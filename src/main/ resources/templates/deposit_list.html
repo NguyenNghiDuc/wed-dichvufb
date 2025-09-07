@@ -1,0 +1,14 @@
+<!doctype html>
+<html><body>
+<h3>Yêu cầu nạp tiền của tôi</h3>
+<table border="1" cellpadding="6">
+  <tr><th>ID</th><th>Số tiền</th><th>Trạng thái</th><th>Thời gian</th></tr>
+  <tr th:each="d : ${list}">
+    <td th:text="${d.id}"></td>
+    <td th:text="${d.amount}"></td>
+    <td th:text="${d.status}"></td>
+    <td th:text="${d.createdAt}"></td>
+  </tr>
+</table>
+<a href="/">Về trang chủ</a>
+</body></html>

@@ -1,0 +1,29 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8" />
+  <title>Đăng ký</title>
+</head>
+<body>
+  <h2>Đăng ký</h2>
+  <form method="post" action="/register">
+    <div>
+      <input name="username" placeholder="Username" required
+             th:value="${username != null} ? ${username} : ''" />
+    </div>
+    <div>
+      <input name="fullName" placeholder="Họ tên"
+             th:value="${fullName != null} ? ${fullName} : ''" />
+    </div>
+    <div>
+      <input type="password" name="password" placeholder="Password" required />
+    </div>
+    <button type="submit">Tạo tài khoản</button>
+  </form>
+
+  <div style="color: red;" th:if="${error}" th:text="${error}"></div>
+  <div style="color: green;" th:if="${msg}" th:text="${msg}"></div>
+
+  <p>Đã có tài khoản? <a href="/login">Đăng nhập</a></p>
+</body>
+</html>

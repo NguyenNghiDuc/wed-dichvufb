@@ -1,0 +1,13 @@
+<!doctype html>
+<html><body>
+<h2>Đăng nhập</h2>
+<form method="post" action="/login">
+  <div><input name="username" placeholder="Username"></div>
+  <div><input type="password" name="password" placeholder="Password"></div>
+  <button type="submit">Đăng nhập</button>
+</form>
+<a href="/register">Đăng ký</a>
+<div th:text="${param.error} ? 'Sai tài khoản hoặc mật khẩu' : ''"></div>
+<div th:text="${param.logout} ? 'Đã đăng xuất' : ''"></div>
+<div th:text="${msg}"></div>
+</body></html>

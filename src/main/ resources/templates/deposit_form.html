@@ -1,0 +1,10 @@
+<!doctype html>
+<html><body>
+<h3>Nạp tiền</h3>
+<form method="post" action="/deposit/new">
+  <input type="number" step="0.01" name="amount" placeholder="Số tiền" required>
+  <input name="note" placeholder="Ghi chú (nếu có)">
+  <button type="submit">Gửi yêu cầu</button>
+</form>
+<div style="color:green" th:text="${msg}"></div>
+</body></html>

@@ -1,0 +1,37 @@
+package com.example.fbservice;
+
+import com.example.fbservice.model.User;
+import com.example.fbservice.repository.UserRepository;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+@DataJpaTest
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE) // giữ nguyên DB config trong application.properties
+class UserRepositoryTest {
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Test
+    void testSaveAndFindUser() {
+        // Tạo user
+        User user = new User();
+        user.setUsername("nguyenvanA");
+        user.setPassword("123456");
+        user.setEmail("a@gmail.com");
+
+        // Lưu
+        userRepository.save(user);
+
+        // Tìm lại
+        User found = userRepository.findByUsername("nguyenvanA").orElse(null);
+
+        // Kiểm tra
+        assertThat(found).isNotNull();
+        assertThat(found.getEmail()).isEqualTo("a@gmail.com");
+    }
+}

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>FB Service</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<header>
+    <nav>
+        <a th:href="@{/}">Trang Chủ</a> |
+        <a th:href="@{/deposit}">Nạp Tiền</a> |
+        <span th:if="${user != null}">
+            Xin chào, <b th:text="${user.fullName}"></b> |
+            <a th:href="@{/logout}">Đăng xuất</a>
+        </span>
+        <span th:if="${user == null}">
+            <a th:href="@{/login}">Đăng nhập</a> |
+            <a th:href="@{/register}">Đăng ký</a>
+        </span>
+    </nav>
+</header>
+<main>
+    <div th:replace="${content}"></div>
+</main>
+<footer>
+    <p>© 2025 FB Service</p>
+</footer>
+</body>
+</html>

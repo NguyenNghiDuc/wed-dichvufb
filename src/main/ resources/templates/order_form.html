@@ -1,0 +1,19 @@
+<!doctype html>
+<html><body>
+<h3>Đặt đơn dịch vụ</h3>
+<form method="post" action="/orders/new">
+  <div>
+    <label>Dịch vụ:</label>
+    <select name="serviceType">
+      <option value="FOLLOW">Tăng Follow</option>
+      <option value="LIKE">Tăng Like</option>
+    </select>
+  </div>
+  <div><input name="link" placeholder="Link/ID" required></div>
+  <div><input type="number" name="quantity" min="1" placeholder="Số lượng" required></div>
+  <div><input type="number" step="0.01" name="unitPrice" placeholder="Đơn giá" required></div>
+  <button type="submit">Tạo đơn</button>
+</form>
+<div style="color:green" th:text="${msg}"></div>
+<div style="color:red" th:text="${error}"></div>
+</body></html>
