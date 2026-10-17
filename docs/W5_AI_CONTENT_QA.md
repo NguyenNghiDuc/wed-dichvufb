@@ -45,3 +45,11 @@ Limits (development, **per server instance only**): 5 requests per user/minute a
 - MockMvc tests for authentication, CSRF, request validation, rate limiting and missing-key fail-closed.
 - Content search tests for cross-owner isolation, literal wildcard semantics, filter/page preservation, validation and HTML escaping.
 - CI Java/PostgreSQL/Flyway/JAR/Docker, CodeQL and staging/manual browser tests are required; CI success is not security sign-off. Do not check roadmap items as accepted until review.
+
+## Performance preview from explicitly user-supplied numbers (no provider integration)
+- `POST /api/v1/content-analytics/preview`: authenticated and CSRF-protected JSON containing 1–100 `posts`, each with `platform`, `publishedAtUtc`, `views`, `likes`, `comments`, `shares` and `saves`.
+- Validates nonnegative bounded integer counts (views 1..1e9), previous two years of UTC timestamps, positive view counts, payload array size, 30 requests/user/minute per instance. The preview is **stateless**; numbers are not retained in a new DB table, sent to LLM or submitted to a social provider.
+- Response source always `USER_SUPPLIED_UNVERIFIED`; computes interaction count per 100 views, **not validated engagement metrics**, and provides a conspicuous warning. A candidate posting hour UTC is **only shown** with >=12 same-platform posts and >=4 posts for at least 3 distinct hours, grouped by recorded UTC post hour. This is a descriptive historical signal, not an optimal-time guarantee. Otherwise the hint is null.
+- The white–orange calendar provides a 1-post interactive preview and openly states that one post cannot yield a posting-time suggestion. Advanced multi-post input remains API-only; there is no fabricated imported history or third-party API access.
+- Unit tests cover arithmetic, insufficient sample size, mixed platforms, timestamp/count limits; MockMvc tests cover authentication, CSRF, request validation and provenance; test on PostgreSQL for draft search literal wildcard/tenant scoping.
+- Provider-verified performance analytics and account-specific posting recommendations are **NOT** implemented: require approved OAuth scopes, authenticated owner identities, official API data, quota limits, and consent. Do not label roadmap #046 or #047 accepted from this preview.
