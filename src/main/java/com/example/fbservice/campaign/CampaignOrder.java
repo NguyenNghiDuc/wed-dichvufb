@@ -23,6 +23,9 @@ public class CampaignOrder {
 
     @Column(name = "assignee_username", length = 100)
     private String assigneeUsername;
+    // All deadline values are UTC timestamps.
+    @Column(name = "due_at") private java.time.LocalDateTime dueAt;
+    @Column(name = "overdue_notified_at") private java.time.LocalDateTime overdueNotifiedAt;
     @Enumerated(EnumType.STRING) @Column(nullable = false, length = 24)
     private CampaignStatus status = CampaignStatus.PENDING_REVIEW;
     @Column(nullable = false, updatable = false)
@@ -56,6 +59,26 @@ public class CampaignOrder {
     }
 
     public void assignTo(String username){this.assigneeUsername=username;}
+    public void scheduleDeadline(java.time.LocalDateTime dueUtc) {
+        if(dueUtc==null) throw new IllegalArgumentException("Deadline required");
+        dueAt=dueUtc;
+        overdueNotifiedAt=null;
+    }
+    public boolean isOverdueAt(java.time.LocalDateTime nowUtc) {
+        return nowUtc!=null && dueAt!=null && dueAt.isBefore(nowUtc)
+            && (status==CampaignStatus.PENDING_REVIEW || status==CampaignStatus.APPROVED
+                || status==CampaignStatus.IN_PROGRESS);
+    }
+    public boolean isOverdue() {
+        return isOverdueAt(java.time.LocalDateTime.now(java.time.ZoneOffset.UTC));
+    }
+    public void markOverdueAlertSent(java.time.LocalDateTime at) {
+        if(!isOverdueAt(at)||overdueNotifiedAt!=null)
+            throw new IllegalStateException("Not due");
+        overdueNotifiedAt=at;
+    }
+    public java.time.LocalDateTime getDueAt(){return dueAt;}
+    public java.time.LocalDateTime getOverdueNotifiedAt(){return overdueNotifiedAt;}
 
     public String getAssigneeUsername(){return assigneeUsername;}
     public Long getId(){return id;}
