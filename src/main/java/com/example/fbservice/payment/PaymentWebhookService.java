@@ -5,6 +5,7 @@ import com.example.fbservice.notification.AccountNotification;
 import com.example.fbservice.notification.AccountNotificationRepository;
 import com.example.fbservice.repository.DepositRequestRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.core.JsonParser;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -88,7 +89,9 @@ public class PaymentWebhookService {
         // payload as different payment references.
         try (JsonParser parser = json.getFactory().createParser(body)) {
             parser.enable(JsonParser.Feature.STRICT_DUPLICATE_DETECTION);
-            event = json.readValue(parser, PaymentWebhookEvent.class);
+            event = json.readerFor(PaymentWebhookEvent.class)
+                    .with(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+                    .readValue(parser);
             if (parser.nextToken() != null) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Trailing payment data");
             }
