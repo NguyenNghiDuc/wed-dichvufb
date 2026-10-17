@@ -36,6 +36,10 @@ class CustomerCampaignAttentionIntegrationTest {
         mvc.perform(get(url).with(user("attention-other"))).andExpect(status().isNotFound());
         mvc.perform(get("/api/v1/campaign-orders/" + foreign.getId() + "/attention"))
             .andExpect(status().isNotFound());
+        orders.updateStatusForAdmin(mine.getId(), CampaignStatus.REJECTED, "trusted-admin");
+        mvc.perform(get(url)).andExpect(status().isOk())
+            .andExpect(jsonPath("$.needsAttention").value(true))
+            .andExpect(jsonPath("$.overdue").value(false));
         mvc.perform(get("/campaigns")).andExpect(status().isOk())
             .andExpect(content().string(containsString("Liên hệ hỗ trợ")));
     }
