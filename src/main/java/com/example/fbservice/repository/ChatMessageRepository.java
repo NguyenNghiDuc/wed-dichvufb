@@ -46,6 +46,22 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
     Page<String> findContactNames(@Param("viewer") String viewer,
                                   @Param("term") String term, Pageable pageable);
 
+    /** One indexed grouped query per displayed contact page, never N+1. */
+    interface UnreadContactCount {
+        String getContact();
+        long getUnreadCount();
+    }
+
+    @Query("""
+        select m.sender as contact, count(m) as unreadCount
+        from ChatMessage m
+        where m.receiver = :viewer and m.sender in :contacts and m.readAt is null
+        group by m.sender
+        """)
+    java.util.List<UnreadContactCount> countUnreadByContact(
+            @Param("viewer") String viewer,
+            @Param("contacts") java.util.List<String> contacts);
+
     /** Atomic read receipt for messages actually addressed to this recipient. */
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("update ChatMessage m set m.readAt = :readAt " +
