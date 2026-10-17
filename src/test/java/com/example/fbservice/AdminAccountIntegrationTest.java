@@ -61,7 +61,6 @@ class AdminAccountIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username="admin-second",roles="ADMIN")
     void lockedAccountCannotLoginOrUseExistingSession() throws Exception {
         persist("admin-second","ADMIN");
         User target=persist("locked-target","USER");
@@ -76,7 +75,8 @@ class AdminAccountIntegrationTest {
         assertThat(session).isNotNull();
         mvc.perform(get("/campaigns").session((org.springframework.mock.web.MockHttpSession)session))
             .andExpect(status().isOk());
-        mvc.perform(post("/admin/users/"+target.getId()+"/enabled").with(csrf())
+        mvc.perform(post("/admin/users/"+target.getId()+"/enabled")
+                .with(user("admin-second").roles("ADMIN")).with(csrf())
                 .param("enabled","false"))
             .andExpect(status().is3xxRedirection());
         mvc.perform(get("/campaigns").session((org.springframework.mock.web.MockHttpSession)session))
