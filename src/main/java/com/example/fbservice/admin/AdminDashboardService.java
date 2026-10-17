@@ -27,7 +27,7 @@ public class AdminDashboardService {
 
     public record Metrics(long totalUsers,long enabledUsers,long totalCampaigns,
                           long pendingCampaigns,long openTickets,long pendingDepositRequests,
-                          int activeServices) {}
+                          int activeServices,long overdueCampaigns) {}
 
     @Transactional(readOnly=true)
     public Metrics metrics(){
@@ -35,7 +35,9 @@ public class AdminDashboardService {
             campaigns.countByStatus(CampaignStatus.PENDING_REVIEW),
             tickets.countByStatus(TicketStatus.OPEN),
             deposits.countByStatus("PENDING"),
-            catalog.available().size());
+            catalog.available().size(),
+            campaigns.countByStatusInAndDueAtBefore(CampaignSlaAlertService.ACTIVE,
+                java.time.LocalDateTime.now(java.time.ZoneOffset.UTC)));
     }
 
     @Transactional(readOnly=true)

@@ -10,15 +10,19 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/staff/campaign-orders")
 public class StaffCampaignController {
     private final CampaignAssignmentService assignments;
+    private final CampaignPerformanceService performance;
 
-    public StaffCampaignController(CampaignAssignmentService assignments) {
+    public StaffCampaignController(CampaignAssignmentService assignments,
+                                    CampaignPerformanceService performance) {
         this.assignments = assignments;
+        this.performance=performance;
     }
 
     @GetMapping
     public String list(@RequestParam(defaultValue = "0") int page, Principal principal, Model model) {
         Page<CampaignOrder> records = assignments.assignedTo(principal.getName(), page);
         model.addAttribute("orders", records.getContent());
+        model.addAttribute("metrics", performance.metricsForStaff(principal.getName()));
         model.addAttribute("page", page);
         model.addAttribute("hasPrevious", records.hasPrevious());
         model.addAttribute("hasNext", records.hasNext());
