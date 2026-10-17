@@ -39,6 +39,12 @@ class ServiceCatalogIntegrationTest {
         var second=orders.create("customer-catalog",request);
         assertThat(first.getQuotedPriceVnd()).isEqualTo(original);
         assertThat(second.getQuotedPriceVnd()).isEqualTo(99000);
+        mvc.perform(get("/api/v1/services"))
+            .andExpect(status().isOk())
+            .andExpect(content().string(org.hamcrest.Matchers.containsString("99000")));
+        mvc.perform(get("/"))
+            .andExpect(status().isOk())
+            .andExpect(content().string(org.hamcrest.Matchers.containsString("99000")));
         assertThat(catalog.recent()).isNotEmpty();
 
         mvc.perform(post("/admin/catalog/PROFILE_AUDIT").with(csrf())
@@ -46,6 +52,10 @@ class ServiceCatalogIntegrationTest {
             .andExpect(status().is3xxRedirection());
         assertThatThrownBy(()->orders.create("customer-catalog",request))
             .isInstanceOf(IllegalArgumentException.class);
+        mvc.perform(get("/api/v1/services"))
+            .andExpect(status().isOk())
+            .andExpect(content().string(org.hamcrest.Matchers.not(
+                org.hamcrest.Matchers.containsString("PROFILE_AUDIT"))));
         mvc.perform(post("/admin/catalog/PROFILE_AUDIT").with(user("ordinary")).with(csrf())
                 .param("price","10000").param("enabled","true"))
             .andExpect(status().isForbidden());

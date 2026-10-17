@@ -70,3 +70,15 @@ Không merge vào main trước khi CI/test được xác nhận.
 - CI tạo coverage report JaCoCo để người review xem coverage; không có ngưỡng nào được coi là bằng chứng '100% không lỗi'.
 
 Các tính năng chưa có OAuth/SMTP/2FA, chưa có API đăng bài thật, chưa có thanh toán VNPay và chưa deploy production. Chỉ đưa hệ thống lên công khai sau security review, migration, backup và kiểm thử thực tế.
+
+## Admin user setup and configurable catalog (development/staging)
+
+Do **not** ship a default admin password. First register a trusted account using `/register`; a database operator may explicitly grant `ADMIN` on the staging database using a reviewed one-time statement:
+
+```sql
+UPDATE users SET role = 'ADMIN' WHERE username = '<trusted-account-username>' AND enabled = TRUE;
+```
+
+Then sign out and sign back in so the session receives the new role. Only authorized operators should have DB write access. Account management: `/admin/users`, audit: `/admin/users/audit`; service prices: `/admin/catalog`. Staff may access only `/admin/support/**`. Locking and role changes invalidate existing database-authenticated sessions on the following request. Admins cannot modify their own account via the UI.
+
+Pricing comes from `service_offerings`, seeded via Flyway V6 on new PostgreSQL databases; development H2 uses matching enum defaults if the table is empty. Changing or disabling services affects **new orders only**, not historic order quotes. Pricing API: `GET /api/v1/services` (authenticated). External posting, fake engagement, and real payments remain disabled pending provider authorizations.
