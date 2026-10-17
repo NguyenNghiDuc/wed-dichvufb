@@ -57,3 +57,16 @@ Nền tảng: FACEBOOK, INSTAGRAM, TIKTOK, YOUTUBE. Gói dịch vụ: PROFILE_AU
 7. Xem lại dữ liệu / code legacy, dọn thư mục cũ và các file build đã commit (target/).
 
 Không merge vào main trước khi CI/test được xác nhận.
+
+## Roadmap và kiểm soát chất lượng
+
+- [Checklist 105 hạng mục](docs/ROADMAP_105.md) — chưa đánh dấu [x] nếu thiếu nghiệm thu bảo mật hoặc UAT.
+- [Chính sách security QA](docs/SECURITY_QA.md) — Java/PostgreSQL CI, CodeQL, Dependabot, phân quyền, CSRF, bảo mật secrets và review.
+- Support portal: `/support`, `/support/new`; Admin hỗ trợ: `/admin/support`.
+- Hồ sơ cá nhân chỉ đọc: `/profile`; FAQ công khai: `/help`.
+- Hủy đơn chưa duyệt: `POST /campaigns/{id}/cancel` (CSRF); REST: `POST /api/v1/campaign-orders/{id}/cancel`.
+- Trang danh sách phân trang: `/campaigns?page=0`, `/admin/campaign-orders?page=0`, REST `/api/v1/campaign-orders/page?page=0&size=20`. Endpoint REST không phân trang cũ giới hạn 50 kết quả.
+- Admin tải CSV: `/admin/campaign-orders/export.csv`, tối đa 5000 dòng, nội dung được escape.
+- CI tạo coverage report JaCoCo để người review xem coverage; không có ngưỡng nào được coi là bằng chứng '100% không lỗi'.
+
+Các tính năng chưa có OAuth/SMTP/2FA, chưa có API đăng bài thật, chưa có thanh toán VNPay và chưa deploy production. Chỉ đưa hệ thống lên công khai sau security review, migration, backup và kiểm thử thực tế.
