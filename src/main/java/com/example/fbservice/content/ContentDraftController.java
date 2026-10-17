@@ -31,7 +31,7 @@ public class ContentDraftController {
         try{
             records=service.searchMine(principal.getName(),page,platform,status,search,fromUtc,toUtc);
         }catch(IllegalArgumentException ex){
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Trang không hợp lệ.");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Bộ lọc nội dung hoặc khoảng lịch UTC không hợp lệ.");
         }
         model.addAttribute("drafts",records.getContent());
         model.addAttribute("pageNumber",page);
