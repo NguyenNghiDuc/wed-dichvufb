@@ -49,18 +49,22 @@ public class AiContentService {
 
     public Map<String,String> generate(AiContentRequest input) {
         if(input==null||input.platform()==null||input.topic()==null||input.audience()==null
-                ||input.topic().isBlank()||input.audience().isBlank())
+                ||input.topic().isBlank()||input.audience().isBlank()
+                ||input.topic().length()>150||input.audience().length()>100
+                ||input.topic().length()<3||input.audience().length()<3
+                ||input.existingContent()!=null&&input.existingContent().length()>3000)
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Yêu cầu AI không hợp lệ");
-        if(key==null||key.isBlank())
-            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,"AI chưa được cấu hình");
         AiContentTask task=input.task()==null?AiContentTask.CAPTION:input.task();
         AiContentLanguage language=input.language()==null?AiContentLanguage.VI:input.language();
         int days=input.days()==null?7:input.days();
         if(days<7||days>30)
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Kế hoạch từ 7 đến 30 ngày");
-        if(task==AiContentTask.OPTIMIZE
-                && (input.existingContent()==null||input.existingContent().isBlank()))
+        if(!input.isTaskPlatformCompatible())
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Loại nội dung không phù hợp nền tảng");
+        if(!input.isOptimizeDraftPresent())
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Cần có nội dung gốc để tối ưu");
+        if(key==null||key.isBlank())
+            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,"AI chưa được cấu hình");
         try {
             String payload=json.writeValueAsString(Map.of(
                 "model",model,"max_tokens",task==AiContentTask.CONTENT_PLAN?1800:450,
