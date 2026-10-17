@@ -65,7 +65,7 @@ document.addEventListener("DOMContentLoaded", () => {
               if (template.mode === "TEMPLATE_ONLY" && Array.isArray(template.suggestions)
                   && template.suggestions.length <= 3
                   && template.suggestions.every(item => typeof item === "string" && item.length <= 500)) {
-                result.value = template.suggestions.join("\\n\\n");
+                result.value = template.suggestions.join("\n\n");
                 status.textContent = "Đang dùng MẪU CÓ SẴN, không phải nội dung do AI tạo.";
               }
             }
