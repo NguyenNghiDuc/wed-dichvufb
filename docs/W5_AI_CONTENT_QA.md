@@ -69,3 +69,5 @@ Limits (development, **per server instance only**): 5 requests per user/minute a
 - Authenticated `GET /api/v1/ai/capabilities` reports configured/unconfigured generative AI, supported formats/languages, 5 requests/minute and 25 requests/24h per user, plus `quotaScope: PER_INSTANCE_ONLY`.
 - This is an explicit warning that limits are per single application instance, not a cross-server quota or monetary budget. The endpoint exposes neither provider credential nor private settings and never calls the AI provider.
 - `publishingEnabled: false` is returned, including when an AI key is configured. This endpoint is informational and does not authorize API posting.
+
+- Both current local deterministic fallbacks produce Vietnamese templates. The UI only offers them when the requested language is `VI`, explicitly warns if `EN` was selected and the paid AI provider is unavailable, and never represents Vietnamese fallback content as English generation.
