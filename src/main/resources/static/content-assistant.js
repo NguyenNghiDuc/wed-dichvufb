@@ -53,7 +53,24 @@ document.addEventListener("DOMContentLoaded", () => {
       });
       if (!response.ok) {
         if (response.status === 429) status.textContent = "Bạn đã dùng hết lượt AI tạm thời.";
-        else if (response.status === 503) status.textContent = "AI chưa được cấu hình hoặc dịch vụ đã hết hạn mức.";
+        else if (response.status === 503) {
+          status.textContent = "AI chưa được cấu hình hoặc dịch vụ đã hết hạn mức.";
+          if (payload.task === "CAPTION" && payload.topic.length <= 100) {
+            const params = new URLSearchParams({ platform: payload.platform, topic: payload.topic });
+            const local = await fetch(form.dataset.fallbackUrl + "?" + params.toString(), {
+              credentials: "same-origin"
+            });
+            if (local.ok) {
+              const template = await local.json();
+              if (template.mode === "TEMPLATE_ONLY" && Array.isArray(template.suggestions)
+                  && template.suggestions.length <= 3
+                  && template.suggestions.every(item => typeof item === "string" && item.length <= 500)) {
+                result.value = template.suggestions.join("\\n\\n");
+                status.textContent = "Đang dùng MẪU CÓ SẴN, không phải nội dung do AI tạo.";
+              }
+            }
+          }
+        }
         else if (response.status === 504) status.textContent = "Dịch vụ AI phản hồi quá chậm.";
         else status.textContent = "Không thể tạo nội dung. Vui lòng kiểm tra dữ liệu và thử lại sau.";
         return;
