@@ -8,6 +8,15 @@ document.addEventListener("DOMContentLoaded", () => {
   const result = document.getElementById("ai-content-result");
   const submit = form.querySelector('button[type="submit"]');
   const token = document.querySelector('input[name="_csrf"]');
+  const taskField = form.querySelector('[name="task"]');
+  const daysField = form.querySelector('[name="days"]');
+  const originalField = form.querySelector('[name="existingContent"]');
+  const synchronizeFields = () => {
+    daysField.disabled = taskField.value !== "CONTENT_PLAN";
+    originalField.disabled = taskField.value !== "OPTIMIZE";
+  };
+  taskField.addEventListener("change", synchronizeFields);
+  synchronizeFields();
 
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -22,6 +31,16 @@ document.addEventListener("DOMContentLoaded", () => {
       days: Number(data.get("days") || 7),
       existingContent: String(data.get("existingContent") || "").trim()
     };
+    if (payload.task === "TIKTOK_IDEAS" && payload.platform !== "TIKTOK" ||
+        payload.task === "YOUTUBE_SHORTS" && payload.platform !== "YOUTUBE") {
+      status.textContent = "Hãy chọn đúng nền tảng cho ý tưởng TikTok hoặc YouTube Shorts.";
+      return;
+    }
+    if (payload.task === "OPTIMIZE" && !payload.existingContent) {
+      status.textContent = "Hãy nhập nội dung gốc cần tối ưu trước khi gửi yêu cầu.";
+      originalField.focus();
+      return;
+    }
     result.value = "";
     status.textContent = "Đang gửi yêu cầu có giới hạn tới dịch vụ AI…";
     submit.disabled = true;
