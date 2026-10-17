@@ -26,8 +26,10 @@ public class CampaignOrderApiController {
     @GetMapping("/page")
     public Page<CampaignOrder> minePage(@RequestParam(defaultValue = "0") int page,
                                         @RequestParam(defaultValue = "20") int size,
+                                        @RequestParam(required = false) Long orderId,
+                                        @RequestParam(required = false) CampaignStatus status,
                                         Principal principal) {
-        return service.pageMine(principal.getName(), page, size);
+        return service.pageMine(principal.getName(), page, size, orderId, status);
     }
 
     @GetMapping("/{id}")

@@ -19,18 +19,24 @@ public class CampaignWebController {
     }
 
     @GetMapping
-    public String list(@RequestParam(defaultValue = "0") int page, Model model, Principal principal) {
+    public String list(@RequestParam(defaultValue = "0") int page,
+                       @RequestParam(required = false) Long orderId,
+                       @RequestParam(required = false) CampaignStatus status,
+                       Model model, Principal principal) {
         Page<CampaignOrder> records;
         try {
-            records = service.pageMine(principal.getName(), page, 20);
+            records = service.pageMine(principal.getName(), page, 20, orderId, status);
         } catch (IllegalArgumentException exception) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid pagination");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid filters or pagination");
         }
         model.addAttribute("orders", records.getContent());
         model.addAttribute("pageNumber", page);
         model.addAttribute("hasPrevious", records.hasPrevious());
         model.addAttribute("hasNext", records.hasNext());
         model.addAttribute("totalPages", records.getTotalPages());
+        model.addAttribute("orderId", orderId);
+        model.addAttribute("selectedStatus", status);
+        model.addAttribute("statuses", CampaignStatus.values());
         return "campaign_list";
     }
 
@@ -61,7 +67,7 @@ public class CampaignWebController {
             return "redirect:/campaigns";
         } catch (IllegalArgumentException exception) {
             model.addAttribute("error", exception.getMessage());
-            return list(0, model, principal);
+            return list(0, null, null, model, principal);
         }
     }
 

@@ -1,9 +1,12 @@
 package com.example.fbservice.campaign;
 
 import com.example.fbservice.notification.*;
+import jakarta.persistence.criteria.Predicate;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.List;
 import org.springframework.data.domain.*;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,9 +46,29 @@ public class CampaignOrderService {
 
     @Transactional(readOnly = true)
     public Page<CampaignOrder> pageMine(String username, int page, int size) {
+        return pageMine(username, page, size, null, null);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<CampaignOrder> pageMine(String username, int page, int size,
+                                        Long orderId, CampaignStatus status) {
+        if (username == null || username.isBlank())
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
         if (page < 0 || page > 10000 || size < 1 || size > 50)
             throw new IllegalArgumentException("Giới hạn phân trang: page 0–10000, size 1–50.");
-        return orders.findByOwnerUsername(username, PageRequest.of(page, size,
+        if (orderId != null && orderId <= 0)
+            throw new IllegalArgumentException("Mã đơn phải là số nguyên dương.");
+
+        // Ownership is mandatory inside the database query (including the count query).
+        // Criteria predicates avoid nullable enum/ID SQL parameters on PostgreSQL.
+        Specification<CampaignOrder> filters = (root, query, builder) -> {
+            List<Predicate> conditions = new ArrayList<>();
+            conditions.add(builder.equal(root.get("ownerUsername"), username));
+            if (orderId != null) conditions.add(builder.equal(root.get("id"), orderId));
+            if (status != null) conditions.add(builder.equal(root.get("status"), status));
+            return builder.and(conditions.toArray(new Predicate[0]));
+        };
+        return orders.findAll(filters, PageRequest.of(page, size,
                 Sort.by(Sort.Order.desc("createdAt"), Sort.Order.desc("id"))));
     }
 
