@@ -23,12 +23,16 @@ public class AdminCatalogController {
     public String update(@PathVariable CampaignServiceType type,
                          @RequestParam long price,
                          @RequestParam(defaultValue="false") boolean enabled,
+                         @RequestParam(required=false) Long expectedVersion,
                          Principal principal,Model model){
         try {
-            catalog.update(principal.getName(),type,price,enabled);
+            catalog.update(principal.getName(),type,price,enabled,expectedVersion);
             return "redirect:/admin/catalog";
         }catch(IllegalArgumentException ex){
             model.addAttribute("error",ex.getMessage());
+            return list(model);
+        }catch(org.springframework.orm.ObjectOptimisticLockingFailureException ex){
+            model.addAttribute("error","Bảng giá đã có thay đổi đồng thời. Tải lại trước khi lưu.");
             return list(model);
         }
     }
