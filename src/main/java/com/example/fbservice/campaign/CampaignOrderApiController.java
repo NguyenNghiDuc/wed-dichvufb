@@ -19,7 +19,8 @@ public class CampaignOrderApiController {
 
     @GetMapping
     public List<CampaignOrder> mine(Principal principal) {
-        return service.findMine(principal.getName());
+        // Backwards-compatible endpoint: bounded to 50; use /page for subsequent pages.
+        return service.pageMine(principal.getName(), 0, 50).getContent();
     }
 
     @GetMapping("/page")

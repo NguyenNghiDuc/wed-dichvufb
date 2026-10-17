@@ -1,9 +1,12 @@
 package com.example.fbservice.campaign;
 
 import java.security.Principal;
+import org.springframework.data.domain.Page;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 @Controller
 @RequestMapping("/campaigns")
@@ -12,8 +15,18 @@ public class CampaignWebController {
     public CampaignWebController(CampaignOrderService service) { this.service = service; }
 
     @GetMapping
-    public String list(Model model, Principal principal) {
-        model.addAttribute("orders", service.findMine(principal.getName()));
+    public String list(@RequestParam(defaultValue = "0") int page, Model model, Principal principal) {
+        Page<CampaignOrder> records;
+        try {
+            records = service.pageMine(principal.getName(), page, 20);
+        } catch (IllegalArgumentException exception) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid pagination");
+        }
+        model.addAttribute("orders", records.getContent());
+        model.addAttribute("pageNumber", page);
+        model.addAttribute("hasPrevious", records.hasPrevious());
+        model.addAttribute("hasNext", records.hasNext());
+        model.addAttribute("totalPages", records.getTotalPages());
         return "campaign_list";
     }
 
@@ -44,7 +57,7 @@ public class CampaignWebController {
             return "redirect:/campaigns";
         } catch (IllegalArgumentException exception) {
             model.addAttribute("error", exception.getMessage());
-            return list(model, principal);
+            return list(0, model, principal);
         }
     }
 

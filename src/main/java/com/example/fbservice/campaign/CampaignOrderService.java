@@ -47,6 +47,14 @@ public class CampaignOrderService {
     }
 
     @Transactional(readOnly = true)
+    public Page<CampaignOrder> pageForAdmin(int page) {
+        if (page < 0 || page > 10000)
+            throw new IllegalArgumentException("Trang không hợp lệ.");
+        return orders.findAll(PageRequest.of(page, 20,
+                Sort.by(Sort.Order.desc("createdAt"), Sort.Order.desc("id"))));
+    }
+
+    @Transactional(readOnly = true)
     public CampaignOrder findMineById(String username, Long id) {
         return orders.findByIdAndOwnerUsername(id, username)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
