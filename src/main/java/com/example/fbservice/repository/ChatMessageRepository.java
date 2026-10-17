@@ -23,6 +23,29 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
                                  @Param("other") String other,
                                  Pageable pageable);
 
+    /**
+     * Alphabetic conversation index. Distinct contacts are extracted only from
+     * messages where the signed-in viewer is one of two participants.
+     * JPA LOCATE treats search text literally, including percent/underscore.
+     */
+    @Query(value = """
+        select distinct case when m.sender = :viewer then m.receiver else m.sender end as contact
+        from ChatMessage m
+        where (m.sender = :viewer or m.receiver = :viewer)
+          and m.sender <> m.receiver
+          and locate(:term, lower(case when m.sender = :viewer then m.receiver else m.sender end)) > 0
+        order by contact asc
+        """,
+        countQuery = """
+        select count(distinct case when m.sender = :viewer then m.receiver else m.sender end)
+        from ChatMessage m
+        where (m.sender = :viewer or m.receiver = :viewer)
+          and m.sender <> m.receiver
+          and locate(:term, lower(case when m.sender = :viewer then m.receiver else m.sender end)) > 0
+        """)
+    Page<String> findContactNames(@Param("viewer") String viewer,
+                                  @Param("term") String term, Pageable pageable);
+
     /** Atomic read receipt for messages actually addressed to this recipient. */
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("update ChatMessage m set m.readAt = :readAt " +

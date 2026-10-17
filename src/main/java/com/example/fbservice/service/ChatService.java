@@ -62,6 +62,19 @@ public class ChatService {
         return messages.findThread(viewer, other, pageRequest(page, size));
     }
 
+    /** Private, bounded conversation index without scanning or loading all messages in Java. */
+    @Transactional(readOnly = true)
+    public Page<String> contactNamesFor(String viewer, String term, int page) {
+        if (viewer == null || viewer.isBlank())
+            throw new IllegalArgumentException("Authentication required");
+        if (page < 0 || page > MAX_PAGE)
+            throw new IllegalArgumentException("Invalid contact page");
+        String query = term == null ? "" : term.strip().toLowerCase(java.util.Locale.ROOT);
+        if (query.length() > 40 || !query.matches("[a-z0-9._-]*"))
+            throw new IllegalArgumentException("Invalid contact search");
+        return messages.findContactNames(viewer, query, PageRequest.of(page, 20));
+    }
+
     /** Compatibility: legacy endpoint returns only the latest 50 messages in one direction. */
     @Transactional(readOnly = true)
     public List<ChatMessage> getConversation(String sender, String receiver) {

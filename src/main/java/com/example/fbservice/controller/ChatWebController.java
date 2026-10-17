@@ -25,9 +25,22 @@ public class ChatWebController {
     }
 
     @GetMapping
-    public String contacts(Model model) {
+    public String contacts(@RequestParam(defaultValue = "0") int page,
+                           @RequestParam(required = false) String q,
+                           Model model, Principal principal) {
+        Page<String> conversations;
+        try {
+            conversations = chats.contactNamesFor(principal.getName(), q, page);
+        } catch (IllegalArgumentException exception) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Bộ lọc hội thoại không hợp lệ");
+        }
         model.addAttribute("staff", users.findTop100ByEnabledTrueAndRoleInOrderByUsernameAsc(
                 List.of("STAFF")));
+        model.addAttribute("conversations", conversations.getContent());
+        model.addAttribute("query", q);
+        model.addAttribute("pageNumber", page);
+        model.addAttribute("hasPrevious", conversations.hasPrevious());
+        model.addAttribute("hasNext", conversations.hasNext());
         return "chat_contacts";
     }
 
