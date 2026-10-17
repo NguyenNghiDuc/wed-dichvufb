@@ -66,4 +66,37 @@ class PublicLoginSessionIntegrationTest {
             .andExpect(status().isForbidden());
         assertThat(users.existsByUsername("blocked-no-csrf")).isFalse();
     }
+    @Test
+    void revokedSessionCannotSubmitStateChangingRequestEvenWithCsrf() throws Exception {
+        User account = new User();
+        account.setUsername("revoked-post-session-user");
+        account.setRole("USER");
+        account.setPassword(encoder.encode("test-only-securePassphrase456"));
+        account = users.saveAndFlush(account);
+
+        var login = mvc.perform(post("/login").with(csrf())
+                .param("username", account.getUsername())
+                .param("password", "test-only-securePassphrase456"))
+            .andExpect(status().is3xxRedirection())
+            .andExpect(redirectedUrl("/campaigns"))
+            .andReturn();
+        var previousSession = (MockHttpSession) login.getRequest().getSession(false);
+        assertThat(previousSession).isNotNull();
+
+        account.setEnabled(false);
+        users.saveAndFlush(account);
+
+        // CSRF validation remains separate from session revocation.
+        // A revoked principal must never be able to perform a write even with a CSRF token.
+        mvc.perform(post("/api/v1/campaign-orders").session(previousSession).with(csrf())
+                .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                .content("{}"))
+            .andExpect(status().isUnauthorized());
+
+        // The invalidated session cannot authorize a subsequent private request.
+        mvc.perform(get("/login"))
+            .andExpect(status().isOk())
+            .andExpect(header().string("X-GrowLab-Auth-Revision", "session-recovery-v2"));
+    }
+
 }
