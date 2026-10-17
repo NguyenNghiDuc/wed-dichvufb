@@ -61,6 +61,53 @@ class AdminAccountIntegrationTest {
     }
 
     @Test
+    void expiredSessionCanOpenPublicLoginInsteadOfWhitelabel403() throws Exception {
+        User stale = persist("orphan-session-user", "USER");
+        stale.setPassword(new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder()
+            .encode("safe-passphrase-123"));
+        users.save(stale);
+
+        var login = mvc.perform(post("/login").with(csrf())
+                .param("username", "orphan-session-user")
+                .param("password", "safe-passphrase-123"))
+            .andExpect(status().is3xxRedirection())
+            .andExpect(redirectedUrl("/campaigns"))
+            .andReturn();
+        var previousSession = (org.springframework.mock.web.MockHttpSession)
+            login.getRequest().getSession(false);
+        assertThat(previousSession).isNotNull();
+
+        // Codespaces/dev database may be reset between restarts.
+        users.deleteById(stale.getId());
+        mvc.perform(get("/login").session(previousSession))
+            .andExpect(status().isOk())
+            .andExpect(view().name("login"))
+            .andExpect(content().string(
+                org.hamcrest.Matchers.containsString("Đăng nhập")));
+    }
+
+    @Test
+    void roleChangeDoesNotBlockPublicLoginForStaleSession() throws Exception {
+        User stale = persist("role-stale-session", "USER");
+        stale.setPassword(new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder()
+            .encode("role-change-passphrase"));
+        users.save(stale);
+        var login = mvc.perform(post("/login").with(csrf())
+                .param("username", "role-stale-session")
+                .param("password", "role-change-passphrase"))
+            .andExpect(status().is3xxRedirection()).andReturn();
+        var previousSession = (org.springframework.mock.web.MockHttpSession)
+            login.getRequest().getSession(false);
+        assertThat(previousSession).isNotNull();
+
+        stale.setRole("STAFF");
+        users.saveAndFlush(stale);
+        mvc.perform(get("/login").session(previousSession))
+            .andExpect(status().isOk())
+            .andExpect(view().name("login"));
+    }
+
+    @Test
     void lockedAccountCannotLoginOrUseExistingSession() throws Exception {
         persist("admin-second","ADMIN");
         User target=persist("locked-target","USER");
@@ -80,7 +127,8 @@ class AdminAccountIntegrationTest {
                 .param("enabled","false"))
             .andExpect(status().is3xxRedirection());
         mvc.perform(get("/campaigns").session((org.springframework.mock.web.MockHttpSession)session))
-            .andExpect(status().isForbidden());
+            .andExpect(status().is3xxRedirection())
+            .andExpect(redirectedUrlPattern("**/login"));
         mvc.perform(post("/login").with(csrf())
                 .param("username","locked-target").param("password","passphrase123"))
             .andExpect(status().is3xxRedirection())

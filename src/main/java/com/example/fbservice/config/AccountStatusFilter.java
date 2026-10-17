@@ -31,7 +31,10 @@ public final class AccountStatusFilter extends OncePerRequestFilter {
                 SecurityContextHolder.clearContext();
                 HttpSession session = request.getSession(false);
                 if (session != null) session.invalidate();
-                response.sendError(HttpServletResponse.SC_FORBIDDEN, "Account unavailable");
+                // Treat the revoked session as anonymous, not as a forbidden request.
+                // This must also work when the browser lands on public /login with a stale cookie.
+                // AuthorizationFilter will redirect protected requests to the login page.
+                chain.doFilter(request, response);
                 return;
             }
         }
