@@ -5,6 +5,7 @@
 <title>Lịch nội dung · GrowLab</title>
 <link rel="stylesheet" th:href="@{/style.css}">
 <script th:src="@{/content-assistant.js}" defer></script>
+<script th:src="@{/content-metrics.js}" defer></script>
 </head>
 <body>
 <main class="page container">
@@ -54,6 +55,34 @@
     <p id="ai-content-status" class="muted" role="status" aria-live="polite"></p>
     <div class="field"><label for="ai-content-result">Kết quả gợi ý (kiểm tra trước khi sử dụng)</label>
       <textarea id="ai-content-result" rows="8" readonly></textarea></div>
+  </div>
+</section>
+
+
+<section class="section" aria-labelledby="metrics-preview-heading">
+  <div class="form-panel">
+    <div class="eyebrow">Phân tích nội dung · Không liên kết mạng xã hội</div>
+    <h2 id="metrics-preview-heading">Xem trước hiệu suất bài viết</h2>
+    <p class="muted">Nhập số liệu của 1 bài viết để tính tỷ lệ tương tác. Hệ thống không xác minh số liệu với Facebook, TikTok hoặc YouTube và không lưu kết quả. Một bài chưa đủ để đề xuất giờ đăng. Ngày giờ nhập theo UTC.</p>
+    <form id="content-metrics-form" th:attr="data-api-url=@{/api/v1/content-analytics/preview}">
+      <div class="field"><label for="metrics-platform">Nền tảng</label>
+        <select id="metrics-platform" name="platform" required><option th:each="p : ${platforms}" th:value="${p.name()}" th:text="${p.displayName}"></option></select></div>
+      <div class="field"><label for="metrics-date">Thời gian đã đăng (UTC)</label>
+        <input id="metrics-date" type="datetime-local" name="publishedAtUtc" required></div>
+      <div class="field"><label for="metrics-views">Lượt xem</label>
+        <input id="metrics-views" type="number" name="views" min="1" max="1000000000" value="100" required></div>
+      <div class="field"><label for="metrics-likes">Lượt thích</label>
+        <input id="metrics-likes" type="number" name="likes" min="0" max="1000000000" value="0" required></div>
+      <div class="field"><label for="metrics-comments">Bình luận</label>
+        <input id="metrics-comments" type="number" name="comments" min="0" max="1000000000" value="0" required></div>
+      <div class="field"><label for="metrics-shares">Lượt chia sẻ</label>
+        <input id="metrics-shares" type="number" name="shares" min="0" max="1000000000" value="0" required></div>
+      <div class="field"><label for="metrics-saves">Lượt lưu</label>
+        <input id="metrics-saves" type="number" name="saves" min="0" max="1000000000" value="0" required></div>
+      <button class="btn" type="submit">Phân tích số liệu đã nhập</button>
+    </form>
+    <p id="content-metrics-status" class="muted" role="status" aria-live="polite"></p>
+    <pre id="content-metrics-result" class="muted" aria-label="Kết quả phân tích dữ liệu do bạn cung cấp"></pre>
   </div>
 </section>
 
