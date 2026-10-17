@@ -28,7 +28,7 @@ class CampaignAssignmentIntegrationTest {
     @Autowired CampaignAssignmentEventRepository events;
     @Autowired AccountNotificationRepository notifications;
 
-    private User user(String name, String role, boolean enabled) {
+    private User persistUser(String name, String role, boolean enabled) {
         User user = new User();
         user.setUsername(name);
         user.setRole(role);
@@ -47,9 +47,9 @@ class CampaignAssignmentIntegrationTest {
     @Test
     @WithMockUser(username = "assign-admin", roles = "ADMIN")
     void assignmentIsAdminOnlyAuditedAndStaffCanProgressOnlyOwn() throws Exception {
-        user("assign-admin", "ADMIN", true);
-        User assigned = user("worker-assigned", "STAFF", true);
-        user("worker-other", "STAFF", true);
+        persistUser("assign-admin", "ADMIN", true);
+        User assigned = persistUser("worker-assigned", "STAFF", true);
+        persistUser("worker-other", "STAFF", true);
         CampaignOrder order = campaign("assignment-customer");
         Long id = order.getId();
 
@@ -110,10 +110,10 @@ class CampaignAssignmentIntegrationTest {
     @Test
     @WithMockUser(username = "assign-second-admin", roles = "ADMIN")
     void cannotAssignInactiveOrOrdinaryUserAndReassignmentIsLogged() throws Exception {
-        user("assign-second-admin", "ADMIN", true);
-        User inactive = user("inactive-staff", "STAFF", false);
-        User ordinary = user("ordinary-assignment", "USER", true);
-        User staff = user("another-active-worker", "STAFF", true);
+        persistUser("assign-second-admin", "ADMIN", true);
+        User inactive = persistUser("inactive-staff", "STAFF", false);
+        User ordinary = persistUser("ordinary-assignment", "USER", true);
+        User staff = persistUser("another-active-worker", "STAFF", true);
         CampaignOrder order = campaign("assignment-owner2");
         Long id = order.getId();
 
