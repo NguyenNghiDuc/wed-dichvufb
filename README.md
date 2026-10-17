@@ -20,6 +20,7 @@ Mặc định dùng H2 file database tại `./data/fbdb` trong môi trường ph
 - `GET /api/v1/services` — các gói tư vấn, giá cố định trên server
 - `GET /api/v1/campaign-orders` — chỉ các đơn của người dùng đang đăng nhập
 - `GET /api/v1/campaign-orders/{id}` — chỉ đọc được đơn của mình
+- `GET /api/v1/campaign-orders/{id}/history?page=0&size=20` — lịch sử trạng thái đơn của chính mình, phân trang tối đa 50 bản ghi, không lộ tên nhân viên xử lý
 - `POST /api/v1/campaign-orders` — yêu cầu mới bằng JSON: `platform`, `serviceType`, `targetUrl`, `brief`
 - `GET /api/v1/content-suggestions?platform=TIKTOK&topic=thoi%20trang` — gợi ý **theo mẫu**, không phải AI tạo sinh
 - `GET /campaigns/export.csv?orderId=123&status=PENDING_REVIEW` — khách hàng tải CSV lịch sử chiến dịch của **chính mình** theo bộ lọc (bỏ tham số để xuất tất cả), tối đa 5000 dòng; CSV có BOM UTF-8 và escape công thức Excel. Nút tải nằm tại /campaigns. Không chứa dữ liệu khách hàng khác.

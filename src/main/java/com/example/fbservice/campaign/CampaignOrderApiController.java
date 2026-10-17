@@ -37,6 +37,21 @@ public class CampaignOrderApiController {
         return service.findMineById(principal.getName(), id);
     }
 
+    /** Only the owning customer can see a campaign's public status timeline. */
+    @GetMapping("/{id}/history")
+    public ResponseEntity<Page<CampaignHistoryEntry>> history(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            Principal principal) {
+        Page<CampaignHistoryEntry> entries = service
+                .pageHistoryForOwner(principal.getName(), id, page, size)
+                .map(CampaignHistoryEntry::from);
+        return ResponseEntity.ok()
+                .header("Cache-Control", "no-store")
+                .body(entries);
+    }
+
     @PostMapping("/{id}/cancel")
     public CampaignOrder cancel(@PathVariable Long id, Principal principal) {
         return service.cancelForOwner(principal.getName(), id);

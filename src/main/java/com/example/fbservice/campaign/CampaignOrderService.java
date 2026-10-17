@@ -113,6 +113,19 @@ public class CampaignOrderService {
         return events.findByCampaignIdOrderByCreatedAtAsc(id);
     }
 
+    /**
+     * Read-only, bounded history. Confirm tenant ownership before touching event records,
+     * so unknown and foreign campaign IDs have identical 404 behavior.
+     */
+    @Transactional(readOnly = true)
+    public Page<CampaignEvent> pageHistoryForOwner(String username, Long campaignId, int page, int size) {
+        if (page < 0 || page > 10000 || size < 1 || size > 50)
+            throw new IllegalArgumentException("Giới hạn lịch sử: page 0–10000, size 1–50.");
+        findMineById(username, campaignId);
+        return events.findByCampaignId(campaignId, PageRequest.of(page, size,
+                Sort.by(Sort.Order.asc("createdAt"), Sort.Order.asc("id"))));
+    }
+
     @Transactional(readOnly = true)
     public List<CampaignOrder> findAllForAdmin() {
         return orders.findAllByOrderByCreatedAtDesc();
