@@ -39,7 +39,7 @@ public class DepositService {
         if (username == null || username.isBlank() || page < 0 || page > MAX_HISTORY_PAGE) {
             throw new IllegalArgumentException("Trang lịch sử không hợp lệ.");
         }
-        return repo.findByOwnerUsernameOrderByCreatedAtDesc(username,
+        return repo.findByOwnerUsernameOrderByCreatedAtDescIdDesc(username,
                 PageRequest.of(page, HISTORY_PAGE_SIZE));
     }
 
