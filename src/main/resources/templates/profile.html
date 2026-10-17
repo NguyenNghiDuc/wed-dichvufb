@@ -1,0 +1,10 @@
+<!doctype html><html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hồ sơ tài khoản · GrowLab</title><link rel="stylesheet" th:href="@{/style.css}"></head>
+<body><main class="page container"><a th:href="@{/campaigns}" class="table-link">← Dashboard</a>
+<div class="page-header"><div><div class="eyebrow">Bảo mật tài khoản</div><h1>Hồ sơ cá nhân</h1></div></div>
+<div class="form-panel"><div class="field"><label>Tên đăng nhập</label><p th:text="${username}"></p></div>
+<div class="field"><label>Email đã đăng ký</label><p th:text="${email != null ? email : 'Chưa cung cấp'}"></p></div>
+<div class="field"><label>Quyền tài khoản</label><p th:text="${role}"></p></div>
+<div class="notice">Email chưa được xác thực tự động. Để bảo vệ tài khoản, tính năng thay đổi email và mật khẩu chưa được mở cho đến khi có xác minh bằng OTP.</div>
+<a class="btn btn-outline" th:href="@{/support/new}">Liên hệ hỗ trợ</a></div></main></body></html>

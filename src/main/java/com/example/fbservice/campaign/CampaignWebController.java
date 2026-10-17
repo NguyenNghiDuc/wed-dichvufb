@@ -1,41 +1,70 @@
 package com.example.fbservice.campaign;
 
 import java.security.Principal;
+import org.springframework.data.domain.Page;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 @Controller
 @RequestMapping("/campaigns")
 public class CampaignWebController {
     private final CampaignOrderService service;
-    public CampaignWebController(CampaignOrderService service){this.service=service;}
+    public CampaignWebController(CampaignOrderService service) { this.service = service; }
+
     @GetMapping
-    public String list(Model model,Principal principal){
-        model.addAttribute("orders",service.findMine(principal.getName()));
+    public String list(@RequestParam(defaultValue = "0") int page, Model model, Principal principal) {
+        Page<CampaignOrder> records;
+        try {
+            records = service.pageMine(principal.getName(), page, 20);
+        } catch (IllegalArgumentException exception) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid pagination");
+        }
+        model.addAttribute("orders", records.getContent());
+        model.addAttribute("pageNumber", page);
+        model.addAttribute("hasPrevious", records.hasPrevious());
+        model.addAttribute("hasNext", records.hasNext());
+        model.addAttribute("totalPages", records.getTotalPages());
         return "campaign_list";
     }
+
     @GetMapping("/new")
-    public String form(Model model){
-        model.addAttribute("platforms",SocialPlatform.values());
-        model.addAttribute("plans",CampaignServiceType.values());
+    public String form(Model model) {
+        model.addAttribute("platforms", SocialPlatform.values());
+        model.addAttribute("plans", CampaignServiceType.values());
         return "campaign_form";
     }
+
     @PostMapping
-    public String create(@RequestParam SocialPlatform platform,@RequestParam CampaignServiceType serviceType,
-                         @RequestParam String targetUrl,@RequestParam String brief,Principal principal,Model model){
+    public String create(@RequestParam SocialPlatform platform, @RequestParam CampaignServiceType serviceType,
+                         @RequestParam String targetUrl, @RequestParam String brief,
+                         Principal principal, Model model) {
         try {
-            service.create(principal.getName(),new CampaignOrderRequest(platform,serviceType,targetUrl,brief));
+            service.create(principal.getName(), new CampaignOrderRequest(platform, serviceType, targetUrl, brief));
             return "redirect:/campaigns";
-        }catch(IllegalArgumentException ex){
-            model.addAttribute("error",ex.getMessage());
+        } catch (IllegalArgumentException exception) {
+            model.addAttribute("error", exception.getMessage());
             return form(model);
         }
     }
+
+    @PostMapping("/{id}/cancel")
+    public String cancel(@PathVariable Long id, Principal principal, Model model) {
+        try {
+            service.cancelForOwner(principal.getName(), id);
+            return "redirect:/campaigns";
+        } catch (IllegalArgumentException exception) {
+            model.addAttribute("error", exception.getMessage());
+            return list(0, model, principal);
+        }
+    }
+
     @GetMapping("/{id}")
-    public String details(@PathVariable Long id,Principal principal,Model model){
-        model.addAttribute("order",service.findMineById(principal.getName(),id));
-        model.addAttribute("events",service.historyForOwner(principal.getName(),id));
+    public String details(@PathVariable Long id, Principal principal, Model model) {
+        model.addAttribute("order", service.findMineById(principal.getName(), id));
+        model.addAttribute("events", service.historyForOwner(principal.getName(), id));
         return "campaign_details";
     }
 }

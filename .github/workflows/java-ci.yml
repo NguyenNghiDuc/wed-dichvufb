@@ -1,9 +1,9 @@
 name: Java CI
 on:
   push:
-    branches: [main, feature/growth-platform-phase1]
+    branches: [main, 'feature/**']
   pull_request:
-    branches: [main]
+    branches: [main, 'feature/**']
 permissions:
   contents: read
 jobs:
@@ -31,6 +31,14 @@ jobs:
           cache: maven
       - name: Run unit and PostgreSQL integration tests
         run: mvn -B --no-transfer-progress clean verify
+      - name: Publish test coverage for review
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-report
+          path: target/site/jacoco/
+          if-no-files-found: warn
+          retention-days: 7
       - name: Package application
         run: test -f target/fbservice-0.0.1-SNAPSHOT.jar
       - name: Launch production JAR smoke test

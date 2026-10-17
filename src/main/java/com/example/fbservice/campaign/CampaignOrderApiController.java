@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import java.net.URI;
 import java.security.Principal;
 import java.util.List;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,12 +19,25 @@ public class CampaignOrderApiController {
 
     @GetMapping
     public List<CampaignOrder> mine(Principal principal) {
-        return service.findMine(principal.getName());
+        // Backwards-compatible endpoint: bounded to 50; use /page for subsequent pages.
+        return service.pageMine(principal.getName(), 0, 50).getContent();
+    }
+
+    @GetMapping("/page")
+    public Page<CampaignOrder> minePage(@RequestParam(defaultValue = "0") int page,
+                                        @RequestParam(defaultValue = "20") int size,
+                                        Principal principal) {
+        return service.pageMine(principal.getName(), page, size);
     }
 
     @GetMapping("/{id}")
     public CampaignOrder mineById(@PathVariable Long id, Principal principal) {
         return service.findMineById(principal.getName(), id);
+    }
+
+    @PostMapping("/{id}/cancel")
+    public CampaignOrder cancel(@PathVariable Long id, Principal principal) {
+        return service.cancelForOwner(principal.getName(), id);
     }
 
     @PostMapping

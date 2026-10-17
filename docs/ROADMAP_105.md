@@ -1,0 +1,148 @@
+# Roadmap 105 hạng mục — GrowLab
+
+**Chính sách nghiệm thu:** Mặc định mọi hạng mục là [ ] CHƯA NGHIỆM THU, kể cả nếu đã có phiên bản thử nghiệm trong code. Chỉ đổi thành [x] khi có bằng chứng thực tế (unit/integration/security/UAT thích hợp) và review. Không tự đồng nhất “CI xanh” với “không có lỗ hổng”.
+
+**Mỗi hạng mục yêu cầu:** (1) issue/commit/PR riêng hoặc nhóm liên quan nhỏ; (2) acceptance criteria; (3) test dương tính + sai dữ liệu + phân quyền/biên; (4) tài liệu cấu hình/migrate; (5) không có lỗ hổng mức nghiêm trọng đã biết còn mở; (6) reviewers duyệt trước merge.
+
+**Ràng buộc:** Chỉ hỗ trợ phát triển người theo dõi thật bằng nội dung/quảng cáo hợp lệ và API cấp quyền; không bán follower giả, đăng nhập giả mạo hoặc né kiểm soát nền tảng. Các OAuth/API, VNPay và email thật cần cấu hình tài khoản thử nghiệm và credential từ chủ dự án.
+
+**Legend:** [ ] chưa nghiệm thu; (prototype) = có code thử nghiệm chưa xác minh production. Các hạng mục dưới đây không tự nhận là đã hoàn thành.
+
+## Bảo mật và tài khoản
+
+- [ ] **001** Xác thực email khi đăng ký
+- [ ] **002** Quên mật khẩu bằng email OTP
+- [ ] **003** Xác thực hai lớp (2FA)
+- [ ] **004** Đăng nhập bằng Google
+- [ ] **005** Đăng nhập bằng Facebook qua OAuth
+- [ ] **006** Quản lý thiết bị đăng nhập
+- [ ] **007** Hiển thị lịch sử IP đăng nhập
+- [ ] **008** Đăng xuất tất cả thiết bị
+- [ ] **009** Cảnh báo đăng nhập bất thường
+- [ ] **010** Khóa tạm thời khi đăng nhập sai quá nhiều
+- [ ] **011** Quản lý phiên đăng nhập và token
+- [ ] **012** Phân quyền Admin, nhân viên, đại lý, khách hàng
+- [ ] **013** Ghi nhật ký hành động quan trọng
+- [ ] **014** Mã hóa thông tin nhạy cảm và khóa API
+- [ ] **015** Chuyển dữ liệu, mật khẩu cũ an toàn sang hệ thống mới
+
+## Giao diện và khách hàng
+
+- [ ] **016** Dashboard khách hàng chuyên nghiệp
+- [ ] **017** Trang hồ sơ cá nhân
+- [ ] **018** Thống kê đơn hàng theo thời gian thực
+- [ ] **019** Tra cứu đơn bằng mã
+- [ ] **020** Lịch sử sử dụng dịch vụ
+- [ ] **021** Hủy yêu cầu khi chưa xử lý
+- [ ] **022** Tìm kiếm và lọc đơn hàng
+- [ ] **023** Đánh giá dịch vụ
+- [ ] **024** Gửi yêu cầu hỗ trợ
+- [ ] **025** Chat trực tiếp với nhân viên
+- [ ] **026** Thông báo trên website và email
+- [ ] **027** Trang hướng dẫn sử dụng và câu hỏi thường gặp
+
+## Quản lý dịch vụ và đơn hàng
+
+- [ ] **028** Tạo/sửa/xóa danh mục dịch vụ
+- [ ] **029** Quản lý dịch vụ Facebook, Instagram, TikTok, YouTube
+- [ ] **030** Quản lý gói tư vấn, nội dung và quảng cáo
+- [ ] **031** Admin tự thay đổi bảng giá
+- [ ] **032** Thiết lập giá riêng theo cấp khách hàng
+- [ ] **033** Tính giá tự động tại server
+- [ ] **034** Phê duyệt đơn trước khi triển khai
+- [ ] **035** Phân công nhân viên xử lý
+- [ ] **036** Theo dõi tiến độ xử lý đơn
+- [ ] **037** Nhật ký chi tiết của từng đơn
+- [ ] **038** Hoàn tiền hoặc điều chỉnh đơn hợp lệ
+- [ ] **039** Cảnh báo đơn bị chậm, thất bại hoặc cần xử lý
+
+## AI và phát triển mạng xã hội
+
+- [ ] **040** AI viết caption bằng tiếng Việt và tiếng Anh
+- [ ] **041** AI tạo hashtag theo chủ đề
+- [ ] **042** AI gợi ý ý tưởng video TikTok
+- [ ] **043** AI viết kịch bản YouTube Shorts
+- [ ] **044** AI tạo lịch nội dung 7–30 ngày
+- [ ] **045** AI đề xuất tiêu đề hấp dẫn
+- [ ] **046** AI phân tích hiệu suất bài đăng
+- [ ] **047** AI đề xuất thời điểm đăng phù hợp
+- [ ] **048** AI gợi ý đối tượng quảng cáo
+- [ ] **049** AI phân tích đối thủ từ dữ liệu công khai hợp lệ
+- [ ] **050** AI đề xuất phương án cải thiện tương tác thật
+- [ ] **051** AI kiểm tra nội dung trước khi đăng
+- [ ] **052** AI tạo nhiều phiên bản nội dung để thử A/B
+- [ ] **053** Quản lý lịch đăng bài từ các tài khoản đã cấp quyền
+- [ ] **054** Thống kê chi phí và giới hạn sử dụng AI
+
+## Kết nối API và tự động hóa
+
+- [ ] **055** Facebook Pages API với quyền hợp lệ
+- [ ] **056** Instagram Graph API
+- [ ] **057** TikTok Developer API
+- [ ] **058** YouTube Data API mở rộng
+- [ ] **059** OAuth kết nối và ngắt kết nối tài khoản
+- [ ] **060** Làm mới token truy cập an toàn
+- [ ] **061** Đồng bộ dữ liệu và thống kê tài khoản
+- [ ] **062** Hàng đợi xử lý tác vụ tự động
+- [ ] **063** Retry có giới hạn khi API bị lỗi
+- [ ] **064** Quản lý giới hạn API, lỗi kết nối và nhật ký đồng bộ
+
+## Thanh toán và kinh doanh
+
+- [ ] **065** Tích hợp VNPay thật
+- [ ] **066** Tích hợp chuyển khoản QR
+- [ ] **067** Xác minh giao dịch từ cổng thanh toán
+- [ ] **068** Ví tiền khách hàng với sổ cái giao dịch
+- [ ] **069** Lịch sử nạp và sử dụng số dư
+- [ ] **070** Hoàn tiền theo quy trình
+- [ ] **071** Mã giảm giá
+- [ ] **072** Mã giới thiệu khách hàng
+- [ ] **073** Chương trình khách hàng thân thiết
+- [ ] **074** Tạo hóa đơn và biên nhận
+- [ ] **075** Đối soát doanh thu hằng ngày
+- [ ] **076** Phát hiện giao dịch đáng ngờ và chống cộng tiền trùng
+
+## Trang quản trị Admin
+
+- [ ] **077** Dashboard tổng quan doanh thu
+- [ ] **078** Thống kê khách hàng mới
+- [ ] **079** Quản lý tài khoản và phân quyền
+- [ ] **080** Khóa/mở khóa tài khoản
+- [ ] **081** Quản lý thiết bị và nhật ký đăng nhập
+- [ ] **082** Quản lý đơn theo trạng thái
+- [ ] **083** Phân công đơn cho nhân viên
+- [ ] **084** Xử lý yêu cầu hoàn tiền
+- [ ] **085** Quản lý dịch vụ và bảng giá
+- [ ] **086** Quản lý thông báo toàn hệ thống
+- [ ] **087** Quản lý mã giảm giá
+- [ ] **088** Quản lý yêu cầu hỗ trợ
+- [ ] **089** Xuất báo cáo Excel hoặc CSV
+- [ ] **090** Nhật ký thay đổi dữ liệu của Admin
+
+## Hiệu năng, triển khai và kiểm thử
+
+- [ ] **091** Kiểm thử giao diện trên điện thoại
+- [ ] **092** Kiểm thử tự động toàn bộ quy trình đăng ký → đăng nhập → tạo đơn
+- [ ] **093** Kiểm thử phân quyền và truy cập chéo tài khoản
+- [ ] **094** Kiểm thử đồng thời nhiều đơn hàng
+- [ ] **095** Kiểm thử thanh toán và webhook giả lập
+- [ ] **096** Kiểm thử API lỗi mạng, timeout, quota
+- [ ] **097** Kiểm tra XSS, CSRF, SQL Injection và SSRF
+- [ ] **098** Giới hạn request trên nhiều server
+- [ ] **099** Tối ưu truy vấn database và phân trang
+- [ ] **100** Cache dữ liệu hợp lý
+- [ ] **101** Tự động backup PostgreSQL
+- [ ] **102** Kiểm thử khôi phục database từ bản backup
+- [ ] **103** Giám sát lỗi, thời gian phản hồi và cảnh báo
+- [ ] **104** Triển khai staging và production với HTTPS
+- [ ] **105** Kiểm thử tải cao, kiểm tra Docker và quy trình rollback
+
+## Sprint P0 đang triển khai
+
+- Bảo vệ endpoint auth bằng giới hạn request theo IP/phiên, thêm security headers và kiểm thử.
+- Bổ sung hủy chiến dịch khi còn chờ duyệt, ghi nhật ký và thông báo; chống truy cập chéo tài khoản.
+- Phân trang đơn theo owner, tránh tải không giới hạn và lộ dữ liệu.
+- Chạy Java CI, PostgreSQL thực và smoke test production JAR/Docker.
+- Chưa có nghiệm thu ngoài production hay pentest độc lập.
+
+Xem `docs/DEPLOYMENT.md` để biết những điều kiện còn thiếu trước khi vận hành chính thức.
