@@ -39,6 +39,21 @@ jobs:
           path: target/site/jacoco/
           if-no-files-found: warn
           retention-days: 7
+      # Safe CI-only restore rehearsal: seeded test database, never a production instance.
+      - name: PostgreSQL backup and isolated restore smoke
+        run: |
+          docker run --rm --network host \
+            -e PGPASSWORD=testpass \
+            -v "$RUNNER_TEMP:/backups" postgres:16-alpine sh -ec '
+              pg_dump -h 127.0.0.1 -U growlab -d growlab_ci --format=custom -f /backups/ci-postgres.dump
+              pg_restore --list /backups/ci-postgres.dump >/dev/null
+              createdb -h 127.0.0.1 -U growlab growlab_restore
+              pg_restore -h 127.0.0.1 -U growlab --no-owner --no-privileges -d growlab_restore /backups/ci-postgres.dump
+              psql -h 127.0.0.1 -U growlab -d growlab_restore -v ON_ERROR_STOP=1 -Atc                 "SELECT to_regclass('''public.payment_receipts''') IS NOT NULL
+                    AND to_regclass('''public.idx_deposit_owner_created''') IS NOT NULL
+                    AND to_regclass('''public.idx_payment_receipts_created_at''') IS NOT NULL" | grep -qx t
+            '
+          rm -f "$RUNNER_TEMP/ci-postgres.dump"
       - name: Package application
         run: test -f target/fbservice-0.0.1-SNAPSHOT.jar
       - name: Launch production JAR smoke test
