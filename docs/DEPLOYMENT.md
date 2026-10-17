@@ -3,7 +3,7 @@
 ## Phase 2: Database
 - Dev runs file-based H2 with `spring.flyway.enabled=false`.
 - Production uses PostgreSQL 16 + Flyway, Hibernate `ddl-auto=validate`.
-- Baseline clean Postgres DB migrations V1/V2/V3. **Existing H2 data is not copied**. Export and reconcile any real users, orders, and deposits manually before cutover. Never rename legacy resource folders and assume old migrations were run.
+- Baseline clean Postgres DB migrations V1–V10 (including V3 payment receipts and V10 review/history indexes). **Existing H2 data is not copied**. Export and reconcile any real users, orders, and deposits manually before cutover. Never rename legacy resource folders and assume old migrations were run.
 - Backup PostgreSQL volume before production upgrades, test recovery on staging.
 
 ## Phase 3: Official APIs
@@ -18,7 +18,7 @@
 
 ## Phase 5: Payments
 - `POST /api/v1/payments/webhooks/internal` is a **generic internal signed event interface**; it is NOT a bank or VNPay integration. Without `GROWTH_WEBHOOK_SECRET` of 32+ bytes the endpoint returns 503.
-- Header `X-GrowLab-Signature` = lowercase HMAC-SHA256 hex digest of raw UTF-8 JSON body. Payload: `{"eventId":"unique-event-123","depositRequestId":123,"amountVnd":50000,"status":"SETTLED"}`.
+- Signed sandbox webhook requires `X-GrowLab-Timestamp` (Unix seconds, within ±300 seconds) and `X-GrowLab-Signature` = hex(HMAC-SHA256(secret, ASCII(timestamp) + "." + **exact raw JSON body bytes**)). The former body-only signature is intentionally rejected to prevent replay. Payload: `{"eventId":"unique-event-123","depositRequestId":123,"amountVnd":50000,"status":"SETTLED"}`. Refer to [PAYMENT_QA_RECONCILIATION.md](PAYMENT_QA_RECONCILIATION.md) for retry rules, reconciliation SQL and the controlled backup/restore rehearsal.
 - A signed event checks deposit amount, row lock, idempotency, and updates status PENDING→APPROVED. It does not credit wallet balance. Real payment provider authentication, transaction reconciliation and refunds require a separate approved adapter.
 
 ## Phase 6: Run/test/deploy
