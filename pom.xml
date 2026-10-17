@@ -10,7 +10,7 @@
     <packaging>jar</packaging>
 
     <name>fbservice</name>
-    <description>Spring Boot H2 Database Example</description>
+    <description>GrowLab social growth management platform</description>
 
     <parent>
         <groupId>org.springframework.boot</groupId>
@@ -24,6 +24,15 @@
     </properties>
 
     <dependencies>
+        <dependency>
+            <groupId>org.postgresql</groupId><artifactId>postgresql</artifactId><scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.flywaydb</groupId><artifactId>flyway-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.flywaydb</groupId><artifactId>flyway-database-postgresql</artifactId>
+        </dependency>
         <!-- Spring Web -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
