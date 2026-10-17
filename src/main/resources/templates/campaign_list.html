@@ -11,6 +11,8 @@
 <main class="page container">
 <div class="page-header"><div><div class="eyebrow">Dashboard</div><h1>Chiến dịch của tôi</h1><p class="muted">Theo dõi quá trình xét duyệt và xử lý yêu cầu.</p></div><a class="btn" th:href="@{/campaigns/new}">+ Tạo chiến dịch</a></div>
 
+<p class="notice" role="status" th:if="${notice}" th:text="${notice}"></p>
+<p class="error" role="alert" th:if="${error}" th:text="${error}"></p>
 <section class="customer-metrics" aria-label="Thống kê chiến dịch của tôi">
 <article class="card"><p class="muted">Tổng chiến dịch</p><p class="metric" th:text="${summary.total()}">0</p><p class="footnote">Tất cả trạng thái</p></article>
 <article class="card"><p class="muted">Chờ duyệt</p><p class="metric" th:text="${summary.pendingReview()}">0</p><p class="footnote">Đang chờ nhân viên xem xét</p></article>

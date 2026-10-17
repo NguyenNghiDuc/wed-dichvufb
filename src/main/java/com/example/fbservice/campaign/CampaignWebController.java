@@ -73,19 +73,24 @@ public class CampaignWebController {
             return "redirect:/campaigns";
         } catch (IllegalArgumentException exception) {
             model.addAttribute("error", exception.getMessage());
+            model.addAttribute("submittedPlatform", platform);
+            model.addAttribute("submittedServiceType", serviceType);
+            model.addAttribute("submittedTargetUrl", targetUrl);
+            model.addAttribute("submittedBrief", brief);
             return form(model);
         }
     }
 
     @PostMapping("/{id}/cancel")
-    public String cancel(@PathVariable Long id, Principal principal, Model model) {
+    public String cancel(@PathVariable Long id, Principal principal,
+            org.springframework.web.servlet.mvc.support.RedirectAttributes flash) {
         try {
             service.cancelForOwner(principal.getName(), id);
-            return "redirect:/campaigns";
+            flash.addFlashAttribute("notice", "Đã hủy đơn chưa xử lý.");
         } catch (IllegalArgumentException exception) {
-            model.addAttribute("error", exception.getMessage());
-            return list(0, null, null, null, null, null, model, principal);
+            flash.addFlashAttribute("error", exception.getMessage());
         }
+        return "redirect:/campaigns";
     }
 
     @GetMapping("/{id}")
