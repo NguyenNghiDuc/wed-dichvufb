@@ -78,3 +78,8 @@ jobs:
           curl -fsS http://127.0.0.1:8080/register | grep -q csrf
       - name: Validate Docker image
         run: docker build -t growlab-ci:latest .
+      - name: Validate Compose syntax without deployment
+        env:
+          POSTGRES_PASSWORD: ci-only-placeholder-not-for-any-real-service
+        run: docker compose config --quiet
+
