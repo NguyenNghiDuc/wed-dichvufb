@@ -64,7 +64,7 @@ class AdminAccountIntegrationTest {
     void lockedAccountCannotLoginOrUseExistingSession() throws Exception {
         persist("admin-second","ADMIN");
         User target=persist("locked-target","USER");
-        users.findById(target.getId()).orElseThrow().setPassword(
+        target.setPassword(
             new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder().encode("passphrase123"));
         users.save(target);
 
