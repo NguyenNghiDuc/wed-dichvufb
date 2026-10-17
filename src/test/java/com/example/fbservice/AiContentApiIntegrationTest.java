@@ -44,6 +44,19 @@ class AiContentApiIntegrationTest {
             .andExpect(status().isServiceUnavailable());
     }
 
+    @Test @WithMockUser(username="ai-capability-owner-29")
+    void capabilityStatusDoesNotExposeSecretsOrSuggestGlobalCostAccounting() throws Exception {
+        mvc.perform(get("/api/v1/ai/capabilities"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.mode").value("LOCAL_TEMPLATES_ONLY"))
+            .andExpect(jsonPath("$.providerConfigured").value(false))
+            .andExpect(jsonPath("$.quotaScope").value("PER_INSTANCE_ONLY"))
+            .andExpect(jsonPath("$.perUserPerMinute").value(5))
+            .andExpect(jsonPath("$.perUserPer24Hours").value(25))
+            .andExpect(jsonPath("$.publishingEnabled").value(false))
+            .andExpect(jsonPath("$.supportedTasks.length()").value(7));
+    }
+
     @Test @WithMockUser(username="ai-api-platform-29")
     void mismatchedPlatformAndMissingRewriteDraftReturn400() throws Exception {
         mvc.perform(post("/api/v1/ai/generate").with(csrf()).contentType("application/json")
