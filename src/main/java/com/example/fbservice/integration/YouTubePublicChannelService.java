@@ -47,6 +47,24 @@ public class YouTubePublicChannelService {
         this.transport = java.util.Objects.requireNonNull(transport);
     }
 
+    /** YouTube reports quotaExceeded as HTTP 403, not only HTTP 429. */
+    private boolean quotaExceeded(String body) {
+        if (body == null || body.length() > MAX_JSON_CHARS) return false;
+        try {
+            JsonNode error = mapper.readTree(body).path("error");
+            if ("RESOURCE_EXHAUSTED".equals(error.path("status").asText())) return true;
+            for (JsonNode detail : error.path("errors")) {
+                String reason = detail.path("reason").asText();
+                if (reason.equals("quotaExceeded") || reason.equals("dailyLimitExceeded")
+                        || reason.equals("userRateLimitExceeded") || reason.equals("rateLimitExceeded"))
+                    return true;
+            }
+        } catch (Exception ignored) {
+            // Malformed/unsanitized upstream error is handled as an ordinary 502.
+        }
+        return false;
+    }
+
     public Map<String, Object> channelSummary(String channelId) {
         if (channelId == null || !channelId.matches("UC[A-Za-z0-9_-]{22}"))
             throw new IllegalArgumentException("Channel ID phải bắt đầu UC và có 24 ký tự hợp lệ.");
@@ -61,7 +79,7 @@ public class YouTubePublicChannelService {
                     .header("Accept", "application/json").GET().build();
             // Do not auto-retry: this endpoint uses a quota-limited official API.
             ProviderResponse response = transport.send(request);
-            if (response.status() == 429)
+            if (response.status() == 429 || (response.status() == 403 && quotaExceeded(response.body())))
                 throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,
                         "YouTube API quota or rate limit reached");
             if (response.status() != 200)
