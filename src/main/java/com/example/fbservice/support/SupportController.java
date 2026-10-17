@@ -41,9 +41,15 @@ public class SupportController {
     }
 
     @GetMapping("/{id}")
-    public String details(@PathVariable Long id, Principal principal, Model model) {
-        model.addAttribute("ticket", service.detailForOwner(principal.getName(), id));
-        model.addAttribute("messages", service.messagesForOwner(principal.getName(), id));
+    public String details(@PathVariable Long id, @RequestParam(defaultValue = "0") int page,
+                          Principal principal, Model model) {
+        var ticket = service.detailForOwner(principal.getName(), id);
+        var messages = service.pageMessagesForOwner(principal.getName(), id, page);
+        model.addAttribute("ticket", ticket);
+        model.addAttribute("messages", messages.getContent());
+        model.addAttribute("messagePage", page);
+        model.addAttribute("hasPrevious", messages.hasPrevious());
+        model.addAttribute("hasNext", messages.hasNext());
         return "support_detail";
     }
 
@@ -55,7 +61,7 @@ public class SupportController {
             return "redirect:/support/" + id;
         } catch (IllegalArgumentException exception) {
             model.addAttribute("error", exception.getMessage());
-            return details(id, principal, model);
+            return details(id, 0, principal, model);
         }
     }
 }

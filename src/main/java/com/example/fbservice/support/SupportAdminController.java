@@ -23,9 +23,14 @@ public class SupportAdminController {
     }
 
     @GetMapping("/{id}")
-    public String details(@PathVariable Long id, Model model) {
-        model.addAttribute("ticket", service.detailForAdmin(id));
-        model.addAttribute("messages", service.messagesForAdmin(id));
+    public String details(@PathVariable Long id, @RequestParam(defaultValue = "0") int page, Model model) {
+        var ticket = service.detailForAdmin(id);
+        var messages = service.pageMessagesForStaff(id, page);
+        model.addAttribute("ticket", ticket);
+        model.addAttribute("messages", messages.getContent());
+        model.addAttribute("messagePage", page);
+        model.addAttribute("hasPrevious", messages.hasPrevious());
+        model.addAttribute("hasNext", messages.hasNext());
         return "admin_support_detail";
     }
 
@@ -37,7 +42,7 @@ public class SupportAdminController {
             return "redirect:/admin/support/" + id;
         } catch (IllegalArgumentException exception) {
             model.addAttribute("error", exception.getMessage());
-            return details(id, model);
+            return details(id, 0, model);
         }
     }
 
@@ -48,7 +53,7 @@ public class SupportAdminController {
             return "redirect:/admin/support/" + id;
         } catch (IllegalArgumentException exception) {
             model.addAttribute("error", exception.getMessage());
-            return details(id, model);
+            return details(id, 0, model);
         }
     }
 }

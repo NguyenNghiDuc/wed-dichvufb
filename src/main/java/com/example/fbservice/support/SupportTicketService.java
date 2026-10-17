@@ -69,6 +69,27 @@ public class SupportTicketService {
         return messages.findByTicketIdOrderByCreatedAtAsc(id);
     }
 
+    private PageRequest messagePaging(int page) {
+        if (page < 0 || page > 10000)
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Trang tin nhắn không hợp lệ.");
+        return PageRequest.of(page, 20,
+                Sort.by(Sort.Order.asc("createdAt"), Sort.Order.asc("id")));
+    }
+
+    @Transactional(readOnly = true)
+    public Page<SupportMessage> pageMessagesForOwner(String user, Long id, int page) {
+        PageRequest paging = messagePaging(page);
+        detailForOwner(user, id);
+        return messages.findByTicketId(id, paging);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<SupportMessage> pageMessagesForStaff(Long id, int page) {
+        PageRequest paging = messagePaging(page);
+        detailForAdmin(id);
+        return messages.findByTicketId(id, paging);
+    }
+
     @Transactional
     public void replyAsOwner(String user, Long id, String message) {
         validate(message, 2, 2000);
