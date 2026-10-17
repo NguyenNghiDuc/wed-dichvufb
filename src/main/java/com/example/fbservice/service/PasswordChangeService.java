@@ -37,7 +37,8 @@ public class PasswordChangeService {
     public void revokeAll(AccountPrincipal principal, String currentPassword) {
         if (principal == null || principal.getAccountId() == null)
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
-        if (currentPassword == null || currentPassword.isBlank())
+        if (currentPassword == null || currentPassword.isBlank()
+                || currentPassword.getBytes(StandardCharsets.UTF_8).length > 72)
             throw new IllegalArgumentException("Vui lòng nhập mật khẩu hiện tại.");
 
         limiter.check("session-revoke:" + principal.getAccountId(), 10, Duration.ofHours(1));
@@ -60,7 +61,8 @@ public class PasswordChangeService {
         if (principal == null || principal.getAccountId() == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
         }
-        if (currentPassword == null || currentPassword.isBlank()) {
+        if (currentPassword == null || currentPassword.isBlank()
+                || currentPassword.getBytes(StandardCharsets.UTF_8).length > 72) {
             throw new IllegalArgumentException("Vui lòng nhập mật khẩu hiện tại.");
         }
         if (newPassword == null || newPassword.length() < 12

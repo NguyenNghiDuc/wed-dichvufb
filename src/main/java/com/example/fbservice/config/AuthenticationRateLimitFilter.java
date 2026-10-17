@@ -55,6 +55,15 @@ public class AuthenticationRateLimitFilter extends OncePerRequestFilter {
                 String username = request.getParameter("username");
                 if (username == null || username.length() > 100) username = "(invalid)";
                 limiter.check(scope + ":account:" + sha256(username), 10, WINDOW);
+                // BCrypt only authenticates up to 72 UTF-8 bytes. Deny trailing input
+                // rather than allowing an overlong string with the same bcrypt prefix.
+                String candidate = request.getParameter("password");
+                if (candidate != null && candidate.getBytes(StandardCharsets.UTF_8).length > 72) {
+                    response.setHeader("Cache-Control", "no-store");
+                    response.setStatus(HttpServletResponse.SC_FOUND);
+                    response.setHeader("Location", request.getContextPath() + "/login?error");
+                    return;
+                }
             } else {
                 // Each completed registration attempt creates a durable DB write.
                 limiter.check(scope, 10, WINDOW);

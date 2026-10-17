@@ -31,3 +31,5 @@
 - BCrypt dùng giới hạn đầu vào 72 byte. Form đăng ký kiểm tra **byte UTF-8**, không chỉ số lượng UTF-16 code unit, tránh hai mật khẩu rất dài có chung tiền tố 72 byte được đối xử tương đương.
 - Tính năng đăng ký giữ yêu cầu tối thiểu 8 ký tự (tương thích khách cũ); đổi mật khẩu mới yêu cầu tối thiểu 12 ký tự và tối đa 72 byte UTF-8.
 - Các mật khẩu đã mã hóa trước đây không bị thay đổi; không tự di trú hash hoặc tài khoản.
+
+- W1 bổ sung chặn nhập mật khẩu quá 72 byte UTF-8 ở cả login, chứng thực đổi mật khẩu và chứng thực đăng xuất mọi thiết bị. Bộ đếm giới hạn vẫn tính các lần thử login quá dài; thông báo login giữ dạng chung để tránh lộ thông tin.
