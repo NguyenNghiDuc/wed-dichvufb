@@ -44,5 +44,14 @@ class PostgresChatPaginationIntegrationTest {
                 .containsExactlyInAnyOrder("outgoing-pg", "incoming-pg");
         assertThat(chat.threadFor("pg-chat-outsider", "pg-chat-b", 0, 20)
                 .getTotalElements()).isZero();
+        // Validate the grouped contact index/unread query on real PostgreSQL,
+        // not only H2; the other customer's thread must not show here.
+        assertThat(chat.contactNamesFor("pg-chat-a", "", 0).getContent())
+                .containsExactly("pg-chat-b");
+        assertThat(chat.unreadCountsForContacts("pg-chat-a",
+                java.util.List.of("pg-chat-b"))).containsEntry("pg-chat-b", 1L);
+        chat.markThreadRead("pg-chat-a", "pg-chat-b");
+        assertThat(chat.unreadCountsForContacts("pg-chat-a",
+                java.util.List.of("pg-chat-b"))).containsEntry("pg-chat-b", 0L);
     }
 }
