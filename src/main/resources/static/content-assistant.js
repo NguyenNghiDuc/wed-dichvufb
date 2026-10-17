@@ -8,6 +8,30 @@ document.addEventListener("DOMContentLoaded", () => {
   const result = document.getElementById("ai-content-result");
   const submit = form.querySelector('button[type="submit"]');
   const token = document.querySelector('input[name="_csrf"]');
+  const copyToDraft = document.getElementById("copy-ai-to-draft");
+  const draftForm = document.getElementById("create-content-form");
+  if (copyToDraft && draftForm) {
+    copyToDraft.addEventListener("click", () => {
+      const draftText = String(result.value || "").trim();
+      const draftBody = draftForm.querySelector('[name="body"]');
+      const draftTitle = draftForm.querySelector('[name="title"]');
+      const draftPlatform = draftForm.querySelector('[name="platform"]');
+      if (!draftText || draftText.length > 3000) {
+        status.textContent = "Bản gợi ý quá dài hoặc trống; hãy rút gọn trước khi chuyển.";
+        return;
+      }
+      if (draftBody.value.trim() || draftTitle.value.trim()) {
+        status.textContent = "Form bản nháp đã có nội dung; vui lòng lưu hoặc xóa nội dung cũ trước.";
+        return;
+      }
+      draftBody.value = draftText;
+      draftTitle.value = String(form.querySelector('[name="topic"]').value || "").trim().slice(0,120);
+      draftPlatform.value = form.querySelector('[name="platform"]').value;
+      status.textContent = "Đã đưa gợi ý vào form, hãy chỉnh sửa và bấm Lưu nội dung khi sẵn sàng.";
+      draftBody.focus();
+    });
+  }
+
   const taskField = form.querySelector('[name="task"]');
   const daysField = form.querySelector('[name="days"]');
   const originalField = form.querySelector('[name="existingContent"]');
@@ -42,6 +66,7 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
     result.value = "";
+    if (copyToDraft) copyToDraft.disabled = true;
     status.textContent = "Đang gửi yêu cầu có giới hạn tới dịch vụ AI…";
     submit.disabled = true;
     try {
@@ -66,6 +91,7 @@ document.addEventListener("DOMContentLoaded", () => {
                   && template.suggestions.length <= 3
                   && template.suggestions.every(item => typeof item === "string" && item.length <= 500)) {
                 result.value = template.suggestions.join("\n\n");
+                if (copyToDraft) copyToDraft.disabled = false;
                 status.textContent = "Đang dùng MẪU CÓ SẴN, không phải nội dung do AI tạo.";
               }
             }
@@ -80,6 +106,7 @@ document.addEventListener("DOMContentLoaded", () => {
         throw new Error("Invalid response");
       // Use only textContent/value; never inject model output as HTML.
       result.value = responseData.content;
+      if (copyToDraft) copyToDraft.disabled = false;
       status.textContent = "Đã nhận bản gợi ý. Hãy kiểm tra thông tin trước khi sử dụng.";
     } catch (_) {
       status.textContent = "Không thể kết nối dịch vụ AI.";
