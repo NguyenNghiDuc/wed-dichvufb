@@ -44,6 +44,22 @@ class AiContentApiIntegrationTest {
             .andExpect(status().isServiceUnavailable());
     }
 
+    @Test @WithMockUser(username="ai-api-platform-29")
+    void mismatchedPlatformAndMissingRewriteDraftReturn400() throws Exception {
+        mvc.perform(post("/api/v1/ai/generate").with(csrf()).contentType("application/json")
+                .content("{\"platform\":\"FACEBOOK\",\"topic\":\"study tips\","
+                  +"\"audience\":\"students\",\"task\":\"TIKTOK_IDEAS\"}"))
+            .andExpect(status().isBadRequest());
+        mvc.perform(post("/api/v1/ai/generate").with(csrf()).contentType("application/json")
+                .content("{\"platform\":\"TIKTOK\",\"topic\":\"study tips\","
+                  +"\"audience\":\"students\",\"task\":\"YOUTUBE_SHORTS\"}"))
+            .andExpect(status().isBadRequest());
+        mvc.perform(post("/api/v1/ai/generate").with(csrf()).contentType("application/json")
+                .content("{\"platform\":\"YOUTUBE\",\"topic\":\"study tips\","
+                  +"\"audience\":\"students\",\"task\":\"OPTIMIZE\",\"existingContent\":\" \"}"))
+            .andExpect(status().isBadRequest());
+    }
+
     @Test @WithMockUser(username="ai-api-rate-budget-29")
     void rateLimitStopsExcessCallsBeforeProvider() throws Exception {
         for(int i=0;i<5;i++) {
