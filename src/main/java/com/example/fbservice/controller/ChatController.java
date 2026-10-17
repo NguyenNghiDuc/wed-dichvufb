@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Map;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -53,6 +55,26 @@ public class ChatController {
             return Map.of("marked", chat.markThreadRead(principal.getName(), other));
         } catch (IllegalArgumentException exception) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid chat participant");
+        }
+    }
+
+    /** Mobile/browser JSON inbox: only contacts of the signed-in account. */
+    @GetMapping("/contacts")
+    public ResponseEntity<Page<ChatContactSummary>> contacts(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(required = false) String q,
+            Principal principal) {
+        try {
+            String viewer = principal.getName();
+            Page<String> pageData = chat.contactNamesFor(viewer, q, page);
+            var unread = chat.unreadCountsForContacts(viewer, pageData.getContent());
+            Page<ChatContactSummary> result = pageData.map(contact ->
+                    new ChatContactSummary(contact, unread.getOrDefault(contact, 0L)));
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CACHE_CONTROL, "no-store")
+                    .body(result);
+        } catch (IllegalArgumentException exception) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid conversation index filters");
         }
     }
 
