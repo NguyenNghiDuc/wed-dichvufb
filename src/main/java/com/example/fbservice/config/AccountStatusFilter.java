@@ -49,6 +49,9 @@ public final class AccountStatusFilter extends OncePerRequestFilter {
             boolean valid = users.findById(principal.getAccountId()).map(account ->
                 account.isEnabled()
                 && account.getUsername().equals(principal.getUsername())
+                // Authentication providers erase UserDetails credentials after login.
+                // A separate digest allows password rotation to revoke existing sessions.
+                && principal.isCredentialCurrent(account.getPassword())
                 && authentication.getAuthorities().stream()
                     .anyMatch(authority -> authority.getAuthority().equals("ROLE_" + account.getRole()))
             ).orElse(false);
