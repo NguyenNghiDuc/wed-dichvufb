@@ -1,0 +1,8 @@
+<!doctype html><html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Admin hỗ trợ · GrowLab</title><link rel="stylesheet" th:href="@{/style.css}"></head>
+<body><main class="page container"><a th:href="@{/admin/support}" class="table-link">← Tất cả yêu cầu</a>
+<div class="page-header"><div><div class="eyebrow">Admin</div><h1 th:text="${ticket.subject}"></h1><p class="muted" th:text="|Tài khoản: ${ticket.ownerUsername}|"></p><span class="status" th:text="${ticket.status.title}"></span></div></div>
+<article class="card"><p th:text="${ticket.description}"></p></article>
+<section class="section"><h2>Lịch sử phản hồi</h2><article class="card" th:each="m : ${messages}"><b th:text="${m.author}"></b><p th:text="${m.body}"></p></article>
+<div class="form-panel" th:if="${ticket.status.name() != 'CLOSED'}"><p class="error" th:if="${error}" th:text="${error}"></p><form method="post" th:action="@{/admin/support/{id}/reply(id=${ticket.id})}"><input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"><div class="field"><label>Trả lời khách hàng</label><textarea name="message" required minlength="2" maxlength="2000"></textarea></div><button class="btn" type="submit">Gửi trả lời</button></form>
+<form method="post" th:action="@{/admin/support/{id}/close(id=${ticket.id})}" style="margin-top:15px"><input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"><button class="btn btn-outline" type="submit">Đóng yêu cầu</button></form></div></section></main></body></html>

@@ -1,0 +1,11 @@
+<!doctype html><html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tạo yêu cầu hỗ trợ · GrowLab</title><link rel="stylesheet" th:href="@{/style.css}"></head>
+<body><main class="page container"><a class="table-link" th:href="@{/support}">← Các yêu cầu của tôi</a>
+<div class="page-header"><div><div class="eyebrow">Trung tâm hỗ trợ</div><h1>Gửi yêu cầu mới</h1></div></div>
+<div class="form-panel"><p class="error" th:if="${error}" th:text="${error}"></p>
+<form method="post" th:action="@{/support}">
+<input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+<div class="field"><label for="subject">Tiêu đề</label><input id="subject" name="subject" required minlength="4" maxlength="120"></div>
+<div class="field"><label for="description">Mô tả vấn đề</label><textarea id="description" name="description" required minlength="10" maxlength="2000"></textarea></div>
+<button class="btn" type="submit">Gửi yêu cầu hỗ trợ</button></form></div></main></body></html>
