@@ -71,10 +71,8 @@ public class CampaignAssignmentService {
 
     @Transactional(readOnly = true)
     public List<User> eligibleStaff() {
-        return users.findAll().stream()
-                .filter(u -> u.isEnabled() && (u.getRole().equals("STAFF") || u.getRole().equals("ADMIN")))
-                .sorted(java.util.Comparator.comparing(User::getUsername))
-                .toList();
+        return users.findTop100ByEnabledTrueAndRoleInOrderByUsernameAsc(
+                List.of("STAFF", "ADMIN"));
     }
 
     @Transactional(readOnly = true)

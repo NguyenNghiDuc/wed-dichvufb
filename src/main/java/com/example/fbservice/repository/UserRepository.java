@@ -14,6 +14,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     boolean existsByUsername(String username);
     Page<User> findAllByOrderByIdDesc(Pageable pageable);
     long countByEnabledTrue();
+    List<User> findTop100ByEnabledTrueAndRoleInOrderByUsernameAsc(List<String> roles);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select u from User u where u.id = :id")
