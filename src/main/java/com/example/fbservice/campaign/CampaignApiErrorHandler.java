@@ -6,7 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-@RestControllerAdvice(assignableTypes = {CampaignOrderApiController.class, ContentSuggestionController.class})
+@RestControllerAdvice(assignableTypes = {CampaignOrderApiController.class, ContentSuggestionController.class, CampaignReviewApiController.class})
 public class CampaignApiErrorHandler {
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Map<String, String>> invalid(IllegalArgumentException ex) {

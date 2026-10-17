@@ -22,6 +22,38 @@
     <div class="step"><strong>Dịch vụ</strong><p th:text="${order.serviceType.displayName}"></p></div>
     <div class="step"><strong>Báo giá dự kiến</strong><p th:text="|${order.quotedPriceVnd} đ|"></p></div>
   </div>
+  <section class="card customer-review" aria-label="Đánh giá dịch vụ">
+    <h2>Đánh giá dịch vụ</h2>
+    <p class="muted">Chỉ đơn đã hoàn thành mới có thể đánh giá một lần. Phản hồi chỉ hiển thị cho chủ đơn.</p>
+    <p class="notice" th:if="${param.reviewSubmitted}">Đã nhận đánh giá của bạn.</p>
+    <p class="error" th:if="${param.reviewError}">Không thể gửi đánh giá. Kiểm tra số sao, nội dung và trạng thái đơn.</p>
+    <div th:if="${review != null}">
+      <strong th:text="|${review.rating()}/5 sao|">5/5 sao</strong>
+      <p th:text="${review.feedback()}"></p>
+      <p class="footnote" th:text="${#temporals.format(review.createdAt(), 'dd/MM/yyyy HH:mm')}"></p>
+    </div>
+    <form th:if="${order.status.name() == 'COMPLETED' and review == null}" method="post"
+          th:action="@{/campaigns/{id}/review(id=${order.id})}">
+      <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+      <div class="field">
+        <label for="rating">Số sao</label>
+        <select id="rating" name="rating" required>
+          <option value="">Chọn mức đánh giá</option>
+          <option value="5">5 — Rất hài lòng</option>
+          <option value="4">4 — Hài lòng</option>
+          <option value="3">3 — Bình thường</option>
+          <option value="2">2 — Chưa hài lòng</option>
+          <option value="1">1 — Không hài lòng</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="feedback">Phản hồi</label>
+        <textarea id="feedback" name="feedback" minlength="10" maxlength="500" required
+                  placeholder="Chia sẻ trải nghiệm của bạn (10–500 ký tự)"></textarea>
+      </div>
+      <button type="submit" class="btn">Gửi đánh giá</button>
+    </form>
+  </section>
   <h2>Lịch sử xử lý</h2>
   <div class="table-panel">
     <table class="data-table">

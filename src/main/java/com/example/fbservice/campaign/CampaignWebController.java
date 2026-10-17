@@ -14,10 +14,12 @@ import org.springframework.web.server.ResponseStatusException;
 @RequestMapping("/campaigns")
 public class CampaignWebController {
     private final CampaignOrderService service;
+    private final CampaignReviewService reviews;
     private final com.example.fbservice.catalog.ServiceCatalogService catalog;
     public CampaignWebController(CampaignOrderService service,
-        com.example.fbservice.catalog.ServiceCatalogService catalog) {
-        this.service=service;this.catalog=catalog;
+        com.example.fbservice.catalog.ServiceCatalogService catalog,
+        CampaignReviewService reviews) {
+        this.service=service;this.catalog=catalog;this.reviews=reviews;
     }
 
     @GetMapping
@@ -92,6 +94,7 @@ public class CampaignWebController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid history page");
         }
         model.addAttribute("order", service.findMineById(principal.getName(), id));
+        model.addAttribute("review", reviews.findForOwner(principal.getName(), id).orElse(null));
         model.addAttribute("events", history.getContent());
         model.addAttribute("pageNumber", page);
         model.addAttribute("totalPages", history.getTotalPages());
