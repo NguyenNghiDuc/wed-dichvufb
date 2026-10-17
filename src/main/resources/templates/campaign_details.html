@@ -60,6 +60,7 @@
       <button type="submit" class="btn">Gửi đánh giá</button>
     </form>
   </section>
+  <div class="actions"><a class="btn btn-outline btn-small" th:href="@{/campaigns/{id}/history.csv(id=${order.id})}">↓ Tải lịch sử xử lý CSV</a></div>
   <h2>Lịch sử xử lý</h2>
   <div class="table-panel">
     <table class="data-table">
