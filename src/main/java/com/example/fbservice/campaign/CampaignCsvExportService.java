@@ -1,0 +1,64 @@
+package com.example.fbservice.campaign;
+
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+import org.springframework.data.domain.*;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+/** Bounded CSV export with spreadsheet formula-injection mitigation. */
+@Service
+public class CampaignCsvExportService {
+    private static final int CHUNK_SIZE = 500;
+    private static final int MAX_ROWS = 5000;
+    private static final DateTimeFormatter DATE = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    private final CampaignOrderRepository orders;
+
+    public CampaignCsvExportService(CampaignOrderRepository orders) {
+        this.orders = orders;
+    }
+
+    @Transactional(readOnly = true)
+    public String exportLatest() {
+        StringBuilder csv = new StringBuilder("\uFEFF");
+        csv.append("id,owner,platform,service,status,price_vnd,created_at,target_url,brief\r\n");
+        Sort sort = Sort.by(Sort.Order.desc("createdAt"), Sort.Order.desc("id"));
+        int exported = 0;
+        int pageNumber = 0;
+        while (exported < MAX_ROWS) {
+            Page<CampaignOrder> page = orders.findAll(PageRequest.of(pageNumber, CHUNK_SIZE, sort));
+            List<CampaignOrder> rows = page.getContent();
+            if (rows.isEmpty()) break;
+            for (CampaignOrder order : rows) {
+                if (exported >= MAX_ROWS) break;
+                appendRow(csv,
+                    order.getId(), order.getOwnerUsername(), order.getPlatform(),
+                    order.getServiceType(), order.getStatus(), order.getQuotedPriceVnd(),
+                    DATE.format(order.getCreatedAt()), order.getTargetUrl(), order.getBrief());
+                exported++;
+            }
+            if (!page.hasNext()) break;
+            pageNumber++;
+        }
+        return csv.toString();
+    }
+
+    private void appendRow(StringBuilder csv, Object... cells) {
+        for (int i = 0; i < cells.length; i++) {
+            if (i != 0) csv.append(',');
+            csv.append(escape(cells[i]));
+        }
+        csv.append("\r\n");
+    }
+
+    static String escape(Object value) {
+        String raw = value == null ? "" : value.toString();
+        String trimmed = raw.stripLeading();
+        if (!trimmed.isEmpty() && "=+-@".indexOf(trimmed.charAt(0)) >= 0) {
+            raw = "'" + raw;
+        } else if (!trimmed.isEmpty() && (trimmed.charAt(0) == '\t' || trimmed.charAt(0) == '\r')) {
+            raw = "'" + raw;
+        }
+        return "\"" + raw.replace("\"", "\"\"") + "\"";
+    }
+}
