@@ -47,6 +47,8 @@ class StaffMetricsIntegrationTest {
             "https://youtube.com/@example",
             "Phát triển nội dung cho kênh kỹ năng học tập."));
         assignments.assign(order.getId(),staff.getId(),"metrics-admin");
+        // Reload after assignment: never merge a stale fixture that could erase the assignee.
+        order = orders.findById(order.getId()).orElseThrow();
         order.scheduleDeadline(LocalDateTime.now(ZoneOffset.UTC).minusMinutes(5));
         orders.saveAndFlush(order);
         assertThat(performance.metricsForStaff("metrics-staff").overdue()).isEqualTo(1);
