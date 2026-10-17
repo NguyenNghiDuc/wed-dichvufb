@@ -172,6 +172,7 @@ public class SupportTicketService {
         validate(message, 2, 2000);
         SupportTicket ticket = tickets.lockForOwner(id, user)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        limiter.check("support:reply:" + user, 60, Duration.ofHours(1));
         ticket.customerReplied();
         messages.save(new SupportMessage(id, user, message.strip()));
         // Notify only the assigned employee, never copying untrusted message content.
@@ -259,6 +260,7 @@ public class SupportTicketService {
         SupportTicket ticket = tickets.lockForAdmin(id)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         ticket.ensureAssignedStaff(admin);
+        limiter.check("support:staff:reply:" + admin, 180, Duration.ofHours(1));
         ticket.staffReplied();
         messages.save(new SupportMessage(id, admin, message.strip()));
         notices.save(new AccountNotification(ticket.getOwnerUsername(),
