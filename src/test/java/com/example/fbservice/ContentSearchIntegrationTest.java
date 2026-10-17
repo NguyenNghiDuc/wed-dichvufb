@@ -122,6 +122,7 @@ class ContentSearchIntegrationTest {
             .andExpect(content().string(containsString("result.value = responseData.content")))
             .andExpect(content().string(containsString("draftBody.value = draftText")))
             .andExpect(content().string(containsString("template.suggestions.map")))
+            .andExpect(content().string(containsString("payload.language === \"VI\"")))
             .andExpect(content().string(not(containsString("draftForm.submit"))))
             .andExpect(content().string(not(containsString("innerHTML"))));
     }
