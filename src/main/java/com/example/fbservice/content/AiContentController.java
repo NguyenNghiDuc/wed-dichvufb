@@ -14,8 +14,10 @@ public class AiContentController {
     public AiContentController(AiContentService service,TrafficLimiter limiter){
         this.service=service;this.limiter=limiter;
     }
-    @PostMapping("/caption")
+    @PostMapping({"/caption","/generate"})
     public Map<String,String> generate(@Valid @RequestBody AiContentRequest input,Principal principal){
+        // Defense-in-depth per-instance budget (production needs a shared atomic quota store).
+        limiter.check("ai:daily:"+principal.getName(),25,Duration.ofDays(1));
         limiter.check("ai:"+principal.getName(),5,Duration.ofMinutes(1));
         return service.generate(input);
     }
