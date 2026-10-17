@@ -46,7 +46,9 @@ class AiContentServiceTest {
                 "{\"choices\":[{\"message\":{\"content\":\"Helpful human-written draft\"}}]}");
         });
         for(var task:AiContentTask.values()) {
-            var input=new AiContentRequest(SocialPlatform.TIKTOK,"Study tips","College students",
+            SocialPlatform platform = task==AiContentTask.YOUTUBE_SHORTS
+                ? SocialPlatform.YOUTUBE : SocialPlatform.TIKTOK;
+            var input=new AiContentRequest(platform,"Study tips","College students",
                 task,AiContentLanguage.EN,7,"Improve this existing draft");
             var result=service.generate(input);
             assertThat(result.get("task")).isEqualTo(task.name());
@@ -93,6 +95,31 @@ class AiContentServiceTest {
                 assertThat(e.getStatusCode()).isEqualTo(HttpStatus.BAD_GATEWAY);
                 assertThat(e.getReason()).doesNotContain("SECRET-DO-NOT-LOG");
             });
+    }
+
+
+    @Test
+    void mismatchedPlatformAndOversizedInputsNeverReachProvider() {
+        AtomicInteger calls=new AtomicInteger();
+        var service=new AiContentService("test-secret-only","test-model",json,req->{
+            calls.incrementAndGet();
+            return new AiContentService.ProviderResponse(200,"{}");
+        });
+        expectStatus(HttpStatus.BAD_REQUEST,service,
+            new AiContentRequest(SocialPlatform.FACEBOOK,"Video idea","Students",
+                AiContentTask.TIKTOK_IDEAS,AiContentLanguage.VI,7,null));
+        expectStatus(HttpStatus.BAD_REQUEST,service,
+            new AiContentRequest(SocialPlatform.TIKTOK,"Video idea","Students",
+                AiContentTask.YOUTUBE_SHORTS,AiContentLanguage.VI,7,null));
+        expectStatus(HttpStatus.BAD_REQUEST,service,
+            new AiContentRequest(SocialPlatform.TIKTOK,"x".repeat(151),"Students"));
+        expectStatus(HttpStatus.BAD_REQUEST,service,
+            new AiContentRequest(SocialPlatform.YOUTUBE,"Useful video","Students",
+                AiContentTask.OPTIMIZE,AiContentLanguage.EN,7," "));
+        expectStatus(HttpStatus.BAD_REQUEST,service,
+            new AiContentRequest(SocialPlatform.YOUTUBE,"Useful video","Students",
+                AiContentTask.OPTIMIZE,AiContentLanguage.EN,7,"x".repeat(3001)));
+        assertThat(calls.get()).isZero();
     }
 
     @Test
