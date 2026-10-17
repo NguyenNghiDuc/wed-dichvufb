@@ -18,7 +18,7 @@ public class WebSecurityConfig {
                 .requestMatchers("/", "/login", "/register", "/help", "/style.css", "/favicon.ico",
                     "/actuator/health", "/actuator/health/**").permitAll()
                 .requestMatchers("/api/v1/payments/webhooks/internal").permitAll()
-                .requestMatchers("/admin/support/**").hasAnyRole("ADMIN", "STAFF")
+                .requestMatchers("/admin/support/**", "/staff/**").hasAnyRole("ADMIN", "STAFF")
                 .requestMatchers("/admin/**", "/api/v1/admin/**").hasRole("ADMIN")
                 .anyRequest().authenticated())
             .headers(headers -> headers.contentSecurityPolicy(csp -> csp.policyDirectives(

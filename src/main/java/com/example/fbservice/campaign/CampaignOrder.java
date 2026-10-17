@@ -20,6 +20,9 @@ public class CampaignOrder {
     private String brief;
     @Column(nullable = false)
     private long quotedPriceVnd;
+
+    @Column(name = "assignee_username", length = 100)
+    private String assigneeUsername;
     @Enumerated(EnumType.STRING) @Column(nullable = false, length = 24)
     private CampaignStatus status = CampaignStatus.PENDING_REVIEW;
     @Column(nullable = false, updatable = false)
@@ -52,6 +55,9 @@ public class CampaignOrder {
         this.status=next;
     }
 
+    public void assignTo(String username){this.assigneeUsername=username;}
+
+    public String getAssigneeUsername(){return assigneeUsername;}
     public Long getId(){return id;}
     public String getOwnerUsername(){return ownerUsername;}
     public SocialPlatform getPlatform(){return platform;}

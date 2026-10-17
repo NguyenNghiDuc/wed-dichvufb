@@ -12,9 +12,12 @@ import org.springframework.web.server.ResponseStatusException;
 @RequestMapping("/admin/campaign-orders")
 public class CampaignAdminController {
     private final CampaignOrderService service;
+    private final CampaignAssignmentService assignments;
 
-    public CampaignAdminController(CampaignOrderService service) {
+    public CampaignAdminController(CampaignOrderService service,
+                                   CampaignAssignmentService assignments) {
         this.service = service;
+        this.assignments = assignments;
     }
 
     @GetMapping
@@ -26,6 +29,7 @@ public class CampaignAdminController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid pagination");
         }
         model.addAttribute("orders", records.getContent());
+        model.addAttribute("employees", assignments.eligibleStaff());
         model.addAttribute("statuses", CampaignStatus.values());
         model.addAttribute("pageNumber", page);
         model.addAttribute("hasPrevious", records.hasPrevious());
