@@ -38,6 +38,7 @@ class PostgresPaymentConcurrencyIntegrationTest {
     @Autowired MockMvc mvc;
     @Autowired DepositRequestRepository deposits;
     @Autowired PaymentReceiptRepository receipts;
+    @Autowired com.example.fbservice.notification.AccountNotificationRepository notifications;
     @Autowired org.springframework.jdbc.core.JdbcTemplate jdbc;
 
     private DepositRequest createDeposit(String owner) {
@@ -108,6 +109,42 @@ class PostgresPaymentConcurrencyIntegrationTest {
                 .map(id -> deposits.findById(id).orElseThrow().getStatus())
                 .filter("APPROVED"::equals).count();
         assertThat(approved).isEqualTo(1);
+    }
+
+    @Test
+    void concurrentRetriesOfSameSignedEventWriteOnlyOneReceiptAndNotification() throws Exception {
+        DepositRequest deposit = createDeposit("pg-concurrent-retry-owner");
+        String reference = "pgRetryConcurrentSame";
+        int parallelRequests = 6;
+        var beforeNotifications = notifications
+                .findTop100ByOwnerUsernameOrderByCreatedAtDesc("pg-concurrent-retry-owner").size();
+        ExecutorService pool = Executors.newFixedThreadPool(parallelRequests);
+        CountDownLatch ready = new CountDownLatch(parallelRequests);
+        CountDownLatch release = new CountDownLatch(1);
+        java.util.List<Future<Integer>> results = new java.util.ArrayList<>();
+        try {
+            for (int i = 0; i < parallelRequests; i++) {
+                results.add(pool.submit(() -> {
+                    ready.countDown();
+                    release.await();
+                    return send(reference, deposit.getId());
+                }));
+            }
+            assertThat(ready.await(10, TimeUnit.SECONDS)).isTrue();
+            release.countDown();
+            for (Future<Integer> future : results) {
+                assertThat(future.get(30, TimeUnit.SECONDS)).isEqualTo(200);
+            }
+        } finally {
+            release.countDown();
+            pool.shutdownNow();
+        }
+        assertThat(receipts.findByEventId(reference)).isPresent();
+        assertThat(deposits.findById(deposit.getId()).orElseThrow().getStatus())
+                .isEqualTo("APPROVED");
+        assertThat(notifications
+                .findTop100ByOwnerUsernameOrderByCreatedAtDesc("pg-concurrent-retry-owner"))
+                .hasSize(beforeNotifications + 1);
     }
 
     @FunctionalInterface
