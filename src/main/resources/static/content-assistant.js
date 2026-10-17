@@ -80,7 +80,8 @@ document.addEventListener("DOMContentLoaded", () => {
         if (response.status === 429) status.textContent = "Bạn đã dùng hết lượt AI tạm thời.";
         else if (response.status === 503) {
           status.textContent = "AI chưa được cấu hình hoặc dịch vụ đã hết hạn mức.";
-          if (payload.task === "CONTENT_PLAN" && payload.topic.length <= 100) {
+          if (payload.language === "EN") status.textContent += " Mẫu dự phòng hiện chỉ hỗ trợ tiếng Việt.";
+          if (payload.task === "CONTENT_PLAN" && payload.language === "VI" && payload.topic.length <= 100) {
             const params = new URLSearchParams({
               platform: payload.platform, topic: payload.topic, days: String(payload.days)
             });
@@ -102,7 +103,7 @@ document.addEventListener("DOMContentLoaded", () => {
               }
             }
           }
-          if (payload.task === "CAPTION" && payload.topic.length <= 100) {
+          if (payload.task === "CAPTION" && payload.language === "VI" && payload.topic.length <= 100) {
             const params = new URLSearchParams({ platform: payload.platform, topic: payload.topic });
             const local = await fetch(form.dataset.fallbackUrl + "?" + params.toString(), {
               credentials: "same-origin"
