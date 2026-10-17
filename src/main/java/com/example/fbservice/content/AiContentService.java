@@ -47,6 +47,11 @@ public class AiContentService {
         this.key=key;this.model=model;this.json=json;this.transport=Objects.requireNonNull(transport);
     }
 
+    /** Configuration readiness only; no credential or model details are exposed. */
+    public boolean isConfigured() {
+        return key!=null && !key.isBlank();
+    }
+
     public Map<String,String> generate(AiContentRequest input) {
         if(input==null||input.platform()==null||input.topic()==null||input.audience()==null
                 ||input.topic().isBlank()||input.audience().isBlank()
