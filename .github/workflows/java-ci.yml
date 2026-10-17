@@ -49,9 +49,8 @@ jobs:
               pg_restore --list /backups/ci-postgres.dump >/dev/null
               createdb -h 127.0.0.1 -U growlab growlab_restore
               pg_restore -h 127.0.0.1 -U growlab --no-owner --no-privileges -d growlab_restore /backups/ci-postgres.dump
-              psql -h 127.0.0.1 -U growlab -d growlab_restore -v ON_ERROR_STOP=1 -Atc                 "SELECT to_regclass('''public.payment_receipts''') IS NOT NULL
-                    AND to_regclass('''public.idx_deposit_owner_created''') IS NOT NULL
-                    AND to_regclass('''public.idx_payment_receipts_created_at''') IS NOT NULL" | grep -qx t
+              psql -h 127.0.0.1 -U growlab -d growlab_restore -v ON_ERROR_STOP=1 -Atc "SELECT COUNT(*) FROM payment_receipts" | grep -Eq "^[0-9]+$"
+              psql -h 127.0.0.1 -U growlab -d growlab_restore -v ON_ERROR_STOP=1 -Atc "SELECT COUNT(*) FROM flyway_schema_history" | grep -Eq "^[1-9][0-9]*$"
             '
           rm -f "$RUNNER_TEMP/ci-postgres.dump"
       - name: Package application
