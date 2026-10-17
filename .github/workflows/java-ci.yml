@@ -78,6 +78,22 @@ jobs:
           curl -fsS http://127.0.0.1:8080/register | grep -q csrf
       - name: Validate Docker image
         run: docker build -t growlab-ci:latest .
+      - name: Boot Docker image against CI-only PostgreSQL
+        run: |
+          docker run --rm -d --name growlab-ci-runtime --network host --no-healthcheck \
+            -e SPRING_PROFILES_ACTIVE=prod \
+            -e DB_URL=jdbc:postgresql://localhost:5432/growlab_ci \
+            -e DB_USERNAME=growlab -e DB_PASSWORD=testpass \
+            -e SERVER_PORT=18080 growlab-ci:latest >/dev/null
+          trap 'docker stop growlab-ci-runtime >/dev/null 2>&1 || true' EXIT
+          for i in {1..50}; do
+            if curl --fail --silent http://127.0.0.1:18080/actuator/health | grep -q UP; then
+              exit 0
+            fi
+            sleep 1
+          done
+          docker logs --tail 60 growlab-ci-runtime
+          exit 1
       - name: Validate Compose syntax without deployment
         env:
           POSTGRES_PASSWORD: ci-only-placeholder-not-for-any-real-service
