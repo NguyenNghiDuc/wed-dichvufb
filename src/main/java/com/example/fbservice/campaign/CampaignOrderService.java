@@ -55,6 +55,15 @@ public class CampaignOrderService {
     }
 
     @Transactional(readOnly = true)
+    public Page<CampaignOrder> searchMine(String owner,int page,int size,
+            CampaignStatus status,SocialPlatform platform,String keyword) {
+        if(page<0||page>10000||size<1||size>50)
+            throw new IllegalArgumentException("Invalid paging");
+        return orders.findAll(CampaignOrderSearch.ownedBy(owner,status,platform,keyword),
+            PageRequest.of(page,size,Sort.by(Sort.Order.desc("createdAt"),Sort.Order.desc("id"))));
+    }
+
+    @Transactional(readOnly = true)
     public Page<CampaignOrder> pageForAdmin(int page) {
         if (page < 0 || page > 10000)
             throw new IllegalArgumentException("Trang không hợp lệ.");
