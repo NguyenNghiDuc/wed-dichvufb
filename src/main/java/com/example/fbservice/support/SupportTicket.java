@@ -4,7 +4,10 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "support_tickets", indexes = @Index(name = "idx_support_owner", columnList = "owner_username"))
+@Table(name = "support_tickets", indexes = {
+    @Index(name = "idx_support_owner", columnList = "owner_username"),
+    @Index(name = "idx_support_staff_queue", columnList = "status,priority,updated_at,id")
+})
 public class SupportTicket {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -17,6 +20,9 @@ public class SupportTicket {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private TicketStatus status = TicketStatus.OPEN;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 16)
+    private TicketPriority priority = TicketPriority.NORMAL;
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
     @Column(nullable = false)
@@ -47,6 +53,11 @@ public class SupportTicket {
         if (status == TicketStatus.CLOSED) throw new IllegalArgumentException("Yêu cầu đã đóng.");
     }
 
+    public TicketPriority getPriority() { return priority; }
+    public void setPriority(TicketPriority next) {
+        if (next == null) throw new IllegalArgumentException("Mức ưu tiên không hợp lệ.");
+        this.priority = next;
+    }
     public Long getId() { return id; }
     public String getOwnerUsername() { return ownerUsername; }
     public String getSubject() { return subject; }

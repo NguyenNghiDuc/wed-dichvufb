@@ -16,10 +16,16 @@ public class SupportController {
     public SupportController(SupportTicketService service) { this.service = service; }
 
     @GetMapping
-    public String list(@RequestParam(defaultValue = "0") int page, Principal principal, Model model) {
-        Page<SupportTicket> records = service.listMine(principal.getName(), page);
+    public String list(@RequestParam(defaultValue = "0") int page,
+                       @RequestParam(required = false) String subject,
+                       @RequestParam(required = false) TicketStatus status,
+                       Principal principal, Model model) {
+        Page<SupportTicket> records = service.searchMine(principal.getName(), page, subject, status);
         model.addAttribute("tickets", records.getContent());
         model.addAttribute("pageNumber", page);
+        model.addAttribute("subject", subject);
+        model.addAttribute("selectedStatus", status);
+        model.addAttribute("statuses", TicketStatus.values());
         model.addAttribute("hasNext", records.hasNext());
         model.addAttribute("hasPrevious", records.hasPrevious());
         return "support_list";

@@ -13,10 +13,19 @@ public class SupportAdminController {
     public SupportAdminController(SupportTicketService service) { this.service = service; }
 
     @GetMapping
-    public String list(@RequestParam(defaultValue = "0") int page, Model model) {
-        Page<SupportTicket> records = service.listForAdmin(page);
+    public String list(@RequestParam(defaultValue = "0") int page,
+                       @RequestParam(required = false) String subject,
+                       @RequestParam(required = false) TicketStatus status,
+                       @RequestParam(required = false) TicketPriority priority,
+                       Model model) {
+        Page<SupportTicket> records = service.searchForStaff(page, subject, status, priority);
         model.addAttribute("tickets", records.getContent());
         model.addAttribute("pageNumber", page);
+        model.addAttribute("subject", subject);
+        model.addAttribute("selectedStatus", status);
+        model.addAttribute("selectedPriority", priority);
+        model.addAttribute("statuses", TicketStatus.values());
+        model.addAttribute("priorities", TicketPriority.values());
         model.addAttribute("hasPrevious", records.hasPrevious());
         model.addAttribute("hasNext", records.hasNext());
         return "admin_support_list";
@@ -32,6 +41,18 @@ public class SupportAdminController {
         model.addAttribute("hasPrevious", messages.hasPrevious());
         model.addAttribute("hasNext", messages.hasNext());
         return "admin_support_detail";
+    }
+
+    @PostMapping("/{id}/priority")
+    public String prioritize(@PathVariable Long id, @RequestParam TicketPriority priority,
+                             Model model) {
+        try {
+            service.prioritizeAsStaff(id, priority);
+            return "redirect:/admin/support/" + id;
+        } catch (IllegalArgumentException exception) {
+            model.addAttribute("error", exception.getMessage());
+            return details(id, 0, model);
+        }
     }
 
     @PostMapping("/{id}/reply")

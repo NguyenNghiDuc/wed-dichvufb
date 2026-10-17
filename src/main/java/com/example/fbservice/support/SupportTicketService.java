@@ -4,6 +4,10 @@ import com.example.fbservice.config.TrafficLimiter;
 import com.example.fbservice.notification.*;
 import java.time.Duration;
 import java.util.List;
+import java.util.ArrayList;
+import java.util.Locale;
+import jakarta.persistence.criteria.Predicate;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.domain.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -44,6 +48,52 @@ public class SupportTicketService {
     @Transactional(readOnly = true)
     public Page<SupportTicket> listForAdmin(int page) {
         return tickets.findAll(paging(page));
+    }
+
+    /**
+     * Bounded subject search. A caller cannot inject an arbitrary owner:
+     * the predicate uses the authenticated principal as its exact owner.
+     */
+    @Transactional(readOnly = true)
+    public Page<SupportTicket> searchMine(String user, int page, String subject, TicketStatus status) {
+        if (user == null || user.isBlank())
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+        return tickets.findAll(ticketFilters(user, subject, status, null), paging(page));
+    }
+
+    @Transactional(readOnly = true)
+    public Page<SupportTicket> searchForStaff(int page, String subject, TicketStatus status,
+                                               TicketPriority priority) {
+        return tickets.findAll(ticketFilters(null, subject, status, priority), paging(page));
+    }
+
+    private Specification<SupportTicket> ticketFilters(String owner, String subject,
+                                                         TicketStatus status, TicketPriority priority) {
+        String cleaned = subject == null ? "" : subject.strip();
+        if (cleaned.length() > 80)
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Từ khóa quá dài.");
+        // Treat LIKE metacharacters as plain characters; no regex or user-supplied SQL.
+        String literal = cleaned.toLowerCase(Locale.ROOT)
+            .replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
+        return (root, query, cb) -> {
+            List<Predicate> checks = new ArrayList<>();
+            if (owner != null) checks.add(cb.equal(root.get("ownerUsername"), owner));
+            if (!cleaned.isBlank())
+                checks.add(cb.like(cb.lower(root.get("subject")), "%" + literal + "%", '\\'));
+            if (status != null) checks.add(cb.equal(root.get("status"), status));
+            if (priority != null) checks.add(cb.equal(root.get("priority"), priority));
+            return cb.and(checks.toArray(new Predicate[0]));
+        };
+    }
+
+    @Transactional
+    public void prioritizeAsStaff(Long id, TicketPriority priority) {
+        if (priority == null) throw new IllegalArgumentException("Mức ưu tiên không hợp lệ.");
+        SupportTicket ticket = tickets.lockForAdmin(id)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        if (ticket.getStatus() == TicketStatus.CLOSED)
+            throw new IllegalArgumentException("Không đổi ưu tiên yêu cầu đã đóng.");
+        ticket.setPriority(priority);
     }
 
     @Transactional(readOnly = true)
