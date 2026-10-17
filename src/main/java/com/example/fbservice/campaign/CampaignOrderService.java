@@ -74,9 +74,30 @@ public class CampaignOrderService {
 
     @Transactional(readOnly = true)
     public Page<CampaignOrder> pageForAdmin(int page) {
+        return pageForAdmin(page, null, null, null);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<CampaignOrder> pageForAdmin(int page, Long orderId, CampaignStatus status, String owner) {
         if (page < 0 || page > 10000)
             throw new IllegalArgumentException("Trang không hợp lệ.");
-        return orders.findAll(PageRequest.of(page, 20,
+        if (orderId != null && orderId <= 0)
+            throw new IllegalArgumentException("Mã đơn phải là số nguyên dương.");
+        String exactOwner = owner == null || owner.isBlank() ? null : owner.trim();
+        if (exactOwner != null && (exactOwner.length() > 100 ||
+                !exactOwner.matches("[a-zA-Z0-9._-]{3,100}")))
+            throw new IllegalArgumentException("Tên khách hàng không hợp lệ.");
+
+        // Admin-only query: no wildcard owner match; bounded and deterministic results.
+        // Separate from the customer-scoped method to avoid accidental privilege expansion.
+        Specification<CampaignOrder> filters = (root, query, builder) -> {
+            List<Predicate> conditions = new ArrayList<>();
+            if (orderId != null) conditions.add(builder.equal(root.get("id"), orderId));
+            if (status != null) conditions.add(builder.equal(root.get("status"), status));
+            if (exactOwner != null) conditions.add(builder.equal(root.get("ownerUsername"), exactOwner));
+            return builder.and(conditions.toArray(new Predicate[0]));
+        };
+        return orders.findAll(filters, PageRequest.of(page, 20,
                 Sort.by(Sort.Order.desc("createdAt"), Sort.Order.desc("id"))));
     }
 
