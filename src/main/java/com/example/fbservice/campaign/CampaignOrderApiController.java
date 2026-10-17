@@ -38,6 +38,15 @@ public class CampaignOrderApiController {
         return service.pageMine(principal.getName(), page, size, orderId, status);
     }
 
+    /** Paginated order progress; does not reveal internal actors or staff usernames. */
+    @GetMapping("/{id}/history")
+    public Page<CampaignHistoryEntry> history(@PathVariable Long id,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            Principal principal) {
+        return service.pageHistoryForOwner(principal.getName(), id, page, size);
+    }
+
     @GetMapping("/{id}")
     public CampaignOrder mineById(@PathVariable Long id, Principal principal) {
         return service.findMineById(principal.getName(), id);

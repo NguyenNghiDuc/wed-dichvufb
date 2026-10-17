@@ -74,9 +74,20 @@ public class CampaignWebController {
     }
 
     @GetMapping("/{id}")
-    public String details(@PathVariable Long id, Principal principal, Model model) {
+    public String details(@PathVariable Long id, @RequestParam(defaultValue = "0") int page,
+                          Principal principal, Model model) {
+        Page<CampaignHistoryEntry> history;
+        try {
+            history = service.pageHistoryForOwner(principal.getName(), id, page, 20);
+        } catch (IllegalArgumentException exception) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid history page");
+        }
         model.addAttribute("order", service.findMineById(principal.getName(), id));
-        model.addAttribute("events", service.historyForOwner(principal.getName(), id));
+        model.addAttribute("events", history.getContent());
+        model.addAttribute("pageNumber", page);
+        model.addAttribute("totalPages", history.getTotalPages());
+        model.addAttribute("hasPrevious", history.hasPrevious());
+        model.addAttribute("hasNext", history.hasNext());
         return "campaign_details";
     }
 }
