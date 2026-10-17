@@ -17,7 +17,7 @@
 <div class="form-panel">
   <h2>Tạo nội dung mới</h2>
   <p class="error" th:if="${error}" th:text="${error}"></p>
-  <form method="post" th:action="@{/content-calendar}">
+  <form id="create-content-form" method="post" th:action="@{/content-calendar}">
     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
     <div class="field"><label for="platform">Nền tảng</label><select id="platform" name="platform" required><option th:each="p : ${platforms}" th:value="${p.name()}" th:text="${p.displayName}"></option></select></div>
     <div class="field"><label for="title">Tiêu đề</label><input id="title" name="title" maxlength="120" required></div>
@@ -55,6 +55,7 @@
     <p id="ai-content-status" class="muted" role="status" aria-live="polite"></p>
     <div class="field"><label for="ai-content-result">Kết quả gợi ý (kiểm tra trước khi sử dụng)</label>
       <textarea id="ai-content-result" rows="8" readonly></textarea></div>
+    <button id="copy-ai-to-draft" class="btn btn-outline" type="button" disabled>Đưa gợi ý vào form bản nháp (không tự lưu)</button>
   </div>
 </section>
 
