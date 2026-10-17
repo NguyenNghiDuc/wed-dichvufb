@@ -21,12 +21,16 @@ public class CampaignAdminController {
     }
 
     @GetMapping
-    public String list(@RequestParam(defaultValue = "0") int page, Model model) {
+    public String list(@RequestParam(defaultValue = "0") int page,
+                       @RequestParam(required = false) Long orderId,
+                       @RequestParam(required = false) CampaignStatus status,
+                       @RequestParam(required = false) String owner,
+                       Model model) {
         Page<CampaignOrder> records;
         try {
-            records = service.pageForAdmin(page);
+            records = service.pageForAdmin(page, orderId, status, owner);
         } catch (IllegalArgumentException exception) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid pagination");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid filters or pagination");
         }
         model.addAttribute("orders", records.getContent());
         model.addAttribute("employees", assignments.eligibleStaff());
@@ -35,6 +39,9 @@ public class CampaignAdminController {
         model.addAttribute("hasPrevious", records.hasPrevious());
         model.addAttribute("hasNext", records.hasNext());
         model.addAttribute("totalPages", records.getTotalPages());
+        model.addAttribute("orderId", orderId);
+        model.addAttribute("selectedStatus", status);
+        model.addAttribute("owner", owner == null ? "" : owner.trim());
         return "admin_campaigns";
     }
 
@@ -46,7 +53,7 @@ public class CampaignAdminController {
             return "redirect:/admin/campaign-orders";
         } catch (IllegalArgumentException exception) {
             model.addAttribute("error", exception.getMessage());
-            return list(0, model);
+            return list(0, null, null, null, model);
         }
     }
 }
