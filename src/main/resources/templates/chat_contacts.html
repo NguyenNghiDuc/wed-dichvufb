@@ -22,7 +22,11 @@
 </form>
 <div class="chat-conversations" aria-label="Danh sách cuộc trò chuyện">
 <a class="chat-conversation" th:each="contact : ${conversations}"
-   th:href="@{/chat/ui/{other}(other=${contact})}" th:text="${contact}">Tên liên hệ</a>
+   th:href="@{/chat/ui/{other}(other=${contact})}">
+<strong th:text="${contact}">Tên liên hệ</strong>
+<span class="status" th:if="${unreadCounts.get(contact) > 0}"
+      th:text="|${unreadCounts.get(contact)} chưa đọc|">Chưa đọc</span>
+</a>
 </div>
 <p class="muted" th:if="${#lists.isEmpty(conversations)}">Chưa có cuộc trò chuyện phù hợp.</p>
 <nav class="actions" aria-label="Phân trang cuộc trò chuyện">
