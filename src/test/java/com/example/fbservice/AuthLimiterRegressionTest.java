@@ -37,9 +37,10 @@ class AuthLimiterRegressionTest {
     @Test
     void oneAccountDoesNotBlockAnotherBehindSameAddress() throws Exception {
         for (int i=0; i<10; i++) {
+            final int index = i;
             mvc.perform(post("/login").with(csrf()).with(req -> {
                     req.setRemoteAddr("198.51.100.93");
-                    req.addHeader("X-Forwarded-For", "203.0.113." + i);
+                    req.addHeader("X-Forwarded-For", "203.0.113." + index);
                     return req;
                 }).param("username","rejected-account").param("password","wrong"))
                 .andExpect(status().is3xxRedirection());
