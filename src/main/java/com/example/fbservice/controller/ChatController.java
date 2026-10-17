@@ -2,38 +2,46 @@ package com.example.fbservice.controller;
 
 import com.example.fbservice.model.ChatMessage;
 import com.example.fbservice.service.ChatService;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
+import java.security.Principal;
 import java.util.List;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("/chat")
 public class ChatController {
+    private final ChatService chat;
 
-    private final ChatService chatService;
-
-    public ChatController(ChatService chatService) {
-        this.chatService = chatService;
+    public ChatController(ChatService chat) {
+        this.chat = chat;
     }
 
-    // Gửi tin nhắn
     @PostMapping("/send")
-    public ResponseEntity<ChatMessage> sendMessage(@RequestBody ChatMessage message) {
-        return ResponseEntity.ok(chatService.saveMessage(message));
+    public ChatMessage sendMessage(@RequestBody ChatMessage message, Principal principal) {
+        if (message.getReceiver() == null || message.getReceiver().isBlank()
+            || message.getContent() == null || message.getContent().isBlank()
+            || message.getContent().length() > 2000) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid message");
+        }
+        ChatMessage safe = new ChatMessage(principal.getName(), message.getReceiver().trim(), message.getContent());
+        return chat.saveMessage(safe);
     }
 
-    // Lấy tin nhắn giữa 2 người
     @GetMapping("/conversation/{sender}/{receiver}")
-    public ResponseEntity<List<ChatMessage>> getConversation(
-            @PathVariable String sender,
-            @PathVariable String receiver) {
-        return ResponseEntity.ok(chatService.getConversation(sender, receiver));
+    public List<ChatMessage> getConversation(@PathVariable String sender, @PathVariable String receiver,
+                                               Principal principal) {
+        if (!principal.getName().equals(sender) && !principal.getName().equals(receiver)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
+        return chat.getConversation(sender, receiver);
     }
 
-    // Lấy tất cả tin nhắn gửi đến user
     @GetMapping("/inbox/{receiver}")
-    public ResponseEntity<List<ChatMessage>> getInbox(@PathVariable String receiver) {
-        return ResponseEntity.ok(chatService.getMessagesForUser(receiver));
+    public List<ChatMessage> getInbox(@PathVariable String receiver, Principal principal) {
+        if (!principal.getName().equals(receiver)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
+        return chat.getMessagesForUser(receiver);
     }
 }

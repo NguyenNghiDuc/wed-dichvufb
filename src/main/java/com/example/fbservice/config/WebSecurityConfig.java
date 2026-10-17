@@ -9,18 +9,18 @@ import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
 public class WebSecurityConfig {
-
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
-            .csrf(csrf -> csrf.disable())
+        return http
             .authorizeHttpRequests(auth -> auth
-                .anyRequest().permitAll()
-            );
-        return http.build();
+                .requestMatchers("/", "/login", "/register", "/style.css", "/favicon.ico").permitAll()
+                .requestMatchers("/admin/**", "/api/v1/admin/**").hasRole("ADMIN")
+                .anyRequest().authenticated())
+            .formLogin(form -> form.loginPage("/login").defaultSuccessUrl("/campaigns", false).permitAll())
+            .logout(logout -> logout.logoutSuccessUrl("/").permitAll())
+            .build();
     }
 
-    // Bean PasswordEncoder để UserService dùng
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
