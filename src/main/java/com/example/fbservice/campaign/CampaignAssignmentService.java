@@ -17,15 +17,18 @@ public class CampaignAssignmentService {
     private final CampaignAssignmentEventRepository assignmentEvents;
     private final CampaignEventRepository campaignEvents;
     private final AccountNotificationRepository notifications;
+    private final com.example.fbservice.admin.AdminStaffQueueRepository staffQueue;
 
     public CampaignAssignmentService(CampaignOrderRepository orders, UserRepository users,
             CampaignAssignmentEventRepository assignmentEvents,
-            CampaignEventRepository campaignEvents, AccountNotificationRepository notifications) {
+            CampaignEventRepository campaignEvents, AccountNotificationRepository notifications,
+            com.example.fbservice.admin.AdminStaffQueueRepository staffQueue) {
         this.orders = orders;
         this.users = users;
         this.assignmentEvents = assignmentEvents;
         this.campaignEvents = campaignEvents;
         this.notifications = notifications;
+        this.staffQueue = staffQueue;
     }
 
     @Transactional
@@ -77,11 +80,20 @@ public class CampaignAssignmentService {
 
     @Transactional(readOnly = true)
     public Page<CampaignOrder> assignedTo(String staffUsername, int page) {
+        return assignedTo(staffUsername, page, null);
+    }
+
+    /** Always scope to the authenticated employee before applying an optional status filter. */
+    @Transactional(readOnly = true)
+    public Page<CampaignOrder> assignedTo(String staffUsername, int page, CampaignStatus status) {
         ensureStaff(staffUsername);
         if (page < 0 || page > 10000)
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
-        return orders.findByAssigneeUsername(staffUsername,
-                PageRequest.of(page, 20, Sort.by(Sort.Order.desc("updatedAt"), Sort.Order.desc("id"))));
+        PageRequest request = PageRequest.of(page, 20,
+            Sort.by(Sort.Order.desc("updatedAt"), Sort.Order.desc("id")));
+        return status == null
+            ? orders.findByAssigneeUsername(staffUsername, request)
+            : staffQueue.findByAssigneeUsernameAndStatus(staffUsername, status, request);
     }
 
     @Transactional
