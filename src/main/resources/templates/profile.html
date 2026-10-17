@@ -6,5 +6,8 @@
 <div class="form-panel"><div class="field"><label>Tên đăng nhập</label><p th:text="${username}"></p></div>
 <div class="field"><label>Email đã đăng ký</label><p th:text="${email != null ? email : 'Chưa cung cấp'}"></p></div>
 <div class="field"><label>Quyền tài khoản</label><p th:text="${role}"></p></div>
+<div class="field"><label>Tên hiển thị</label><p th:text="${customerProfile.displayName().isBlank() ? 'Chưa cập nhật' : customerProfile.displayName()}"></p></div>
+<div class="field"><label>Số điện thoại liên hệ</label><p th:text="${customerProfile.phone().isBlank() ? 'Chưa cập nhật' : customerProfile.phone()}"></p></div>
+<div class="notice" th:if="${param.updated}">Đã cập nhật thông tin liên hệ.</div>
 <div class="notice">Email chưa được xác thực tự động. Để bảo vệ tài khoản, tính năng thay đổi email và mật khẩu chưa được mở cho đến khi có xác minh bằng OTP.</div>
-<div class="actions"><a class="btn btn-outline" th:href="@{/support/new}">Liên hệ hỗ trợ</a><a class="btn" th:if="${staffAccess}" th:href="@{/staff/campaign-orders}">Đơn được phân công →</a></div></div></main></body></html>
+<div class="actions"><a class="btn" th:href="@{/profile/edit}">Chỉnh sửa thông tin liên hệ</a><a class="btn btn-outline" th:href="@{/support/new}">Liên hệ hỗ trợ</a><a class="btn" th:if="${staffAccess}" th:href="@{/staff/campaign-orders}">Đơn được phân công →</a></div></div></main></body></html>
