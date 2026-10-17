@@ -143,6 +143,18 @@ class PaymentWebhookIntegrationTest {
     }
 
     @Test
+    void unknownSignedPaymentFieldsCannotBeSilentlyIgnored() throws Exception {
+        DepositRequest deposit = newDeposit("webhook-owner-unknown-fields", 62000);
+        String valid = event("unknownFieldEvt123", deposit.getId(), 62000, "SETTLED");
+        String withUnknown = valid.replace("\"status\":", "\"bankTransactionId\":\"unverified\",\"status\":");
+        long priorReceipts = receipts.count();
+        mvc.perform(request(withUnknown, now())).andExpect(status().isBadRequest());
+        assertThat(receipts.count()).isEqualTo(priorReceipts);
+        assertThat(deposits.findById(deposit.getId()).orElseThrow().getStatus())
+                .isEqualTo("PENDING");
+    }
+
+    @Test
     void transportLimitsRawBodyWithoutPersistingSettlement() throws Exception {
         DepositRequest deposit = newDeposit("webhook-owner-limit", 99000);
         String timestamp = now();
