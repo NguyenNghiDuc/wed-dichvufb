@@ -4,6 +4,9 @@ import com.example.fbservice.model.Order;
 import com.example.fbservice.service.OrderService;
 import java.security.Principal;
 import org.springframework.stereotype.Controller;
+import org.springframework.data.domain.Page;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
@@ -34,8 +37,18 @@ public class OrderController {
     }
 
     @GetMapping("/list")
-    public String list(Model model, Principal principal) {
-        model.addAttribute("orders", orders.list(principal.getName()));
+    public String list(@RequestParam(defaultValue = "0") int page, Model model, Principal principal) {
+        Page<Order> records;
+        try {
+            records = orders.pageMine(principal.getName(), page, 20);
+        } catch (IllegalArgumentException exception) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid page");
+        }
+        model.addAttribute("orders", records.getContent());
+        model.addAttribute("pageNumber", page);
+        model.addAttribute("hasPrevious", records.hasPrevious());
+        model.addAttribute("hasNext", records.hasNext());
+        model.addAttribute("totalPages", records.getTotalPages());
         return "order_list";
     }
 }
