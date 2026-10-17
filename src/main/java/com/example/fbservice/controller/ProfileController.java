@@ -25,6 +25,7 @@ public class ProfileController {
         model.addAttribute("username", account.getUsername());
         model.addAttribute("email", account.getEmail());
         model.addAttribute("role", account.getRole());
+        model.addAttribute("staffAccess", "STAFF".equals(account.getRole()) || "ADMIN".equals(account.getRole()));
         return "profile";
     }
 }

@@ -7,4 +7,4 @@
 <div class="field"><label>Email đã đăng ký</label><p th:text="${email != null ? email : 'Chưa cung cấp'}"></p></div>
 <div class="field"><label>Quyền tài khoản</label><p th:text="${role}"></p></div>
 <div class="notice">Email chưa được xác thực tự động. Để bảo vệ tài khoản, tính năng thay đổi email và mật khẩu chưa được mở cho đến khi có xác minh bằng OTP.</div>
-<a class="btn btn-outline" th:href="@{/support/new}">Liên hệ hỗ trợ</a></div></main></body></html>
+<div class="actions"><a class="btn btn-outline" th:href="@{/support/new}">Liên hệ hỗ trợ</a><a class="btn" th:if="${staffAccess}" th:href="@{/staff/campaign-orders}">Đơn được phân công →</a></div></div></main></body></html>
