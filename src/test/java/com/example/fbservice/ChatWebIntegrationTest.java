@@ -49,12 +49,15 @@ class ChatWebIntegrationTest {
             .andExpect(view().name("chat_thread"))
             .andExpect(model().attribute("messages",hasSize(20)))
             .andExpect(model().attribute("hasNext",true))
+            .andExpect(content().string(not(containsString("private-different-customer"))));
+        // Newest-first paging places the malicious *older* message on page 2,
+        // so assert escaped HTML on the page containing that exact payload.
+        mvc.perform(get("/chat/ui/webchat-staff").param("page","1"))
+            .andExpect(status().isOk())
+            .andExpect(model().attribute("messages",hasSize(6)))
             .andExpect(content().string(containsString("&lt;img")))
             .andExpect(content().string(not(containsString("<img src=x onerror=alert(1)>"))))
             .andExpect(content().string(not(containsString("private-different-customer"))));
-        mvc.perform(get("/chat/ui/webchat-staff").param("page","1"))
-            .andExpect(status().isOk())
-            .andExpect(model().attribute("messages",hasSize(6)));
         mvc.perform(get("/chat/ui/webchat-staff").param("page","10001"))
             .andExpect(status().isBadRequest());
         mvc.perform(get("/chat/ui/unknown-webchat-user"))
