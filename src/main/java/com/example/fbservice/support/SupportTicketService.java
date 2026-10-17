@@ -2,6 +2,7 @@ package com.example.fbservice.support;
 
 import com.example.fbservice.config.TrafficLimiter;
 import com.example.fbservice.repository.UserRepository;
+import com.example.fbservice.model.User;
 import com.example.fbservice.notification.*;
 import java.time.Duration;
 import java.util.List;
@@ -22,15 +23,17 @@ public class SupportTicketService {
     private final AccountNotificationRepository notices;
     private final TrafficLimiter limiter;
     private final UserRepository users;
+    private final SupportAssignmentEventRepository assignments;
 
     public SupportTicketService(SupportTicketRepository tickets, SupportMessageRepository messages,
                                 AccountNotificationRepository notices, TrafficLimiter limiter,
-                                UserRepository users) {
+                                UserRepository users, SupportAssignmentEventRepository assignments) {
         this.tickets = tickets;
         this.messages = messages;
         this.notices = notices;
         this.limiter = limiter;
         this.users = users;
+        this.assignments = assignments;
     }
 
     @Transactional
@@ -166,10 +169,62 @@ public class SupportTicketService {
         SupportTicket ticket = tickets.lockForAdmin(id)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         if (staff.equals(ticket.getAssigneeUsername())) return;
+        String previous = ticket.getAssigneeUsername();
         ticket.claim(staff);
+        assignments.save(new SupportAssignmentEvent(id, previous, staff, staff));
         notices.save(new AccountNotification(ticket.getOwnerUsername(),
                 "Hỗ trợ #" + id + " đã được tiếp nhận",
                 "Nhân viên hỗ trợ đang xử lý yêu cầu của bạn."));
+    }
+
+    /** ADMIN-only recovery from an absent, disabled or unavailable assignee. */
+    @Transactional
+    public void reassignAsAdmin(String adminUsername, Long id, Long employeeId) {
+        User admin = users.findByUsername(adminUsername)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN));
+        if (!admin.isEnabled() || !"ADMIN".equals(admin.getRole()))
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        SupportTicket ticket = tickets.lockForAdmin(id)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        ticket.ensureOpen();
+        String next = null;
+        if (employeeId != null) {
+            User employee = users.findById(employeeId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tồn tại nhân viên."));
+            if (!employee.isEnabled() ||
+                !("STAFF".equals(employee.getRole()) || "ADMIN".equals(employee.getRole())))
+                throw new IllegalArgumentException("Người nhận phải là STAFF/ADMIN còn hoạt động.");
+            next = employee.getUsername();
+        }
+        String old = ticket.getAssigneeUsername();
+        if (java.util.Objects.equals(old, next))
+            throw new IllegalArgumentException("Người phụ trách không thay đổi.");
+        ticket.reassignTo(next);
+        assignments.save(new SupportAssignmentEvent(id, old, next, adminUsername));
+        notices.save(new AccountNotification(ticket.getOwnerUsername(),
+            "Cập nhật tiếp nhận hỗ trợ #" + id,
+            "Yêu cầu của bạn đã được chuyển giao cho bộ phận hỗ trợ."));
+        if (next != null)
+            notices.save(new AccountNotification(next,
+                "Được giao hỗ trợ #" + id, "Bạn đã được phân công xử lý yêu cầu."));
+    }
+
+    @Transactional(readOnly = true)
+    public boolean isActiveAdmin(String username) {
+        return users.findByUsername(username)
+            .map(user -> user.isEnabled() && "ADMIN".equals(user.getRole()))
+            .orElse(false);
+    }
+
+    @Transactional(readOnly = true)
+    public List<User> eligibleAssignees() {
+        return users.findTop100ByEnabledTrueAndRoleInOrderByUsernameAsc(List.of("STAFF","ADMIN"));
+    }
+
+    @Transactional(readOnly = true)
+    public List<SupportAssignmentEvent> assignmentHistory(Long id) {
+        detailForAdmin(id);
+        return assignments.findTop50ByTicketIdOrderByCreatedAtDescIdDesc(id);
     }
 
     @Transactional

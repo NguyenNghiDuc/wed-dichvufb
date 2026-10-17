@@ -65,6 +65,12 @@ public class SupportTicket {
             throw new IllegalArgumentException("Yêu cầu đang được nhân viên khác xử lý.");
         assigneeUsername = username;
     }
+    /** Only the checked, audited ADMIN transfer service may use this setter. */
+    public void reassignTo(String nextUsername) {
+        ensureOpen();
+        this.assigneeUsername = nextUsername;
+    }
+
     public void ensureAssignedStaff(String username) {
         if (assigneeUsername != null && !assigneeUsername.equals(username))
             throw new IllegalArgumentException("Yêu cầu được giao cho nhân viên khác.");
