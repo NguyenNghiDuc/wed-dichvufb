@@ -128,7 +128,7 @@ class AdminAccountIntegrationTest {
             .andExpect(status().is3xxRedirection());
         mvc.perform(get("/campaigns").session((org.springframework.mock.web.MockHttpSession)session))
             .andExpect(status().is3xxRedirection())
-            .andExpect(redirectedUrlPattern("**/login"));
+            .andExpect(redirectedUrl("/login?sessionExpired"));
         mvc.perform(post("/login").with(csrf())
                 .param("username","locked-target").param("password","passphrase123"))
             .andExpect(status().is3xxRedirection())

@@ -1,19 +1,40 @@
 package com.example.fbservice.config;
 
 import com.example.fbservice.repository.UserRepository;
-import jakarta.servlet.*;
-import jakarta.servlet.http.*;
+import jakarta.servlet.DispatcherType;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
+import java.util.Set;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-/** Revalidate persisted status and role for each authenticated session request. */
+/**
+ * Revokes sessions after account removal, suspension, or role changes.
+ * Public login and error pages must remain accessible even with an old session.
+ */
 public final class AccountStatusFilter extends OncePerRequestFilter {
+    private static final Set<String> PUBLIC_GET_PATHS = Set.of(
+        "/", "/login", "/register", "/help", "/error",
+        "/favicon.ico", "/favicon.svg", "/style.css",
+        "/actuator/health", "/actuator/health/liveness", "/actuator/health/readiness"
+    );
     private final UserRepository users;
 
     public AccountStatusFilter(UserRepository users) {
         this.users = users;
+    }
+
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        if (request.getDispatcherType() == DispatcherType.ERROR) return true;
+        String method = request.getMethod();
+        if (!"GET".equalsIgnoreCase(method) && !"HEAD".equalsIgnoreCase(method)) return false;
+        return PUBLIC_GET_PATHS.contains(request.getServletPath());
     }
 
     @Override
@@ -31,10 +52,16 @@ public final class AccountStatusFilter extends OncePerRequestFilter {
                 SecurityContextHolder.clearContext();
                 HttpSession session = request.getSession(false);
                 if (session != null) session.invalidate();
-                // Treat the revoked session as anonymous, not as a forbidden request.
-                // This must also work when the browser lands on public /login with a stale cookie.
-                // AuthorizationFilter will redirect protected requests to the login page.
-                chain.doFilter(request, response);
+                response.setHeader("Cache-Control", "no-store");
+                if ("GET".equalsIgnoreCase(request.getMethod())
+                        || "HEAD".equalsIgnoreCase(request.getMethod())) {
+                    // An anonymous filter has already run earlier in the security chain.
+                    // Explicitly redirect to avoid an authorization fallback 403.
+                    response.setStatus(HttpServletResponse.SC_FOUND);
+                    response.setHeader("Location", request.getContextPath() + "/login?sessionExpired");
+                } else {
+                    response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+                }
                 return;
             }
         }

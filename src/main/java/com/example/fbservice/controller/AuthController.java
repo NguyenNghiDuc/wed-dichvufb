@@ -13,7 +13,12 @@ public class AuthController {
     public AuthController(UserService users){this.users=users;}
 
     @GetMapping("/login")
-    public String loginPage(){return "login";}
+    public String loginPage(jakarta.servlet.http.HttpServletResponse response) {
+        // A fixed, nonsensitive marker helps identify the currently running binary in Codespaces.
+        response.setHeader("X-GrowLab-Auth-Revision", "session-recovery-v2");
+        response.setHeader("Cache-Control", "no-store");
+        return "login";
+    }
     @GetMapping("/register")
     public String registerPage(){return "register";}
 
