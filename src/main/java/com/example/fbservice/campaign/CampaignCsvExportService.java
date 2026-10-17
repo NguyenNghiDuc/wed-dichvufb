@@ -1,6 +1,7 @@
 package com.example.fbservice.campaign;
 
 import java.time.format.DateTimeFormatter;
+import java.time.LocalDate;
 import java.util.List;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
@@ -48,6 +49,12 @@ public class CampaignCsvExportService {
     /** Export only the authenticated customer's rows, respecting the same filters as the list. */
     @Transactional(readOnly = true)
     public String exportMine(String username, Long orderId, CampaignStatus status) {
+        return exportMine(username, orderId, status, null, null, null);
+    }
+
+    @Transactional(readOnly = true)
+    public String exportMine(String username, Long orderId, CampaignStatus status,
+                             CampaignServiceType serviceType, LocalDate from, LocalDate to) {
         StringBuilder csv = new StringBuilder("\uFEFF");
         csv.append("id,platform,service,status,price_vnd,created_at,target_url,brief\r\n");
         int exported = 0;
@@ -55,7 +62,7 @@ public class CampaignCsvExportService {
         while (exported < MAX_ROWS) {
             // pageMine applies ownership in the database query, validates the filters,
             // and caps each batch at 50 rows; do not fetch all users and filter in Java.
-            Page<CampaignOrder> page = customerOrders.pageMine(username, pageNumber, 50, orderId, status);
+            Page<CampaignOrder> page = customerOrders.pageMine(username, pageNumber, 50, orderId, status, serviceType, from, to);
             if (page.isEmpty()) break;
             for (CampaignOrder order : page.getContent()) {
                 if (exported >= MAX_ROWS) break;

@@ -1,6 +1,8 @@
 package com.example.fbservice.campaign;
 
 import java.security.Principal;
+import java.time.LocalDate;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
@@ -22,10 +24,13 @@ public class CampaignWebController {
     public String list(@RequestParam(defaultValue = "0") int page,
                        @RequestParam(required = false) Long orderId,
                        @RequestParam(required = false) CampaignStatus status,
+                       @RequestParam(required = false) CampaignServiceType serviceType,
+                       @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+                       @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
                        Model model, Principal principal) {
         Page<CampaignOrder> records;
         try {
-            records = service.pageMine(principal.getName(), page, 20, orderId, status);
+            records = service.pageMine(principal.getName(), page, 20, orderId, status, serviceType, from, to);
         } catch (IllegalArgumentException exception) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid filters or pagination");
         }
@@ -38,6 +43,10 @@ public class CampaignWebController {
         model.addAttribute("totalPages", records.getTotalPages());
         model.addAttribute("orderId", orderId);
         model.addAttribute("selectedStatus", status);
+        model.addAttribute("selectedServiceType", serviceType);
+        model.addAttribute("serviceTypes", CampaignServiceType.values());
+        model.addAttribute("from", from);
+        model.addAttribute("to", to);
         model.addAttribute("statuses", CampaignStatus.values());
         return "campaign_list";
     }
@@ -69,7 +78,7 @@ public class CampaignWebController {
             return "redirect:/campaigns";
         } catch (IllegalArgumentException exception) {
             model.addAttribute("error", exception.getMessage());
-            return list(0, null, null, model, principal);
+            return list(0, null, null, null, null, null, model, principal);
         }
     }
 

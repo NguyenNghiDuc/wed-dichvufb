@@ -23,9 +23,16 @@
 <label for="status">Trạng thái</label>
 <select id="status" name="status"><option value="">Tất cả trạng thái</option>
 <option th:each="s : ${statuses}" th:value="${s.name()}" th:text="${s.displayName}" th:selected="${s == selectedStatus}"></option></select>
+<label for="serviceType">Dịch vụ</label>
+<select id="serviceType" name="serviceType"><option value="">Tất cả dịch vụ</option>
+<option th:each="service : ${serviceTypes}" th:value="${service.name()}" th:text="${service.displayName}" th:selected="${service == selectedServiceType}"></option></select>
+<label for="from">Từ ngày</label>
+<input id="from" name="from" type="date" th:value="${from}">
+<label for="to">Đến ngày</label>
+<input id="to" name="to" type="date" th:value="${to}">
 <button type="submit" class="btn btn-small">Tìm kiếm</button>
 <a class="btn btn-outline btn-small" th:href="@{/campaigns}">Xóa lọc</a>
-<a class="btn btn-outline btn-small" th:href="@{/campaigns/export.csv(orderId=${orderId},status=${selectedStatus})}">↓ Xuất CSV theo bộ lọc</a>
+<a class="btn btn-outline btn-small" th:href="@{/campaigns/export.csv(orderId=${orderId},status=${selectedStatus},serviceType=${selectedServiceType},from=${from},to=${to})}">↓ Xuất CSV theo bộ lọc</a>
 </form>
 
 <div class="table-panel"><table class="data-table"><thead><tr><th>Mã đơn</th><th>Nền tảng</th><th>Gói dịch vụ</th><th>Báo giá</th><th>Ngày tạo</th><th>Trạng thái</th><th>Thao tác</th></tr></thead><tbody>
@@ -33,9 +40,9 @@
 <tr th:if="${#lists.isEmpty(orders)}"><td colspan="7" class="muted">Không tìm thấy chiến dịch phù hợp.</td></tr>
 </tbody></table></div>
 <nav class="actions" aria-label="Phân trang">
-<a class="btn btn-outline btn-small" th:if="${hasPrevious}" th:href="@{/campaigns(page=${pageNumber - 1},orderId=${orderId},status=${selectedStatus})}">← Trang trước</a>
+<a class="btn btn-outline btn-small" th:if="${hasPrevious}" th:href="@{/campaigns(page=${pageNumber - 1},orderId=${orderId},status=${selectedStatus},serviceType=${selectedServiceType},from=${from},to=${to})}">← Trang trước</a>
 <span class="muted" th:text="|Trang ${pageNumber + 1} / ${totalPages == 0 ? 1 : totalPages}|"></span>
-<a class="btn btn-outline btn-small" th:if="${hasNext}" th:href="@{/campaigns(page=${pageNumber + 1},orderId=${orderId},status=${selectedStatus})}">Trang sau →</a>
+<a class="btn btn-outline btn-small" th:if="${hasNext}" th:href="@{/campaigns(page=${pageNumber + 1},orderId=${orderId},status=${selectedStatus},serviceType=${selectedServiceType},from=${from},to=${to})}">Trang sau →</a>
 </nav>
 <p class="footnote">Bản thử nghiệm: dịch vụ cần xét duyệt thủ công; báo giá chưa phải khoản thu hoặc thanh toán đã hoàn tất.</p>
 </main></body></html>

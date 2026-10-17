@@ -3,6 +3,8 @@ package com.example.fbservice.campaign;
 import com.example.fbservice.notification.*;
 import jakarta.persistence.criteria.Predicate;
 import java.net.URI;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import org.springframework.data.domain.*;
@@ -65,18 +67,28 @@ public class CampaignOrderService {
 
     @Transactional(readOnly = true)
     public Page<CampaignOrder> pageMine(String username, int page, int size) {
-        return pageMine(username, page, size, null, null);
+        return pageMine(username, page, size, null, null, null, null, null);
     }
 
     @Transactional(readOnly = true)
     public Page<CampaignOrder> pageMine(String username, int page, int size,
                                         Long orderId, CampaignStatus status) {
+        return pageMine(username, page, size, orderId, status, null, null, null);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<CampaignOrder> pageMine(String username, int page, int size,
+                                        Long orderId, CampaignStatus status,
+                                        CampaignServiceType serviceType, LocalDate from, LocalDate to) {
         if (username == null || username.isBlank())
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
         if (page < 0 || page > 10000 || size < 1 || size > 50)
             throw new IllegalArgumentException("Giới hạn phân trang: page 0–10000, size 1–50.");
         if (orderId != null && orderId <= 0)
             throw new IllegalArgumentException("Mã đơn phải là số nguyên dương.");
+        validateDateRange(from, to);
+        LocalDateTime lowerBound = from == null ? null : from.atStartOfDay();
+        LocalDateTime upperBound = to == null ? null : to.plusDays(1).atStartOfDay();
 
         // Ownership is mandatory inside the database query (including the count query).
         // Criteria predicates avoid nullable enum/ID SQL parameters on PostgreSQL.
@@ -85,10 +97,21 @@ public class CampaignOrderService {
             conditions.add(builder.equal(root.get("ownerUsername"), username));
             if (orderId != null) conditions.add(builder.equal(root.get("id"), orderId));
             if (status != null) conditions.add(builder.equal(root.get("status"), status));
+            if (serviceType != null) conditions.add(builder.equal(root.get("serviceType"), serviceType));
+            if (lowerBound != null) conditions.add(builder.greaterThanOrEqualTo(root.get("createdAt"), lowerBound));
+            if (upperBound != null) conditions.add(builder.lessThan(root.get("createdAt"), upperBound));
             return builder.and(conditions.toArray(new Predicate[0]));
         };
         return orders.findAll(filters, PageRequest.of(page, size,
                 Sort.by(Sort.Order.desc("createdAt"), Sort.Order.desc("id"))));
+    }
+
+    /** Inclusive dates in the application's timezone with an exclusive next-day upper bound. */
+    private static void validateDateRange(LocalDate from, LocalDate to) {
+        if ((from != null && (from.getYear() < 2000 || from.getYear() > 2100)) ||
+            (to != null && (to.getYear() < 2000 || to.getYear() > 2100)) ||
+            (from != null && to != null && from.isAfter(to)))
+            throw new IllegalArgumentException("Khoảng ngày không hợp lệ (2000–2100).");
     }
 
     @Transactional(readOnly = true)

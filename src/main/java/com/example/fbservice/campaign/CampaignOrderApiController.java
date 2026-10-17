@@ -3,6 +3,8 @@ package com.example.fbservice.campaign;
 import jakarta.validation.Valid;
 import java.net.URI;
 import java.security.Principal;
+import java.time.LocalDate;
+import org.springframework.format.annotation.DateTimeFormat;
 import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
@@ -34,8 +36,11 @@ public class CampaignOrderApiController {
                                         @RequestParam(defaultValue = "20") int size,
                                         @RequestParam(required = false) Long orderId,
                                         @RequestParam(required = false) CampaignStatus status,
+                                        @RequestParam(required = false) CampaignServiceType serviceType,
+                                        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+                                        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
                                         Principal principal) {
-        return service.pageMine(principal.getName(), page, size, orderId, status);
+        return service.pageMine(principal.getName(), page, size, orderId, status, serviceType, from, to);
     }
 
     /** Paginated order progress; does not reveal internal actors or staff usernames. */
