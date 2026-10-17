@@ -52,8 +52,11 @@ public final class AccountStatusFilter extends OncePerRequestFilter {
                 // Authentication providers erase UserDetails credentials after login.
                 // A separate digest allows password rotation to revoke existing sessions.
                 && principal.isCredentialCurrent(account.getPassword())
+                // A database account has exactly one role. Do not accept a session
+                // with extra authorities that might accidentally preserve privileges.
+                && authentication.getAuthorities().size() == 1
                 && authentication.getAuthorities().stream()
-                    .anyMatch(authority -> authority.getAuthority().equals("ROLE_" + account.getRole()))
+                    .allMatch(authority -> authority.getAuthority().equals("ROLE_" + account.getRole()))
             ).orElse(false);
             if (!valid) {
                 SecurityContextHolder.clearContext();
