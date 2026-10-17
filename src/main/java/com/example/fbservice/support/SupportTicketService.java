@@ -154,6 +154,12 @@ public class SupportTicketService {
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         ticket.customerReplied();
         messages.save(new SupportMessage(id, user, message.strip()));
+        // Notify only the assigned employee, never copying untrusted message content.
+        if (ticket.getAssigneeUsername() != null) {
+            notices.save(new AccountNotification(ticket.getAssigneeUsername(),
+                "Khách hàng phản hồi hỗ trợ #" + id,
+                "Khách hàng đã gửi thêm nội dung. Mở yêu cầu để xem chi tiết."));
+        }
     }
 
     /**
