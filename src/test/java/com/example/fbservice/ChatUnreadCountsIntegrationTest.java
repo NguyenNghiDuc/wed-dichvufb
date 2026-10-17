@@ -40,7 +40,7 @@ class ChatUnreadCountsIntegrationTest {
             .andExpect(content().string(containsString("1 chưa đọc")))
             .andExpect(content().string(not(containsString("unread-index-outsider"))));
         assertThat(chat.unreadCountsForContacts("unread-index-outsider",
-                List.of("unread-index-bob")).get("unread-index-bob")).isZero();
+                List.of("unread-index-charlie")).get("unread-index-charlie")).isZero();
         chat.markThreadRead("unread-index-alice","unread-index-bob");
         assertThat(chat.unreadCountsForContacts("unread-index-alice",
                 List.of("unread-index-bob")).get("unread-index-bob")).isZero();
