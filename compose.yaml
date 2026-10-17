@@ -1,0 +1,34 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: growlab
+      POSTGRES_USER: ${POSTGRES_USER:-growlab}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in environment}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL","pg_isready -U ${POSTGRES_USER:-growlab} -d growlab"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_URL: jdbc:postgresql://db:5432/growlab
+      DB_USERNAME: ${POSTGRES_USER:-growlab}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in environment}
+      YOUTUBE_API_KEY: ${YOUTUBE_API_KEY:-}
+      GROWTH_AI_API_KEY: ${GROWTH_AI_API_KEY:-}
+      GROWTH_AI_MODEL: ${GROWTH_AI_MODEL:-gpt-4o-mini}
+      GROWTH_WEBHOOK_SECRET: ${GROWTH_WEBHOOK_SECRET:-}
+volumes:
+  pgdata:

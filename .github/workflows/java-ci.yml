@@ -4,9 +4,24 @@ on:
     branches: [main, feature/growth-platform-phase1]
   pull_request:
     branches: [main]
+permissions:
+  contents: read
 jobs:
   verify:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: growlab_ci
+          POSTGRES_USER: growlab
+          POSTGRES_PASSWORD: testpass
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U growlab -d growlab_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -14,5 +29,7 @@ jobs:
           distribution: temurin
           java-version: '17'
           cache: maven
-      - name: Run tests
-        run: mvn -B test
+      - name: Run unit and PostgreSQL integration tests
+        run: mvn -B --no-transfer-progress clean verify
+      - name: Package application
+        run: test -f target/fbservice-0.0.1-SNAPSHOT.jar

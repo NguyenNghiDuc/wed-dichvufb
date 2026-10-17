@@ -14,7 +14,8 @@ public class WebSecurityConfig {
         return http
             .csrf(csrf -> csrf.ignoringRequestMatchers("/api/v1/payments/webhooks/internal"))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/", "/login", "/register", "/style.css", "/favicon.ico").permitAll()
+                .requestMatchers("/", "/login", "/register", "/style.css", "/favicon.ico",
+                    "/actuator/health", "/actuator/health/**").permitAll()
                 .requestMatchers("/api/v1/payments/webhooks/internal").permitAll()
                 .requestMatchers("/admin/**", "/api/v1/admin/**").hasRole("ADMIN")
                 .anyRequest().authenticated())
