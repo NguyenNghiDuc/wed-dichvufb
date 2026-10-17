@@ -1,5 +1,6 @@
 package com.example.fbservice.campaign;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import jakarta.persistence.LockModeType;
@@ -15,6 +16,8 @@ public interface CampaignOrderRepository extends JpaRepository<CampaignOrder, Lo
     Optional<CampaignOrder> findByIdAndOwnerUsername(Long id, String username);
     List<CampaignOrder> findAllByOrderByCreatedAtDesc();
     long countByStatus(CampaignStatus status);
+    long countByStatusAndCreatedAtBefore(CampaignStatus status, LocalDateTime cutoff);
+    long countByStatusAndUpdatedAtBefore(CampaignStatus status, LocalDateTime cutoff);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select c from CampaignOrder c where c.id = :id and c.ownerUsername = :username")
