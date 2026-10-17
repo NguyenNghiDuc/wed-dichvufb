@@ -110,6 +110,8 @@ class ContentSearchIntegrationTest {
             .andExpect(status().isOk())
             .andExpect(content().string(containsString("Trợ lý viết nội dung")))
             .andExpect(content().string(containsString("content-assistant.js")))
+            .andExpect(content().string(containsString("content-metrics.js")))
+            .andExpect(content().string(containsString("không xác minh số liệu")))
             .andExpect(content().string(containsString("Xóa bộ lọc")));
         mvc.perform(get("/content-assistant.js"))
             .andExpect(status().isOk())
