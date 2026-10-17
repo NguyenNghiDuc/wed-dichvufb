@@ -28,6 +28,32 @@ public class PasswordChangeService {
         this.limiter = limiter;
     }
 
+    /**
+     * Signs out all sessions without changing the user's actual password.
+     * Re-encoding the same password gives a fresh BCrypt salt and thus a fresh
+     * credential revision. Subsequent protected requests reject old principals.
+     */
+    @Transactional
+    public void revokeAll(AccountPrincipal principal, String currentPassword) {
+        if (principal == null || principal.getAccountId() == null)
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+        if (currentPassword == null || currentPassword.isBlank())
+            throw new IllegalArgumentException("Vui lòng nhập mật khẩu hiện tại.");
+
+        limiter.check("session-revoke:" + principal.getAccountId(), 10, Duration.ofHours(1));
+        User account = users.lockById(principal.getAccountId())
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
+        if (!account.isEnabled()
+                || !account.getUsername().equals(principal.getUsername())
+                || !principal.isCredentialCurrent(account.getPassword())) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+        }
+        if (!passwords.matches(currentPassword, account.getPassword())) {
+            throw new IllegalArgumentException("Mật khẩu hiện tại không chính xác.");
+        }
+        account.setPassword(passwords.encode(currentPassword));
+    }
+
     @Transactional
     public void change(AccountPrincipal principal, String currentPassword,
                        String newPassword, String confirmation) {
