@@ -15,11 +15,12 @@ import org.springframework.web.server.ResponseStatusException;
 public class CampaignWebController {
     private final CampaignOrderService service;
     private final CampaignReviewService reviews;
+    private final CampaignAttentionService attention;
     private final com.example.fbservice.catalog.ServiceCatalogService catalog;
     public CampaignWebController(CampaignOrderService service,
         com.example.fbservice.catalog.ServiceCatalogService catalog,
-        CampaignReviewService reviews) {
-        this.service=service;this.catalog=catalog;this.reviews=reviews;
+        CampaignReviewService reviews, CampaignAttentionService attention) {
+        this.service=service;this.catalog=catalog;this.reviews=reviews;this.attention=attention;
     }
 
     @GetMapping
@@ -39,6 +40,9 @@ public class CampaignWebController {
         // Aggregate across every page, including orders hidden by the current filter.
         model.addAttribute("summary", service.summaryForOwner(principal.getName()));
         model.addAttribute("orders", records.getContent());
+        // Only current owner's 20 visible records; no additional database queries.
+        model.addAttribute("attentionById", records.getContent().stream()
+            .collect(java.util.stream.Collectors.toMap(CampaignOrder::getId, attention::inspect)));
         model.addAttribute("pageNumber", page);
         model.addAttribute("hasPrevious", records.hasPrevious());
         model.addAttribute("hasNext", records.hasNext());
@@ -95,6 +99,7 @@ public class CampaignWebController {
         }
         model.addAttribute("order", service.findMineById(principal.getName(), id));
         model.addAttribute("review", reviews.findForOwner(principal.getName(), id).orElse(null));
+        model.addAttribute("attention", attention.inspect(service.findMineById(principal.getName(), id)));
         model.addAttribute("events", history.getContent());
         model.addAttribute("pageNumber", page);
         model.addAttribute("totalPages", history.getTotalPages());

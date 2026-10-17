@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Chi tiết chiến dịch · GrowLab</title>
 <link rel="stylesheet" th:href="@{/style.css}">
+<link rel="stylesheet" th:href="@{/customer.css}">
 </head>
 <body>
 <main class="page container">
@@ -21,6 +22,11 @@
     <div class="step"><strong>Nền tảng</strong><p th:text="${order.platform.displayName}"></p></div>
     <div class="step"><strong>Dịch vụ</strong><p th:text="${order.serviceType.displayName}"></p></div>
     <div class="step"><strong>Báo giá dự kiến</strong><p th:text="|${order.quotedPriceVnd} đ|"></p></div>
+  </div>
+  <div class="notice" th:if="${attention.needsAttention()}">
+    <strong th:text="${attention.shortLabel()}">Cần hỗ trợ</strong>
+    <p th:text="${attention.message()}"></p>
+    <a class="table-link" th:href="@{/support/new}">Gửi yêu cầu hỗ trợ →</a>
   </div>
   <section class="card customer-review" aria-label="Đánh giá dịch vụ">
     <h2>Đánh giá dịch vụ</h2>
