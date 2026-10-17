@@ -12,18 +12,38 @@ a direct 403 when opening public /login.
 - Always land on /campaigns after successful form login to avoid legacy /error saved requests
   in sessions. Deep links will no longer automatically resume after login.
 - Provide an SVG favicon, and redirect legacy /favicon.ico requests to it.
-- Invalid authenticated sessions are invalidated and continue as anonymous, preserving
-  proper authentication checks on protected endpoints (fix/login-stale-session-403).
+- Public GET /login remains accessible with stale cookies. On a private GET, revoked sessions
+  are invalidated and redirected to /login?sessionExpired; unsafe methods return 401.
+  Protected-route authorization is still enforced (fix/login-stale-session-403).
 - Keep CSRF required everywhere except the signed webhook POST route.
 - Regression tests check error dispatch, favicon, admin access and redirects.
 
-## Manual Codespaces verification
-1. In the Codespaces terminal, switch to the tested fix branch.
-2. Stop any older Spring Boot processes on port 8000, then restart the app.
-3. Confirm the forwarded port has protocol HTTP and appropriate visibility.
-4. Test /login, /favicon.ico, /favicon.svg, /error?continue, /campaigns (logged-out),
-   and POST /login with a known staging account.
-5. Test with old browser session cookie and fresh incognito session.
+## Codespaces verification (not yet manually accepted)
+The fix is on a draft pull request, not deployed to Codespaces by a GitHub commit.
+Open the Codespaces terminal and run:
 
-If a port proxy still blocks requests, inspect the forwarded-port authorization and
-restart Codespaces. App-side changes cannot repair GitHub proxy permissions.
+```bash
+git fetch origin
+git switch fix/login-stale-session-403
+git pull --ff-only origin fix/login-stale-session-403
+PORT=8000 bash scripts/codespaces-login.sh check
+```
+
+If this reports the old revision, 403, or cannot connect, inspect the listener:
+`ss -ltnp | grep ':8000'`. Stop the older Java process **after checking its PID**.
+Then start the new build (it does not kill an existing server automatically):
+
+```bash
+PORT=8000 bash scripts/codespaces-login.sh run
+```
+
+In a separate terminal run `PORT=8000 bash scripts/codespaces-login.sh check`.
+A pass requires local `GET /login` = HTTP 200 and the response header
+`X-GrowLab-Auth-Revision: session-recovery-v2`. For port 8080 use `PORT=8080`.
+
+If the local check succeeds but the browser's `*.app.github.dev` forwarded
+URL still returns 403, inspect GitHub Codespaces port forwarding visibility,
+authentication and stale browser cookies; it may be a GitHub proxy denial rather
+than a Spring Security response. Validate /favicon.ico, /favicon.svg,
+/error?continue, logged-out /campaigns, login, CSRF, and Admin permissions in a
+real browser before approving a merge. CodeQL issue #13 also remains open.
