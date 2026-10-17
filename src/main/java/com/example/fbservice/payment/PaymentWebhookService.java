@@ -5,6 +5,7 @@ import com.example.fbservice.notification.AccountNotification;
 import com.example.fbservice.notification.AccountNotificationRepository;
 import com.example.fbservice.repository.DepositRequestRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.core.JsonParser;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.time.Instant;
@@ -82,8 +83,17 @@ public class PaymentWebhookService {
         }
 
         PaymentWebhookEvent event;
-        try {
-            event = json.readValue(body, PaymentWebhookEvent.class);
+        // Fail closed for duplicate JSON field names and trailing JSON documents.
+        // Never allow a producer and receiver to interpret the same signed
+        // payload as different payment references.
+        try (JsonParser parser = json.getFactory().createParser(body)) {
+            parser.enable(JsonParser.Feature.STRICT_DUPLICATE_DETECTION);
+            event = json.readValue(parser, PaymentWebhookEvent.class);
+            if (parser.nextToken() != null) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Trailing payment data");
+            }
+        } catch (ResponseStatusException ex) {
+            throw ex;
         } catch (Exception ex) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid payment event");
         }
@@ -91,6 +101,7 @@ public class PaymentWebhookService {
                 || !event.eventId().matches("[a-zA-Z0-9_-]{8,100}")
                 || event.depositRequestId() == null || event.depositRequestId() < 1
                 || event.amountVnd() == null || event.amountVnd() < 1000
+                || event.amountVnd() > 1000000000L
                 || !"SETTLED".equals(event.status())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid settlement event");
         }
