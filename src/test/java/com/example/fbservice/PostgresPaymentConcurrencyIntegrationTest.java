@@ -38,6 +38,7 @@ class PostgresPaymentConcurrencyIntegrationTest {
     @Autowired MockMvc mvc;
     @Autowired DepositRequestRepository deposits;
     @Autowired PaymentReceiptRepository receipts;
+    @Autowired org.springframework.jdbc.core.JdbcTemplate jdbc;
 
     private DepositRequest createDeposit(String owner) {
         DepositRequest request = new DepositRequest();
@@ -58,6 +59,27 @@ class PostgresPaymentConcurrencyIntegrationTest {
                 .header("X-GrowLab-Timestamp", timestamp)
                 .header("X-GrowLab-Signature", signature)
                 .contentType("application/json").content(body)).andReturn().getResponse().getStatus();
+    }
+
+    @Test
+    void flywayCreatedCorrectIndexAndReceiptUniqueness() {
+        Integer indexCount = jdbc.queryForObject("""
+                SELECT COUNT(*) FROM pg_indexes
+                WHERE schemaname = current_schema()
+                  AND (
+                    (tablename = 'deposit_request'
+                       AND indexname = 'idx_deposit_owner_created_id')
+                    OR (tablename = 'payment_receipts'
+                       AND indexname = 'idx_payment_receipts_created_at')
+                  )
+                """, Integer.class);
+        assertThat(indexCount).isEqualTo(2);
+        Integer oldIndexCount = jdbc.queryForObject("""
+                SELECT COUNT(*) FROM pg_indexes
+                WHERE schemaname = current_schema()
+                  AND indexname = 'idx_deposit_owner_created'
+                """, Integer.class);
+        assertThat(oldIndexCount).isZero();
     }
 
     @Test
