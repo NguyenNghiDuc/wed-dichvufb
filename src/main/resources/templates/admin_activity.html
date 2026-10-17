@@ -16,7 +16,9 @@ Không phải nhật ký chống chỉnh sửa toàn diện.</p></div></div>
  th:text="${a.name() == 'ALL' ? 'Tất cả' : a.name() == 'ACCOUNTS' ? 'Tài khoản' : a.name() == 'CATALOG' ? 'Bảng giá' : a.name() == 'ASSIGNMENTS' ? 'Phân công' : 'Trạng thái đơn'}"></option></select></div>
 <div class="admin-filter-actions"><button type="submit" class="btn btn-small">Áp dụng</button>
 <a class="btn btn-outline btn-small" th:href="@{/admin/activity}">Xóa lọc</a></div></form>
-<div class="admin-table-heading"><strong>Hoạt động gần đây</strong><span>Chỉ đọc · Giới hạn 50 dòng</span></div>
+<div class="admin-table-heading"><strong>Hoạt động gần đây</strong><div class="admin-row-actions">
+<span>Chỉ đọc · Giới hạn 50 dòng</span>
+<a class="btn btn-outline btn-small" th:href="@{/admin/activity/export.csv(area=${selectedArea})}">Xuất CSV (50 dòng) ↗</a></div></div>
 <div class="table-panel admin-table-scroll"><table class="data-table admin-table">
 <thead><tr><th>Thời gian</th><th>Loại</th><th>Người thực hiện</th><th>Đối tượng</th><th>Thay đổi</th></tr></thead>
 <tbody><tr th:each="e : ${entries}"><td th:text="${#temporals.format(e.createdAt,'dd/MM/yyyy HH:mm')}"></td>
