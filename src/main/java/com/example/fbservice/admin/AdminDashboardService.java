@@ -5,6 +5,7 @@ import com.example.fbservice.catalog.ServiceCatalogService;
 import com.example.fbservice.model.DepositRequest;
 import com.example.fbservice.repository.*;
 import com.example.fbservice.support.*;
+import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
@@ -25,17 +26,26 @@ public class AdminDashboardService {
         this.deposits=deposits;this.catalog=catalog;
     }
 
+    // Provisional review thresholds, not contractual SLAs; owner sign-off required.
+    private static final long PENDING_REVIEW_HOURS = 48;
+    private static final long IN_PROGRESS_HOURS = 168;
+
     public record Metrics(long totalUsers,long enabledUsers,long totalCampaigns,
                           long pendingCampaigns,long openTickets,long pendingDepositRequests,
-                          int activeServices) {}
+                          int activeServices,long pendingNeedsReview,long progressingNeedsReview) {}
 
     @Transactional(readOnly=true)
     public Metrics metrics(){
+        LocalDateTime now = LocalDateTime.now();
         return new Metrics(users.count(),users.countByEnabledTrue(),campaigns.count(),
             campaigns.countByStatus(CampaignStatus.PENDING_REVIEW),
             tickets.countByStatus(TicketStatus.OPEN),
             deposits.countByStatus("PENDING"),
-            catalog.available().size());
+            catalog.available().size(),
+            campaigns.countByStatusAndCreatedAtBefore(CampaignStatus.PENDING_REVIEW,
+                now.minusHours(PENDING_REVIEW_HOURS)),
+            campaigns.countByStatusAndUpdatedAtBefore(CampaignStatus.IN_PROGRESS,
+                now.minusHours(IN_PROGRESS_HOURS)));
     }
 
     @Transactional(readOnly=true)

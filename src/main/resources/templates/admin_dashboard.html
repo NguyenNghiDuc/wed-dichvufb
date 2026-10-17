@@ -12,9 +12,12 @@
 <article class="card"><div class="muted">Phiếu hỗ trợ cần xử lý</div><div class="metric" th:text="${metrics.openTickets}">0</div></article>
 <article class="card"><div class="muted">Yêu cầu nạp đang chờ</div><div class="metric" th:text="${metrics.pendingDepositRequests}">0</div></article>
 <article class="card"><div class="muted">Dịch vụ đang mở</div><div class="metric" th:text="${metrics.activeServices}">0</div></article>
+<article class="card"><div class="muted">Chờ duyệt trên 48 giờ</div><div class="metric" th:text="${metrics.pendingNeedsReview}">0</div><a th:href="@{/admin/campaign-orders(status='PENDING_REVIEW')}">Rà soát đơn chờ duyệt →</a></article>
+<article class="card"><div class="muted">Đang xử lý trên 7 ngày từ cập nhật gần nhất</div><div class="metric" th:text="${metrics.progressingNeedsReview}">0</div><a th:href="@{/admin/campaign-orders(status='IN_PROGRESS')}">Rà soát đơn đang xử lý →</a></article>
 </div>
 <section class="section"><div class="page-header"><h2>Mười chiến dịch mới nhất</h2><a class="btn btn-outline btn-small" th:href="@{/admin/campaign-orders}">Tất cả chiến dịch →</a></div>
 <div class="table-panel"><table class="data-table"><thead><tr><th>Mã</th><th>Người dùng</th><th>Dịch vụ</th><th>Báo giá</th><th>Trạng thái</th></tr></thead>
 <tbody><tr th:each="c : ${latest}"><td th:text="${c.id}"></td><td th:text="${c.ownerUsername}"></td><td th:text="${c.serviceType.displayName}"></td><td th:text="|${c.quotedPriceVnd} đ|"></td><td><span class="status" th:text="${c.status.displayName}"></span></td></tr>
 <tr th:if="${#lists.isEmpty(latest)}"><td colspan="5">Chưa có chiến dịch nào.</td></tr></tbody></table></div></section>
+<p class="muted">Các ngưỡng rà soát 48 giờ và 7 ngày chỉ là gợi ý vận hành, chưa phải cam kết thời hạn dịch vụ (SLA). Danh sách liên kết hiển thị toàn bộ đơn theo trạng thái để Admin rà soát; không có tự động thay đổi trạng thái hay gửi cảnh báo.</p>
 <p class="notice">Chưa có thanh toán thật hoặc báo cáo doanh thu đã đối soát. Các yêu cầu nạp tiền chỉ là dữ liệu thử nghiệm.</p></main></body></html>
