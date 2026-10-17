@@ -32,7 +32,7 @@
     <div class="eyebrow">AI nội dung · Gợi ý có kiểm soát</div>
     <h2 id="ai-draft-heading">Trợ lý viết nội dung</h2>
     <p class="muted">Chỉ tạo bản gợi ý, không tự đăng. Nếu đã cấu hình AI, dữ liệu nhập sẽ gửi tới nhà cung cấp AI; không nhập dữ liệu cá nhân hoặc bí mật. Thiếu API key, tính năng sẽ thông báo chưa khả dụng.</p>
-    <form id="ai-content-form" th:attr="data-api-url=@{/api/v1/ai/generate},data-fallback-url=@{/api/v1/content-suggestions}">
+    <form id="ai-content-form" th:attr="data-api-url=@{/api/v1/ai/generate},data-fallback-url=@{/api/v1/content-suggestions},data-plan-fallback-url=@{/api/v1/content-templates/plan}">
       <div class="field"><label for="ai-platform">Nền tảng</label>
         <select id="ai-platform" name="platform" required><option th:each="p : ${platforms}" th:value="${p.name()}" th:text="${p.displayName}"></option></select></div>
       <div class="field"><label for="ai-topic">Chủ đề</label><input id="ai-topic" name="topic" minlength="3" maxlength="150" required></div>
