@@ -43,6 +43,17 @@ public class SupportAdminController {
         return "admin_support_detail";
     }
 
+    @PostMapping("/{id}/claim")
+    public String claim(@PathVariable Long id, Principal principal, Model model) {
+        try {
+            service.claimAsStaff(principal.getName(), id);
+            return "redirect:/admin/support/" + id;
+        } catch (IllegalArgumentException exception) {
+            model.addAttribute("error", exception.getMessage());
+            return details(id, 0, model);
+        }
+    }
+
     @PostMapping("/{id}/priority")
     public String prioritize(@PathVariable Long id, @RequestParam TicketPriority priority,
                              Model model) {
