@@ -125,6 +125,24 @@ class PaymentWebhookIntegrationTest {
     }
 
     @Test
+    void rejectsDuplicateJsonKeysTrailingDocumentsAndAmountsOutsideDepositLimit() throws Exception {
+        DepositRequest valid = newDeposit("webhook-json-owner", 50000);
+        String base = event("sandboxJsonEvent123", valid.getId(), 50000, "SETTLED");
+        String duplicated = base.replace("\\"eventId\\":",
+                "\\"eventId\\":\\"otherEvent123\\",\\"eventId\\":");
+        long before = receipts.count();
+        mvc.perform(request(duplicated, now())).andExpect(status().isBadRequest());
+        mvc.perform(request(base + " {}", now())).andExpect(status().isBadRequest());
+        DepositRequest excessive = newDeposit("webhook-max-owner", 1000000001L);
+        mvc.perform(request(event("sandboxHugeEvent123", excessive.getId(),
+                        1000000001L, "SETTLED"), now()))
+                .andExpect(status().isBadRequest());
+        assertThat(receipts.count()).isEqualTo(before);
+        assertThat(deposits.findById(valid.getId()).orElseThrow().getStatus())
+                .isEqualTo("PENDING");
+    }
+
+    @Test
     void transportLimitsRawBodyWithoutPersistingSettlement() throws Exception {
         DepositRequest deposit = newDeposit("webhook-owner-limit", 99000);
         String timestamp = now();
