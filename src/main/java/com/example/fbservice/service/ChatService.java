@@ -2,6 +2,10 @@ package com.example.fbservice.service;
 
 import com.example.fbservice.model.ChatMessage;
 import com.example.fbservice.repository.ChatMessageRepository;
+import com.example.fbservice.repository.UserRepository;
+import com.example.fbservice.notification.AccountNotification;
+import com.example.fbservice.notification.AccountNotificationRepository;
+import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -17,14 +21,35 @@ public class ChatService {
             Sort.Order.desc("timestamp"), Sort.Order.desc("id"));
 
     private final ChatMessageRepository messages;
+    private final UserRepository users;
+    private final AccountNotificationRepository notifications;
 
-    public ChatService(ChatMessageRepository messages) {
+    public ChatService(ChatMessageRepository messages, UserRepository users,
+                       AccountNotificationRepository notifications) {
         this.messages = messages;
+        this.users = users;
+        this.notifications = notifications;
     }
 
     @Transactional
     public ChatMessage saveMessage(ChatMessage message) {
-        return messages.save(message);
+        ChatMessage saved = messages.save(message);
+        // Never send user-controlled message bodies in notifications.
+        // No notification rows for nonexistent or self-addressed accounts.
+        if (!saved.getSender().equals(saved.getReceiver()) &&
+                users.existsByUsername(saved.getReceiver())) {
+            notifications.save(new AccountNotification(saved.getReceiver(),
+                "Tin nhắn mới", "Có phản hồi mới từ " + saved.getSender() + "."));
+        }
+        return saved;
+    }
+
+    @Transactional
+    public int markThreadRead(String viewer, String other) {
+        if (viewer == null || viewer.isBlank() || other == null ||
+                !other.matches("[a-zA-Z0-9._-]{3,40}"))
+            throw new IllegalArgumentException("Invalid conversation participant");
+        return messages.markThreadRead(viewer, other, LocalDateTime.now());
     }
 
     /** Both directions, always scoped to the logged-in user by the controller. */

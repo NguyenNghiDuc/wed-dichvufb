@@ -4,6 +4,7 @@ import com.example.fbservice.model.ChatMessage;
 import com.example.fbservice.service.ChatService;
 import java.security.Principal;
 import java.util.List;
+import java.util.Map;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -39,6 +40,19 @@ public class ChatController {
             return chat.threadFor(principal.getName(), other, page, size);
         } catch (IllegalArgumentException exception) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid chat participant or pagination");
+        }
+    }
+
+    /**
+     * Mark only messages received by the authenticated account from this contact.
+     * Repeating the call is harmless and returns zero.
+     */
+    @PostMapping("/thread/{other}/read")
+    public Map<String, Integer> markRead(@PathVariable String other, Principal principal) {
+        try {
+            return Map.of("marked", chat.markThreadRead(principal.getName(), other));
+        } catch (IllegalArgumentException exception) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid chat participant");
         }
     }
 
