@@ -3,6 +3,8 @@ package com.example.fbservice;
 import com.example.fbservice.campaign.SocialPlatform;
 import com.example.fbservice.content.ContentDraftService;
 import com.example.fbservice.content.DraftStatus;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -40,4 +42,20 @@ class PostgresContentSearchIntegrationTest {
         assertThat(drafts.searchMine(other,0,SocialPlatform.YOUTUBE,null,"100%_today").getTotalElements()).isZero();
         assertThat(drafts.searchMine(owner,0,SocialPlatform.TIKTOK,null,"100xtoday").getTotalElements()).isEqualTo(1);
     }
+    @Test
+    void postgresUtcPlannedDateWindowRemainsOwnerScoped() {
+        LocalDateTime now=LocalDateTime.now(ZoneOffset.UTC).withSecond(0).withNano(0);
+        String owner="pg-utc-draft-29";
+        drafts.save(owner,SocialPlatform.YOUTUBE,"Within period",
+            "Education",now.plusDays(3));
+        drafts.save(owner,SocialPlatform.YOUTUBE,"Outside period",
+            "Education",now.plusDays(20));
+        drafts.save("pg-other-utc-draft-29",SocialPlatform.YOUTUBE,
+            "PRIVATE-SCHEDULE", "Not available to first owner",now.plusDays(3));
+        var found=drafts.searchMine(owner,0,SocialPlatform.YOUTUBE,DraftStatus.PLANNED,
+            "period",now.plusDays(2),now.plusDays(5));
+        assertThat(found.getTotalElements()).isEqualTo(1);
+        assertThat(found.getContent().get(0).getTitle()).isEqualTo("Within period");
+    }
+
 }
