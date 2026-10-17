@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Nhắn tin hỗ trợ · GrowLab</title><link rel="stylesheet" th:href="@{/style.css}"></head>
+<body><main class="page container">
+<a class="table-link" th:href="@{/support}">← Trung tâm hỗ trợ</a>
+<div class="page-header"><div><div class="eyebrow">GrowLab chat</div><h1>Nhắn tin hỗ trợ</h1>
+<p class="muted">Trao đổi với nhân viên hoặc mở một hội thoại với tài khoản liên hệ.</p></div></div>
+<div class="form-panel"><form method="get" th:action="@{/chat/ui/open}" role="search">
+<div class="field"><label for="chatContact">Tài khoản liên hệ</label>
+<input id="chatContact" name="contact" maxlength="40" minlength="3" required autocomplete="off"
+       pattern="[a-zA-Z0-9._-]{3,40}" placeholder="Nhập tên tài khoản"></div>
+<button type="submit" class="btn">Mở hội thoại</button></form></div>
+<section class="section"><h2>Nhân viên hỗ trợ đang hoạt động</h2>
+<div class="card-grid">
+<a class="card chat-contact" th:each="person : ${staff}" th:href="@{/chat/ui/{other}(other=${person.username})}">
+<span class="icon-square" aria-hidden="true">✉</span><h3 th:text="${person.username}"></h3>
+<span class="muted">Mở cuộc trò chuyện →</span></a></div>
+<p th:if="${#lists.isEmpty(staff)}" class="notice">Chưa có nhân viên trực tuyến trong danh sách.
+Bạn vẫn có thể gửi yêu cầu hỗ trợ.</p>
+</section></main></body></html>

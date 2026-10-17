@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hội thoại · GrowLab</title><link rel="stylesheet" th:href="@{/style.css}"></head>
+<body><main class="page container">
+<a class="table-link" th:href="@{/chat/ui}">← Hộp thoại</a>
+<div class="page-header"><div><div class="eyebrow">Chat trực tiếp</div>
+<h1 th:text="|Trò chuyện với ${other}|">Trò chuyện</h1>
+<p class="muted">Tin nhắn mới nhất hiển thị trước. Trang chỉ hiển thị nội dung của hai tài khoản.</p></div></div>
+<form method="post" th:action="@{/chat/ui/{other}/read(other=${other})}" class="actions">
+<input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+<button class="btn btn-outline btn-small" type="submit">Đánh dấu đã đọc</button></form>
+<section class="chat-panel" aria-label="Lịch sử tin nhắn">
+<article class="chat-bubble" th:each="m : ${messages}" th:classappend="${m.sender == viewer} ? ' sent' : ' received'">
+<div class="chat-meta"><strong th:text="${m.sender == viewer ? 'Bạn' : m.sender}">Người gửi</strong>
+<small th:text="${#temporals.format(m.timestamp,'dd/MM/yyyy HH:mm')}"></small></div>
+<p th:text="${m.content}"></p><small th:if="${m.sender == viewer}"
+th:text="${m.readAt != null ? 'Đã đọc' : 'Chưa đọc'}"></small></article>
+<p class="muted" th:if="${#lists.isEmpty(messages)}">Chưa có tin nhắn trong cuộc hội thoại này.</p></section>
+<nav class="actions" aria-label="Phân trang tin nhắn">
+<a th:if="${hasPrevious}" class="btn btn-outline btn-small" th:href="@{/chat/ui/{other}(other=${other},page=${pageNumber - 1})}">← Tin mới hơn</a>
+<span class="muted" th:text="|Trang ${pageNumber + 1}|">Trang 1</span>
+<a th:if="${hasNext}" class="btn btn-outline btn-small" th:href="@{/chat/ui/{other}(other=${other},page=${pageNumber + 1})}">Tin cũ hơn →</a></nav>
+<div class="form-panel chat-composer"><form method="post" th:action="@{/chat/ui/{other}/send(other=${other})}">
+<input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+<div class="field"><label for="chatBody">Nội dung tin nhắn</label>
+<textarea id="chatBody" name="content" maxlength="255" minlength="1" required></textarea></div>
+<button class="btn" type="submit">Gửi tin nhắn</button></form></div>
+</main></body></html>
