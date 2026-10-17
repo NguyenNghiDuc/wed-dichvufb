@@ -18,6 +18,7 @@
 <option th:each="s : ${statuses}" th:value="${s.name()}" th:text="${s.displayName}" th:selected="${s == selectedStatus}"></option></select>
 <button type="submit" class="btn btn-small">Tìm kiếm</button>
 <a class="btn btn-outline btn-small" th:href="@{/campaigns}">Xóa lọc</a>
+<a class="btn btn-outline btn-small" th:href="@{/campaigns/export.csv(orderId=${orderId},status=${selectedStatus})}">↓ Xuất CSV theo bộ lọc</a>
 </form>
 
 <div class="table-panel"><table class="data-table"><thead><tr><th>Mã đơn</th><th>Nền tảng</th><th>Gói dịch vụ</th><th>Báo giá</th><th>Ngày tạo</th><th>Trạng thái</th><th>Thao tác</th></tr></thead><tbody>
