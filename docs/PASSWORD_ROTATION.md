@@ -25,3 +25,9 @@
 - BCrypt hash được tái tạo với salt mới trên **cùng mật khẩu**, làm mới credential revision của account, không thay đổi mật khẩu mà người dùng phải nhớ.
 - Tất cả phiên cũ (kể cả phiên hiện tại) không còn dùng được ở request riêng tiếp theo; POST thành công trả lại trang login.
 - Giới hạn tối đa 10 lần thử/giờ/tài khoản trên mỗi instance. Không có khả năng đẩy lệnh đóng kết nối WebSocket ngay lập tức hoặc thu hồi session khi nó không gửi request; phần realtime cần session store/pubsub riêng.
+
+## Đăng ký và giới hạn byte BCrypt
+
+- BCrypt dùng giới hạn đầu vào 72 byte. Form đăng ký kiểm tra **byte UTF-8**, không chỉ số lượng UTF-16 code unit, tránh hai mật khẩu rất dài có chung tiền tố 72 byte được đối xử tương đương.
+- Tính năng đăng ký giữ yêu cầu tối thiểu 8 ký tự (tương thích khách cũ); đổi mật khẩu mới yêu cầu tối thiểu 12 ký tự và tối đa 72 byte UTF-8.
+- Các mật khẩu đã mã hóa trước đây không bị thay đổi; không tự di trú hash hoặc tài khoản.

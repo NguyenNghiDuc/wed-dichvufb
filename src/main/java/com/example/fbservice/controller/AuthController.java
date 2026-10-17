@@ -30,8 +30,9 @@ public class AuthController {
             model.addAttribute("error","Tên tài khoản cần 3–40 ký tự chữ, số, dấu chấm hoặc gạch.");
             return "register";
         }
-        if(password==null||password.length()<8||password.length()>72){
-            model.addAttribute("error","Mật khẩu cần từ 8 đến 72 ký tự.");
+        if(password==null||password.length()<8||
+           password.getBytes(java.nio.charset.StandardCharsets.UTF_8).length>72){
+            model.addAttribute("error","Mật khẩu cần ít nhất 8 ký tự và tối đa 72 byte UTF-8.");
             return "register";
         }
         String cleanEmail=email==null?null:email.trim();
