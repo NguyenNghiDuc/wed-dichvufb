@@ -19,6 +19,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class DepositHistoryPaginationIntegrationTest {
     @Autowired MockMvc mvc;
     @Autowired DepositService service;
+    @Autowired com.example.fbservice.repository.DepositRequestRepository repository;
 
     @Test
     @WithMockUser(username = "deposit-page-owner", roles = "USER")
@@ -44,6 +45,23 @@ class DepositHistoryPaginationIntegrationTest {
                 .andExpect(model().attribute("deposits", hasSize(2)))
                 .andExpect(model().attribute("hasPrevious", true))
                 .andExpect(model().attribute("hasNext", false));
+    }
+
+    @Test
+    @WithMockUser(username = "deposit-page-tiebreak", roles = "USER")
+    void equalTimestampsAreOrderedDeterministicallyById() throws Exception {
+        java.time.LocalDateTime sameTime = java.time.LocalDateTime.of(2026, 10, 18, 0, 0);
+        java.util.List<Long> ids = new java.util.ArrayList<>();
+        for (int i = 0; i < 3; i++) {
+            DepositRequest item = new DepositRequest();
+            item.setAmount(31000 + i);
+            item.setOwnerUsername("deposit-page-tiebreak");
+            item.setCreatedAt(sameTime);
+            ids.add(repository.save(item).getId());
+        }
+        org.assertj.core.api.Assertions.assertThat(service.history("deposit-page-tiebreak", 0)
+                .getContent()).extracting(DepositRequest::getId)
+                .containsExactly(ids.get(2), ids.get(1), ids.get(0));
     }
 
     @Test
