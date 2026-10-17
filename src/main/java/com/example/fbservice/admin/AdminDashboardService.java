@@ -18,12 +18,13 @@ public class AdminDashboardService {
     private final SupportTicketRepository tickets;
     private final DepositRequestRepository deposits;
     private final ServiceCatalogService catalog;
+    private final AdminAnalyticsRepository analytics;
 
     public AdminDashboardService(UserRepository users,CampaignOrderRepository campaigns,
                                 SupportTicketRepository tickets,DepositRequestRepository deposits,
-                                ServiceCatalogService catalog){
+                                ServiceCatalogService catalog, AdminAnalyticsRepository analytics){
         this.users=users;this.campaigns=campaigns;this.tickets=tickets;
-        this.deposits=deposits;this.catalog=catalog;
+        this.deposits=deposits;this.catalog=catalog;this.analytics=analytics;
     }
 
     // Provisional review thresholds, not contractual SLAs; owner sign-off required.
@@ -46,6 +47,24 @@ public class AdminDashboardService {
                 now.minusHours(PENDING_REVIEW_HOURS)),
             campaigns.countByStatusAndUpdatedAtBefore(CampaignStatus.IN_PROGRESS,
                 now.minusHours(IN_PROGRESS_HOURS)));
+    }
+
+    public record OperationsSummary(List<AdminStatusBreakdown> statuses,
+                                    List<AdminStaffLoad> staffLoad,
+                                    long pipelineQuotedValueVnd) {}
+
+    @Transactional(readOnly=true)
+    public OperationsSummary operations() {
+        List<AdminStatusBreakdown> breakdown = analytics.groupByStatus();
+        // These are indicative quotes on unclosed orders; NEVER real revenue.
+        long pipeline = breakdown.stream()
+            .filter(r -> r.status() == CampaignStatus.PENDING_REVIEW
+                      || r.status() == CampaignStatus.APPROVED
+                      || r.status() == CampaignStatus.IN_PROGRESS)
+            .mapToLong(AdminStatusBreakdown::quotedValueVnd).sum();
+        List<AdminStaffLoad> staff = analytics.activeStaffLoad(
+            List.of(CampaignStatus.APPROVED, CampaignStatus.IN_PROGRESS), PageRequest.of(0, 8));
+        return new OperationsSummary(breakdown, staff, pipeline);
     }
 
     @Transactional(readOnly=true)

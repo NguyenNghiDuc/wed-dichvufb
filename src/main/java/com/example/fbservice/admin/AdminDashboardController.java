@@ -13,6 +13,7 @@ public class AdminDashboardController {
     public String dashboard(Model model){
         model.addAttribute("metrics",dashboard.metrics());
         model.addAttribute("latest",dashboard.latestCampaigns());
+        model.addAttribute("operations",dashboard.operations());
         return "admin_dashboard";
     }
 }
