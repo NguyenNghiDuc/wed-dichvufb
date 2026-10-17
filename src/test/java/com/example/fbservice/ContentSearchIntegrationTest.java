@@ -110,6 +110,8 @@ class ContentSearchIntegrationTest {
             .andExpect(status().isOk())
             .andExpect(content().string(containsString("Trợ lý viết nội dung")))
             .andExpect(content().string(containsString("content-assistant.js")))
+            .andExpect(content().string(containsString("copy-ai-to-draft")))
+            .andExpect(content().string(containsString("create-content-form")))
             .andExpect(content().string(containsString("content-metrics.js")))
             .andExpect(content().string(containsString("không xác minh số liệu")))
             .andExpect(content().string(containsString("Xóa bộ lọc")));
@@ -117,6 +119,8 @@ class ContentSearchIntegrationTest {
             .andExpect(status().isOk())
             .andExpect(content().string(containsString("credentials: \"same-origin\"")))
             .andExpect(content().string(containsString("result.value = responseData.content")))
+            .andExpect(content().string(containsString("draftBody.value = draftText")))
+            .andExpect(content().string(not(containsString("draftForm.submit"))))
             .andExpect(content().string(not(containsString("innerHTML"))));
     }
 
