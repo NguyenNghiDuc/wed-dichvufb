@@ -1,5 +1,5 @@
-<!doctype html><html lang="vi" xmlns:th="http://www.thymeleaf.org"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Admin · Bảng giá GrowLab</title><link rel="stylesheet" th:href="@{/style.css}"></head><body>
-<main class="page container"><a th:href="@{/admin/campaign-orders}" class="table-link">← Dashboard Admin</a>
+<!doctype html><html lang="vi" xmlns:th="http://www.thymeleaf.org"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Admin · Bảng giá GrowLab</title><link rel="stylesheet" th:href="@{/style.css}"><link rel="stylesheet" th:href="@{/admin.css}"></head><body class="admin-body">
+<main class="page container admin-page"><a th:href="@{/admin/campaign-orders}" class="table-link">← Dashboard Admin</a>
 <div class="page-header"><div><div class="eyebrow">Quản lý dịch vụ</div><h1>Bảng giá và trạng thái bán</h1><p class="muted">Giá được đọc từ database khi khách tạo đơn. Giá cũ trong các đơn đã lập được giữ nguyên.</p></div></div>
 <p class="error" th:if="${error}" th:text="${error}"></p><div class="card-grid">
 <article th:each="s : ${services}" class="card"><h3 th:text="${s.title}"></h3><p th:text="${s.code}" class="muted"></p>

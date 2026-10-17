@@ -1,7 +1,7 @@
 <!doctype html><html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Lịch sử phân công · GrowLab</title><link rel="stylesheet" th:href="@{/style.css}"></head><body>
-<main class="page container"><a th:href="@{/admin/campaign-orders}" class="table-link">← Quản lý chiến dịch</a>
+<title>Lịch sử phân công · GrowLab</title><link rel="stylesheet" th:href="@{/style.css}"><link rel="stylesheet" th:href="@{/admin.css}"></head><body class="admin-body">
+<main class="page container admin-page"><a th:href="@{/admin/campaign-orders}" class="table-link">← Quản lý chiến dịch</a>
 <div class="page-header"><div><div class="eyebrow">Nhật ký</div><h1 th:text="|Phân công chiến dịch #${order.id}|"></h1></div></div>
 <div class="table-panel"><table class="data-table"><thead><tr><th>Ngày</th><th>Admin</th><th>Trước</th><th>Sau</th></tr></thead>
 <tbody><tr th:each="e : ${events}"><td th:text="${#temporals.format(e.createdAt,'dd/MM/yyyy HH:mm')}"></td>
