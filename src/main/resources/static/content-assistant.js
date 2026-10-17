@@ -80,6 +80,28 @@ document.addEventListener("DOMContentLoaded", () => {
         if (response.status === 429) status.textContent = "Bạn đã dùng hết lượt AI tạm thời.";
         else if (response.status === 503) {
           status.textContent = "AI chưa được cấu hình hoặc dịch vụ đã hết hạn mức.";
+          if (payload.task === "CONTENT_PLAN" && payload.topic.length <= 100) {
+            const params = new URLSearchParams({
+              platform: payload.platform, topic: payload.topic, days: String(payload.days)
+            });
+            const local = await fetch(form.dataset.planFallbackUrl + "?" + params.toString(), {
+              credentials: "same-origin"
+            });
+            if (local.ok) {
+              const template = await local.json();
+              if (template.mode === "TEMPLATE_ONLY" && Array.isArray(template.suggestions)
+                  && template.suggestions.length === payload.days
+                  && template.suggestions.every(item =>
+                      Number.isInteger(item.day) && item.day >= 1 && item.day <= 30 &&
+                      typeof item.format === "string" && item.format.length <= 100 &&
+                      typeof item.idea === "string" && item.idea.length <= 500)) {
+                result.value = template.suggestions.map(item =>
+                  "Ngày " + item.day + ": " + item.format + " — " + item.idea).join("\n");
+                if (copyToDraft) copyToDraft.disabled = result.value.length > 3000;
+                status.textContent = "Đang dùng KẾ HOẠCH THEO MẪU, KHÔNG phải AI hay lịch tự động.";
+              }
+            }
+          }
           if (payload.task === "CAPTION" && payload.topic.length <= 100) {
             const params = new URLSearchParams({ platform: payload.platform, topic: payload.topic });
             const local = await fetch(form.dataset.fallbackUrl + "?" + params.toString(), {
