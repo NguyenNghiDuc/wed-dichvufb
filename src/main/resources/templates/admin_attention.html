@@ -1,0 +1,39 @@
+<!doctype html><html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hàng đợi cần xử lý · GrowLab Admin</title>
+<link rel="stylesheet" th:href="@{/style.css}"><link rel="stylesheet" th:href="@{/admin.css}"></head>
+<body class="admin-body"><main class="page container admin-page">
+<nav class="admin-breadcrumb" aria-label="Điều hướng"><a th:href="@{/admin/dashboard}">← Trung tâm điều hành</a>
+<span>/</span><strong>Hàng đợi ưu tiên</strong></nav>
+<div class="page-header admin-page-header"><div>
+<div class="eyebrow">Vận hành và phân công</div><h1>Hàng đợi cần rà soát</h1>
+<p class="muted">Chỉ những đơn thực sự thuộc bộ lọc được hiển thị. Không tự động thay đổi trạng thái, không tạo giao dịch.</p>
+</div><a class="btn btn-outline" th:href="@{/admin/campaign-orders}">Quản lý toàn bộ đơn ↗</a></div>
+<form method="get" th:action="@{/admin/attention}" class="admin-filterbar" role="search"
+aria-label="Chọn hàng đợi"><div class="admin-filter-field">
+<label for="queue">Hàng đợi ưu tiên</label><select name="queue" id="queue">
+<option th:each="q : ${queues}" th:value="${q.name()}" th:text="${q.label}" th:selected="${q == queue}"></option>
+</select></div><div class="admin-filter-actions"><button class="btn btn-small" type="submit">Xem hàng đợi</button></div></form>
+<div class="admin-table-heading"><strong th:text="${queue.label}">Các đơn cần rà soát</strong>
+<span>20 đơn / trang · cũ nhất trước</span></div>
+<div class="table-panel admin-table-scroll"><table class="data-table admin-table">
+<thead><tr><th>Mã</th><th>Khách hàng</th><th>Dịch vụ</th><th>Ngày tạo</th><th>Cập nhật cuối</th><th>Phụ trách</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
+<tbody><tr th:each="o : ${orders}"><td class="admin-id" th:text="|#${o.id}|"></td>
+<td th:text="${o.ownerUsername}"></td>
+<td th:text="${o.serviceType.displayName}"></td>
+<td th:text="${#temporals.format(o.createdAt,'dd/MM/yyyy HH:mm')}"></td>
+<td th:text="${#temporals.format(o.updatedAt,'dd/MM/yyyy HH:mm')}"></td>
+<td th:text="${o.assigneeUsername != null ? o.assigneeUsername : 'Chưa phân công'}"></td>
+<td><span class="admin-status" th:text="${o.status.displayName}"></span></td>
+<td><a class="btn btn-outline btn-small" th:href="@{/admin/campaign-orders(orderId=${o.id})}">Xem đơn</a></td></tr>
+<tr th:if="${#lists.isEmpty(orders)}"><td colspan="8" class="admin-empty">Không có đơn thuộc hàng đợi này.</td></tr>
+</tbody></table></div>
+<nav class="admin-pager" aria-label="Phân trang hàng đợi">
+<a th:if="${hasPrevious}" class="btn btn-outline btn-small"
+ th:href="@{/admin/attention(queue=${queue},page=${pageNumber - 1})}">← Trước</a>
+<span th:text="|Trang ${pageNumber + 1}|">Trang 1</span>
+<a th:if="${hasNext}" class="btn btn-outline btn-small"
+ th:href="@{/admin/attention(queue=${queue},page=${pageNumber + 1})}">Sau →</a></nav>
+<p class="admin-caption">48 giờ và 7 ngày là ngưỡng tạm thời để ưu tiên kiểm tra, không phải cam kết SLA.
+Lịch sử chuyển trạng thái, phê duyệt và phân công vẫn thuộc trang quản lý đơn có audit.</p>
+</main></body></html>

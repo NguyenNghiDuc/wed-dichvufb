@@ -6,6 +6,7 @@
 <header class="topbar admin-topbar"><nav class="nav container">
 <a class="brand" th:href="@{/admin/dashboard}"><span class="brand-icon">↗</span>Grow<strong>Lab</strong><small class="admin-brand-tag">ADMIN</small></a>
 <div class="nav-links admin-nav"><a th:href="@{/admin/campaign-orders}">Đơn hàng</a>
+<a th:href="@{/admin/attention}">Hàng đợi</a>
 <a th:href="@{/admin/users}">Tài khoản</a><a th:href="@{/admin/catalog}">Dịch vụ</a>
 <a th:href="@{/admin/support}">Hỗ trợ</a><a th:href="@{/admin/activity}">Nhật ký</a><a th:href="@{/staff/campaign-orders}">Công việc</a>
 <form method="post" th:action="@{/logout}"><input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
