@@ -32,10 +32,15 @@ public class SupportAdminController {
     }
 
     @GetMapping("/{id}")
-    public String details(@PathVariable Long id, @RequestParam(defaultValue = "0") int page, Model model) {
+    public String details(@PathVariable Long id, @RequestParam(defaultValue = "0") int page,
+                          Model model, Principal principal) {
         var ticket = service.detailForAdmin(id);
         var messages = service.pageMessagesForStaff(id, page);
         model.addAttribute("ticket", ticket);
+        boolean admin = service.isActiveAdmin(principal.getName());
+        model.addAttribute("canReassign", admin);
+        if (admin) model.addAttribute("assignees", service.eligibleAssignees());
+        model.addAttribute("assignmentHistory", service.assignmentHistory(id));
         model.addAttribute("messages", messages.getContent());
         model.addAttribute("messagePage", page);
         model.addAttribute("hasPrevious", messages.hasPrevious());
@@ -50,19 +55,32 @@ public class SupportAdminController {
             return "redirect:/admin/support/" + id;
         } catch (IllegalArgumentException exception) {
             model.addAttribute("error", exception.getMessage());
-            return details(id, 0, model);
+            return details(id, 0, model, principal);
+        }
+    }
+
+    @PostMapping("/{id}/reassign")
+    public String reassign(@PathVariable Long id,
+                           @RequestParam(required = false) Long employeeId,
+                           Principal principal, Model model) {
+        try {
+            service.reassignAsAdmin(principal.getName(), id, employeeId);
+            return "redirect:/admin/support/" + id;
+        } catch (IllegalArgumentException exception) {
+            model.addAttribute("error", exception.getMessage());
+            return details(id, 0, model, principal);
         }
     }
 
     @PostMapping("/{id}/priority")
     public String prioritize(@PathVariable Long id, @RequestParam TicketPriority priority,
-                             Model model) {
+                             Model model, Principal principal) {
         try {
             service.prioritizeAsStaff(id, priority);
             return "redirect:/admin/support/" + id;
         } catch (IllegalArgumentException exception) {
             model.addAttribute("error", exception.getMessage());
-            return details(id, 0, model);
+            return details(id, 0, model, principal);
         }
     }
 
@@ -74,7 +92,7 @@ public class SupportAdminController {
             return "redirect:/admin/support/" + id;
         } catch (IllegalArgumentException exception) {
             model.addAttribute("error", exception.getMessage());
-            return details(id, 0, model);
+            return details(id, 0, model, principal);
         }
     }
 
@@ -85,7 +103,7 @@ public class SupportAdminController {
             return "redirect:/admin/support/" + id;
         } catch (IllegalArgumentException exception) {
             model.addAttribute("error", exception.getMessage());
-            return details(id, 0, model);
+            return details(id, 0, model, principal);
         }
     }
 }
