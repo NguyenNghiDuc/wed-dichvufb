@@ -1,0 +1,38 @@
+<!doctype html><html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Nhân viên · GrowLab Admin</title><link rel="stylesheet" th:href="@{/style.css}">
+<link rel="stylesheet" th:href="@{/admin.css}"></head><body class="admin-body">
+<main class="page container admin-page"><nav class="admin-breadcrumb" aria-label="Điều hướng">
+<a th:href="@{/admin/dashboard}">← Trung tâm điều hành</a><span>/</span><strong>Nhân viên</strong></nav>
+<div class="page-header admin-page-header"><div><div class="eyebrow">Nhân sự vận hành</div>
+<h1>Danh bạ STAFF và ADMIN</h1>
+<p class="muted">Theo dõi quyền, trạng thái và số đơn đang xử lý. Thay đổi vai trò hoặc khóa tài khoản ở trang quản lý tài khoản có audit.</p></div>
+<a class="btn btn-outline" th:href="@{/admin/users(role='STAFF')}">Quản lý tài khoản ↗</a></div>
+<form method="get" th:action="@{/admin/staff}" class="admin-filterbar" role="search" aria-label="Lọc nhân viên">
+<div class="admin-filter-field"><label for="username">Tài khoản</label>
+<input id="username" type="search" name="username" maxlength="40" minlength="3"
+ pattern="[a-zA-Z0-9._-]{3,40}" th:value="${usernameFilter}" placeholder="Tên đăng nhập chính xác"></div>
+<div class="admin-filter-field"><label for="role">Vai trò</label>
+<select name="role" id="role"><option th:each="r : ${roles}" th:value="${r.name()}"
+ th:selected="${r == roleFilter}" th:text="${r.name() == 'ALL' ? 'Tất cả' : r.name()}"></option></select></div>
+<div class="admin-filter-actions"><button class="btn btn-small" type="submit">Tìm kiếm</button>
+<a class="btn btn-outline btn-small" th:href="@{/admin/staff}">Xóa lọc</a></div></form>
+<div class="admin-table-heading"><strong>Đội ngũ được phân quyền</strong><span>20 tài khoản / trang</span></div>
+<div class="table-panel admin-table-scroll"><table class="data-table admin-table">
+<thead><tr><th>Nhân viên</th><th>Vai trò</th><th>Trạng thái</th><th>Đơn đang phụ trách</th><th>Quản lý</th></tr></thead>
+<tbody><tr th:each="u : ${staff}"><td><strong th:text="${u.username}"></strong></td>
+<td><span class="admin-role" th:text="${u.role}"></span></td>
+<td><span class="admin-status" th:classappend="${u.enabled ? ' is-active' : ' is-locked'}"
+ th:text="${u.enabled ? 'Hoạt động' : 'Đã khóa'}"></span></td>
+<td th:text="${u.activeOrders}">0</td>
+<td><a class="btn btn-outline btn-small" th:href="@{/admin/users(username=${u.username})}">Xem tài khoản</a></td></tr>
+<tr th:if="${#lists.isEmpty(staff)}"><td colspan="5" class="admin-empty">Không tìm thấy nhân viên.</td></tr></tbody></table></div>
+<nav class="admin-pager" aria-label="Phân trang nhân viên">
+<a th:if="${hasPrevious}" class="btn btn-outline btn-small"
+ th:href="@{/admin/staff(page=${pageNumber - 1},role=${roleFilter},username=${usernameFilter})}">← Trước</a>
+<span th:text="|Trang ${pageNumber + 1}|">Trang 1</span>
+<a th:if="${hasNext}" class="btn btn-outline btn-small"
+ th:href="@{/admin/staff(page=${pageNumber + 1},role=${roleFilter},username=${usernameFilter})}">Sau →</a></nav>
+<p class="admin-caption">Đơn đang phụ trách gồm trạng thái đã duyệt hoặc đang thực hiện, không tính đơn chờ duyệt/đã đóng.
+Nhân viên đã khóa vẫn hiển thị để Admin rà soát phân công.</p>
+</main></body></html>
