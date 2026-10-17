@@ -24,10 +24,12 @@ public class ContentDraftController {
                        @RequestParam(required=false) SocialPlatform platform,
                        @RequestParam(required=false) DraftStatus status,
                        @RequestParam(required=false,name="q") String search,
+                       @RequestParam(required=false) @DateTimeFormat(iso=DateTimeFormat.ISO.DATE_TIME) LocalDateTime fromUtc,
+                       @RequestParam(required=false) @DateTimeFormat(iso=DateTimeFormat.ISO.DATE_TIME) LocalDateTime toUtc,
                        Model model,Principal principal){
         Page<ContentDraft> records;
         try{
-            records=service.searchMine(principal.getName(),page,platform,status,search);
+            records=service.searchMine(principal.getName(),page,platform,status,search,fromUtc,toUtc);
         }catch(IllegalArgumentException ex){
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Trang không hợp lệ.");
         }
@@ -41,6 +43,8 @@ public class ContentDraftController {
         model.addAttribute("selectedPlatform",platform);
         model.addAttribute("selectedStatus",status);
         model.addAttribute("searchQuery",search==null?"":search.strip());
+        model.addAttribute("fromUtc",fromUtc==null?"":fromUtc.format(INPUT_DATE));
+        model.addAttribute("toUtc",toUtc==null?"":toUtc.format(INPUT_DATE));
         return "content_calendar";
     }
 
@@ -54,7 +58,7 @@ public class ContentDraftController {
             return "redirect:/content-calendar";
         }catch(IllegalArgumentException ex){
             model.addAttribute("error",ex.getMessage());
-            return list(0,null,null,null,model,principal);
+            return list(0,null,null,null,null,null,model,principal);
         }
     }
 
