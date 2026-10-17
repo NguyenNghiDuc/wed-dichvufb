@@ -23,6 +23,12 @@ public class CampaignOrderApiController {
         return service.pageMine(principal.getName(), 0, 50).getContent();
     }
 
+    /** Counts always belong to the authenticated principal; no owner parameter is accepted. */
+    @GetMapping("/summary")
+    public CampaignSummary summary(Principal principal) {
+        return service.summaryForOwner(principal.getName());
+    }
+
     @GetMapping("/page")
     public Page<CampaignOrder> minePage(@RequestParam(defaultValue = "0") int page,
                                         @RequestParam(defaultValue = "20") int size,
