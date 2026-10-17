@@ -60,6 +60,19 @@ class AiContentApiIntegrationTest {
             .andExpect(status().isBadRequest());
     }
 
+    @Test @WithMockUser(username="ai-template-fallback-29")
+    void existingTemplateFallbackIsExplicitlyNonAiAndDoesNotNeedCredentials() throws Exception {
+        mvc.perform(get("/api/v1/content-suggestions")
+                .param("platform","TIKTOK").param("topic","study tips"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.mode").value("TEMPLATE_ONLY"))
+            .andExpect(jsonPath("$.platform").value("TIKTOK"))
+            .andExpect(jsonPath("$.suggestions.length()").value(3));
+        mvc.perform(get("/api/v1/content-suggestions")
+                .param("platform","TIKTOK").param("topic","z".repeat(101)))
+            .andExpect(status().isBadRequest());
+    }
+
     @Test @WithMockUser(username="ai-api-rate-budget-29")
     void rateLimitStopsExcessCallsBeforeProvider() throws Exception {
         for(int i=0;i<5;i++) {
