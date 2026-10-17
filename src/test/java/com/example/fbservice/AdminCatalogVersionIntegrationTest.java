@@ -30,19 +30,25 @@ class AdminCatalogVersionIntegrationTest {
         var initial=catalog.all().stream()
             .filter(s -> s.getCode().equals("AD_STRATEGY")).findFirst().orElseThrow();
         long oldVersion=initial.getVersion();
+        long oldPrice=initial.getPriceVnd();
+        boolean oldEnabled=initial.isEnabled();
         long baselineAudit=audit.count();
         mvc.perform(get("/admin/catalog")).andExpect(status().isOk())
             .andExpect(content().string(containsString("expectedVersion")));
         mvc.perform(post("/admin/catalog/AD_STRATEGY").with(csrf())
                 .param("price","399000").param("enabled","true")
-                .param("expectedVersion", Long.toString(oldVersion)))
+                .param("expectedVersion", Long.toString(oldVersion))
+                .param("expectedPrice", Long.toString(oldPrice))
+                .param("expectedEnabled", Boolean.toString(oldEnabled)))
             .andExpect(status().is3xxRedirection());
         assertThat(catalog.quote(CampaignServiceType.AD_STRATEGY)).isEqualTo(399000);
         assertThat(audit.count()).isEqualTo(baselineAudit + 1);
 
         mvc.perform(post("/admin/catalog/AD_STRATEGY").with(csrf())
                 .param("price","299000").param("enabled","true")
-                .param("expectedVersion", Long.toString(oldVersion)))
+                .param("expectedVersion", Long.toString(oldVersion))
+                .param("expectedPrice", Long.toString(oldPrice))
+                .param("expectedEnabled", Boolean.toString(oldEnabled)))
             .andExpect(status().isOk())
             .andExpect(content().string(containsString("Bảng giá đã thay đổi")));
         assertThat(catalog.quote(CampaignServiceType.AD_STRATEGY)).isEqualTo(399000);

@@ -24,9 +24,12 @@ public class AdminCatalogController {
                          @RequestParam long price,
                          @RequestParam(defaultValue="false") boolean enabled,
                          @RequestParam(required=false) Long expectedVersion,
+                         @RequestParam(required=false) Long expectedPrice,
+                         @RequestParam(required=false) Boolean expectedEnabled,
                          Principal principal,Model model){
         try {
-            catalog.update(principal.getName(),type,price,enabled,expectedVersion);
+            catalog.update(principal.getName(),type,price,enabled,
+                           expectedVersion,expectedPrice,expectedEnabled);
             return "redirect:/admin/catalog";
         }catch(IllegalArgumentException ex){
             model.addAttribute("error",ex.getMessage());

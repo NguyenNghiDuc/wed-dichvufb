@@ -6,6 +6,8 @@
 <form method="post" th:action="@{/admin/catalog/{type}(type=${s.code})}">
 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
 <input type="hidden" name="expectedVersion" th:value="${s.version}">
+<input type="hidden" name="expectedPrice" th:value="${s.priceVnd}">
+<input type="hidden" name="expectedEnabled" th:value="${s.enabled}">
 <div class="field"><label>Giá bán (VND)</label><input type="number" name="price" min="10000" max="50000000" th:value="${s.priceVnd}" required></div>
 <div class="field"><label><input class="check-input" type="checkbox" name="enabled" value="true" th:checked="${s.enabled}"> Nhận đơn mới</label></div>
 <button class="btn" type="submit">Lưu dịch vụ</button></form></article>
