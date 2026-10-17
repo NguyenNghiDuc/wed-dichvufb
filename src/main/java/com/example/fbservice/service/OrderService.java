@@ -8,28 +8,24 @@ import java.util.List;
 @Service
 public class OrderService {
     private final OrderRepository orders;
+    public OrderService(OrderRepository orders){this.orders=orders;}
 
-    public OrderService(OrderRepository orders) {
-        this.orders = orders;
-    }
-
-    public Order create(Order input, String username) {
-        if (input.getQuantity() < 1 || input.getQuantity() > 10000
-            || input.getLinkOrder() == null || input.getLinkOrder().isBlank()
-            || input.getLinkOrder().length() > 255) {
+    public Order create(Order input,String username) {
+        if(username==null||username.isBlank()||input==null||
+            input.getQuantity()<1||input.getQuantity()>10000||
+            input.getLinkOrder()==null||input.getLinkOrder().isBlank()||input.getLinkOrder().length()>255||
+            (input.getServerName()!=null && input.getServerName().length()>255)||
+            (input.getNote()!=null && input.getNote().length()>255)){
             throw new IllegalArgumentException("Thông tin đơn hàng không hợp lệ.");
         }
-        Order order = new Order();
-        order.setOwnerUsername(username);
-        order.setLinkOrder(input.getLinkOrder().trim());
-        order.setServerName(input.getServerName());
-        order.setQuantity(input.getQuantity());
-        order.setNote(input.getNote());
-        order.setPricePerUnit(10); // Server price: never accept client-supplied unit price.
-        return orders.save(order);
+        Order o=new Order();
+        o.setOwnerUsername(username);
+        o.setLinkOrder(input.getLinkOrder().trim());
+        o.setServerName(input.getServerName());
+        o.setQuantity(input.getQuantity());
+        o.setNote(input.getNote());
+        o.setPricePerUnit(10);
+        return orders.save(o);
     }
-
-    public List<Order> list(String username) {
-        return orders.findByOwnerUsernameOrderByCreatedAtDesc(username);
-    }
+    public List<Order> list(String username){return orders.findByOwnerUsernameOrderByCreatedAtDesc(username);}
 }
