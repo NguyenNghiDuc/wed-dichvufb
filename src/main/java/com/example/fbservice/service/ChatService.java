@@ -75,6 +75,24 @@ public class ChatService {
         return messages.findContactNames(viewer, query, PageRequest.of(page, 20));
     }
 
+    /**
+     * Query only the 20 contacts that the signed-in user's inbox already returned.
+     * Missing groups imply zero unread messages; no third-party counts are exposed.
+     */
+    @Transactional(readOnly = true)
+    public java.util.Map<String, Long> unreadCountsForContacts(String viewer, List<String> contacts) {
+        if (viewer == null || viewer.isBlank() || contacts == null || contacts.size() > 20)
+            throw new IllegalArgumentException("Invalid scoped contact page");
+        if (contacts.isEmpty()) return java.util.Map.of();
+        java.util.Map<String, Long> totals = new java.util.HashMap<>();
+        for (String contact : contacts) totals.put(contact, 0L);
+        for (ChatMessageRepository.UnreadContactCount row :
+                messages.countUnreadByContact(viewer, contacts)) {
+            totals.put(row.getContact(), row.getUnreadCount());
+        }
+        return totals;
+    }
+
     /** Compatibility: legacy endpoint returns only the latest 50 messages in one direction. */
     @Transactional(readOnly = true)
     public List<ChatMessage> getConversation(String sender, String receiver) {
