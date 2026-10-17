@@ -67,5 +67,11 @@ jobs:
             -H 'X-Forwarded-Host: example-8000.app.github.dev' \
             http://127.0.0.1:8080/login -o /tmp/login-forwarded.html
           grep -qi '^X-GrowLab-Auth-Revision: session-recovery-v2' /tmp/login-forwarded.headers
+          # A stale browser session cookie must not block the public login page.
+          curl -fsS -D /tmp/login-stale.headers \
+            -H 'Cookie: JSESSIONID=stale-session-from-old-codespace' \
+            http://127.0.0.1:8080/login -o /tmp/login-stale.html
+          grep -qi '^X-GrowLab-Auth-Revision: session-recovery-v2' /tmp/login-stale.headers
+          bash scripts/diagnose-codespaces-login.sh 8080
       - name: Validate Docker image
         run: docker build -t growlab-ci:latest .
