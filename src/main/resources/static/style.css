@@ -27,3 +27,10 @@
 .chat-composer{margin-top:25px;max-width:none}
 .chat-contact:focus-visible,.chat-panel~.actions a:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
 @media(max-width:600px){.chat-bubble{max-width:100%}.chat-composer{padding:18px}}
+
+/* Bounded conversation index with native links and visible keyboard focus. */
+.chat-conversations{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:18px}
+.chat-conversation{display:block;padding:17px 19px;border:1px solid var(--line);background:#fff;border-radius:14px;font-weight:700;overflow-wrap:anywhere}
+.chat-conversation:hover{background:var(--pale);border-color:#ffd1b2}
+.chat-conversation:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+@media(max-width:600px){.chat-conversations{grid-template-columns:1fr}}

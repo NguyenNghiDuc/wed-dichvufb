@@ -11,11 +11,32 @@
 <input id="chatContact" name="contact" maxlength="40" minlength="3" required autocomplete="off"
        pattern="[a-zA-Z0-9._-]{3,40}" placeholder="Nhập tên tài khoản"></div>
 <button type="submit" class="btn">Mở hội thoại</button></form></div>
-<section class="section"><h2>Nhân viên hỗ trợ đang hoạt động</h2>
+<section class="section">
+<h2>Hội thoại của tôi</h2>
+<form method="get" th:action="@{/chat/ui}" class="actions" role="search" aria-label="Tìm hội thoại">
+<label for="chatSearch">Tìm theo tên tài khoản</label>
+<input id="chatSearch" name="q" type="search" maxlength="40" th:value="${query}"
+       placeholder="Tên người đã trò chuyện">
+<button type="submit" class="btn btn-small">Tìm kiếm</button>
+<a th:href="@{/chat/ui}" class="btn btn-outline btn-small">Xóa lọc</a>
+</form>
+<div class="chat-conversations" aria-label="Danh sách cuộc trò chuyện">
+<a class="chat-conversation" th:each="contact : ${conversations}"
+   th:href="@{/chat/ui/{other}(other=${contact})}" th:text="${contact}">Tên liên hệ</a>
+</div>
+<p class="muted" th:if="${#lists.isEmpty(conversations)}">Chưa có cuộc trò chuyện phù hợp.</p>
+<nav class="actions" aria-label="Phân trang cuộc trò chuyện">
+<a class="btn btn-outline btn-small" th:if="${hasPrevious}"
+   th:href="@{/chat/ui(page=${pageNumber - 1},q=${query})}">← Trước</a>
+<span class="muted" th:text="|Trang ${pageNumber + 1}|">Trang 1</span>
+<a class="btn btn-outline btn-small" th:if="${hasNext}"
+   th:href="@{/chat/ui(page=${pageNumber + 1},q=${query})}">Sau →</a>
+</nav></section>
+<section class="section"><h2>Nhân viên hỗ trợ có tài khoản đang kích hoạt</h2>
 <div class="card-grid">
 <a class="card chat-contact" th:each="person : ${staff}" th:href="@{/chat/ui/{other}(other=${person.username})}">
 <span class="icon-square" aria-hidden="true">✉</span><h3 th:text="${person.username}"></h3>
 <span class="muted">Mở cuộc trò chuyện →</span></a></div>
-<p th:if="${#lists.isEmpty(staff)}" class="notice">Chưa có nhân viên trực tuyến trong danh sách.
+<p th:if="${#lists.isEmpty(staff)}" class="notice">Chưa có nhân viên hỗ trợ trong danh sách.
 Bạn vẫn có thể gửi yêu cầu hỗ trợ.</p>
 </section></main></body></html>
