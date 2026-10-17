@@ -71,3 +71,8 @@ Limits (development, **per server instance only**): 5 requests per user/minute a
 - `publishingEnabled: false` is returned, including when an AI key is configured. This endpoint is informational and does not authorize API posting.
 
 - Both current local deterministic fallbacks produce Vietnamese templates. The UI only offers them when the requested language is `VI`, explicitly warns if `EN` was selected and the paid AI provider is unavailable, and never represents Vietnamese fallback content as English generation.
+
+## UTC schedule range filtering
+- Calendar GET also accepts optional `fromUtc` and `toUtc` in ISO local date-time notation **representing UTC**, e.g. `2026-10-18T10:00`. These are only query filters, not instructions to publish.
+- With both bounds present, the start must not exceed the end and the query window may not exceed one year. Predicates for owner, platform, status, keyword, and `scheduledAtUtc` are combined in the same SQL query; no cross-account or unbounded-fetch filtering.
+- The white–orange search form preserves time bounds during pagination; H2 and PostgreSQL tests cover UTC filters, invalid date bounds and owner isolation.
