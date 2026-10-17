@@ -8,6 +8,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.CacheControl;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -23,6 +24,14 @@ public class CampaignOrderApiController {
     public List<CampaignOrder> mine(Principal principal) {
         // Backwards-compatible endpoint: bounded to 50; use /page for subsequent pages.
         return service.pageMine(principal.getName(), 0, 50).getContent();
+    }
+
+    /** Live server-side quote; a client-provided price is never used. */
+    @GetMapping("/quote")
+    public ResponseEntity<CampaignQuote> quote(@RequestParam CampaignServiceType serviceType,
+                                                Principal principal) {
+        return ResponseEntity.ok().cacheControl(CacheControl.noStore())
+            .body(service.quoteForCustomer(principal.getName(), serviceType));
     }
 
     /** Counts always belong to the authenticated principal; no owner parameter is accepted. */

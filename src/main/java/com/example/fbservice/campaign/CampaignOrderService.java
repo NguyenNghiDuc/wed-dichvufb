@@ -41,6 +41,16 @@ public class CampaignOrderService {
         return order;
     }
 
+    /** Provisional quote from the live enabled service catalog; never accept a client-provided amount. */
+    @Transactional(readOnly = true)
+    public CampaignQuote quoteForCustomer(String username, CampaignServiceType serviceType) {
+        if (username == null || username.isBlank())
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+        if (serviceType == null) throw new IllegalArgumentException("Dịch vụ không hợp lệ.");
+        return new CampaignQuote(serviceType, serviceType.getDisplayName(),
+            catalog.quote(serviceType), "VND", true);
+    }
+
     @Transactional(readOnly = true)
     public CampaignSummary summaryForOwner(String username) {
         if (username == null || username.isBlank())
