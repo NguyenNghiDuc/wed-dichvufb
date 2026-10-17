@@ -12,6 +12,7 @@ public interface CampaignOrderRepository extends JpaRepository<CampaignOrder, Lo
     Page<CampaignOrder> findByOwnerUsername(String username, Pageable pageable);
     Optional<CampaignOrder> findByIdAndOwnerUsername(Long id, String username);
     List<CampaignOrder> findAllByOrderByCreatedAtDesc();
+    long countByStatus(CampaignStatus status);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select c from CampaignOrder c where c.id = :id and c.ownerUsername = :username")
