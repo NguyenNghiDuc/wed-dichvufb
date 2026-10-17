@@ -26,14 +26,15 @@ public class AuthenticationRateLimitFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         if (!"POST".equalsIgnoreCase(request.getMethod())) return true;
-        return !("/login".equals(request.getServletPath()) || "/register".equals(request.getServletPath()));
+        String path = request.getRequestURI().substring(request.getContextPath().length());
+        return !("/login".equals(path) || "/register".equals(path));
     }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
                                     FilterChain chain) throws ServletException, IOException {
         // Use the TCP peer, never an untrusted X-Forwarded-For header supplied by the client.
-        String action = request.getServletPath();
+        String action = request.getRequestURI().substring(request.getContextPath().length());
         String client = request.getRemoteAddr();
         try {
             limiter.check("auth:" + action + ":" + client, 10, Duration.ofMinutes(10));
