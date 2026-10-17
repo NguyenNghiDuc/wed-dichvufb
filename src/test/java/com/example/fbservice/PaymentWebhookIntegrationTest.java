@@ -125,10 +125,32 @@ class PaymentWebhookIntegrationTest {
     }
 
     @Test
+    void transportLimitsRawBodyWithoutPersistingSettlement() throws Exception {
+        DepositRequest deposit = newDeposit("webhook-owner-limit", 99000);
+        String timestamp = now();
+        long before = receipts.count();
+
+        // At exactly the transport limit, signature is processed but non-JSON is rejected.
+        mvc.perform(request(" ".repeat(4096), timestamp))
+                .andExpect(status().isBadRequest());
+        // 4097 bytes must be rejected before Jackson or database operations.
+        mvc.perform(request(" ".repeat(4097), timestamp))
+                .andExpect(status().is(413));
+        mvc.perform(post("/api/v1/payments/webhooks/internal")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(" ".repeat(12000))
+                        .header("X-GrowLab-Timestamp", timestamp))
+                .andExpect(status().is(413));
+        assertThat(receipts.count()).isEqualTo(before);
+        assertThat(deposits.findById(deposit.getId()).orElseThrow().getStatus())
+                .isEqualTo("PENDING");
+    }
+
+    @Test
     void rejectsMalformedOversizedAndUnauthenticatedBody() throws Exception {
         String timestamp = now();
         mvc.perform(request("not-json", timestamp)).andExpect(status().isBadRequest());
-        mvc.perform(request("x".repeat(4097), timestamp)).andExpect(status().isBadRequest());
+        mvc.perform(request("x".repeat(4097), timestamp)).andExpect(status().is(413));
         mvc.perform(post("/api/v1/payments/webhooks/internal")
                         .contentType(MediaType.APPLICATION_JSON).content("{}"))
                 .andExpect(status().isUnauthorized());
