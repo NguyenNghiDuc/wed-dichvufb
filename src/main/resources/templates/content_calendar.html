@@ -101,6 +101,10 @@
     <select id="filter-status" name="status"><option value="">Tất cả trạng thái</option>
       <option th:each="s : ${statuses}" th:value="${s.name()}" th:text="${s.name()}" th:selected="${s == selectedStatus}"></option>
     </select></div>
+  <div class="field"><label for="filter-from-utc">Lịch dự kiến từ (UTC)</label>
+    <input id="filter-from-utc" type="datetime-local" name="fromUtc" th:value="${fromUtc}"></div>
+  <div class="field"><label for="filter-to-utc">Lịch dự kiến đến (UTC)</label>
+    <input id="filter-to-utc" type="datetime-local" name="toUtc" th:value="${toUtc}"></div>
   <div class="actions"><button type="submit" class="btn">Tìm kiếm</button>
     <a class="btn btn-outline" th:href="@{/content-calendar}">Xóa bộ lọc</a></div>
 </form>
@@ -127,9 +131,9 @@
 </table>
 </div>
 <nav class="actions" aria-label="Phân trang nội dung">
-  <a class="btn btn-outline btn-small" th:if="${hasPrevious}" th:href="@{/content-calendar(page=${pageNumber - 1},platform=${selectedPlatform},status=${selectedStatus},q=${searchQuery})}">← Trang trước</a>
+  <a class="btn btn-outline btn-small" th:if="${hasPrevious}" th:href="@{/content-calendar(page=${pageNumber - 1},platform=${selectedPlatform},status=${selectedStatus},q=${searchQuery},fromUtc=${fromUtc},toUtc=${toUtc})}">← Trang trước</a>
   <span class="muted" th:text="|Trang ${pageNumber + 1} / ${totalPages == 0 ? 1 : totalPages}|"></span>
-  <a class="btn btn-outline btn-small" th:if="${hasNext}" th:href="@{/content-calendar(page=${pageNumber + 1},platform=${selectedPlatform},status=${selectedStatus},q=${searchQuery})}">Trang sau →</a>
+  <a class="btn btn-outline btn-small" th:if="${hasNext}" th:href="@{/content-calendar(page=${pageNumber + 1},platform=${selectedPlatform},status=${selectedStatus},q=${searchQuery},fromUtc=${fromUtc},toUtc=${toUtc})}">Trang sau →</a>
 </nav>
 </section>
 </main></body></html>
