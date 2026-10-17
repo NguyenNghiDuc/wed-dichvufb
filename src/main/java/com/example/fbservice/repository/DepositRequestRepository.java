@@ -10,7 +10,7 @@ import org.springframework.data.repository.query.Param;
 
 public interface DepositRequestRepository extends JpaRepository<DepositRequest, Long> {
     // Indexed owner-scoped history; never load an unbounded user's deposits into the UI.
-    Page<DepositRequest> findByOwnerUsernameOrderByCreatedAtDesc(String username, Pageable pageable);
+    Page<DepositRequest> findByOwnerUsernameOrderByCreatedAtDescIdDesc(String username, Pageable pageable);
 
     long countByStatus(String status);
 
