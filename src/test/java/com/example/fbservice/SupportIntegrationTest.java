@@ -63,7 +63,7 @@ class SupportIntegrationTest {
                 .param("message","Chúng tôi đã tiếp nhận và xử lý."))
             .andExpect(status().is3xxRedirection());
         assertThat(tickets.detailForAdmin(ticket.getId()).getStatus()).isEqualTo(TicketStatus.ANSWERED);
-        mvc.perform(post("/admin/support/"+ticket.getId()+"/close").with(csrf())
+        mvc.perform(post("/admin/support/"+ticket.getId()+"/close").with(csrf()))
             .andExpect(status().is3xxRedirection());
         assertThat(tickets.detailForAdmin(ticket.getId()).getStatus()).isEqualTo(TicketStatus.CLOSED);
         assertThat(notifications.countByOwnerUsernameAndReadAtIsNull("support-owner2")).isEqualTo(3L);
