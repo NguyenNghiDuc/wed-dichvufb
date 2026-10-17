@@ -34,7 +34,11 @@ public final class AccountStatusFilter extends OncePerRequestFilter {
         if (request.getDispatcherType() == DispatcherType.ERROR) return true;
         String method = request.getMethod();
         if (!"GET".equalsIgnoreCase(method) && !"HEAD".equalsIgnoreCase(method)) return false;
-        return PUBLIC_GET_PATHS.contains(request.getServletPath());
+        // Servlet path can be empty under servlet forwarding/MockMvc; use the actual request URI.
+        String uri = request.getRequestURI();
+        String contextPath = request.getContextPath();
+        String path = uri.startsWith(contextPath) ? uri.substring(contextPath.length()) : uri;
+        return PUBLIC_GET_PATHS.contains(path);
     }
 
     @Override
