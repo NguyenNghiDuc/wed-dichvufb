@@ -127,6 +127,19 @@ public class CampaignOrderService {
     }
 
     @Transactional(readOnly = true)
+    public Page<CampaignHistoryEntry> pageHistoryForOwner(String username, Long id, int page, int size) {
+        if (page < 0 || page > 10000 || size < 1 || size > 50)
+            throw new IllegalArgumentException("Giới hạn lịch sử: page 0–10000, size 1–50.");
+        // Verify ownership before accessing the event table. Other users receive 404.
+        findMineById(username, id);
+        PageRequest paging = PageRequest.of(page, size,
+            Sort.by(Sort.Order.asc("createdAt"), Sort.Order.asc("id")));
+        return events.findByCampaignId(id, paging).map(e ->
+            new CampaignHistoryEntry(e.getOldStatus(), e.getNewStatus(),
+                e.getDescription(), e.getCreatedAt()));
+    }
+
+    @Transactional(readOnly = true)
     public List<CampaignEvent> historyForOwner(String username, Long id) {
         findMineById(username, id);
         return events.findByCampaignIdOrderByCreatedAtAsc(id);

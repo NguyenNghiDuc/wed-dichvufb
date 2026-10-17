@@ -1,1 +1,51 @@
-<!doctype html><html lang="vi" xmlns:th="http://www.thymeleaf.org"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Chi tiết chiến dịch · GrowLab</title><link rel="stylesheet" th:href="@{/style.css}"></head><body><main class="page container"><a class="table-link" th:href="@{/campaigns}">← Các chiến dịch</a><div class="page-header"><div><div class="eyebrow">Chi tiết chiến dịch</div><h1 th:text="|Chiến dịch #${order.id}|"></h1><p class="muted" th:text="${order.brief}"></p><span class="status" th:text="${order.status.displayName}"></span></div></div><h2>Lịch sử xử lý</h2><div class="table-panel"><table class="data-table"><thead><tr><th>Thời gian</th><th>Trạng thái</th><th>Ghi chú</th></tr></thead><tbody><tr th:each="e : ${events}"><td th:text="${#temporals.format(e.createdAt,'dd/MM/yyyy HH:mm')}"></td><td th:text="${e.newStatus.displayName}"></td><td th:text="${e.description}"></td></tr></tbody></table></div></main></body></html>
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Chi tiết chiến dịch · GrowLab</title>
+<link rel="stylesheet" th:href="@{/style.css}">
+</head>
+<body>
+<main class="page container">
+  <a class="table-link" th:href="@{/campaigns}">← Các chiến dịch</a>
+  <div class="page-header">
+    <div>
+      <div class="eyebrow">Chi tiết chiến dịch</div>
+      <h1 th:text="|Chiến dịch #${order.id}|">Chiến dịch</h1>
+      <p class="muted" th:text="${order.brief}">Mô tả</p>
+      <span class="status" th:text="${order.status.displayName}">Trạng thái</span>
+    </div>
+  </div>
+  <div class="steps" aria-label="Thông tin yêu cầu">
+    <div class="step"><strong>Nền tảng</strong><p th:text="${order.platform.displayName}"></p></div>
+    <div class="step"><strong>Dịch vụ</strong><p th:text="${order.serviceType.displayName}"></p></div>
+    <div class="step"><strong>Báo giá dự kiến</strong><p th:text="|${order.quotedPriceVnd} đ|"></p></div>
+  </div>
+  <h2>Lịch sử xử lý</h2>
+  <div class="table-panel">
+    <table class="data-table">
+      <thead><tr><th>Thời gian</th><th>Trạng thái</th><th>Ghi chú</th></tr></thead>
+      <tbody>
+        <tr th:each="e : ${events}">
+          <td th:text="${#temporals.format(e.createdAt(), 'dd/MM/yyyy HH:mm')}"></td>
+          <td th:text="${e.newStatus().displayName}"></td>
+          <td th:text="${e.description()}"></td>
+        </tr>
+        <tr th:if="${#lists.isEmpty(events)}">
+          <td colspan="3" class="muted">Chưa có sự kiện trong trang này.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <nav class="actions" aria-label="Phân trang lịch sử">
+    <a class="btn btn-outline btn-small" th:if="${hasPrevious}"
+       th:href="@{/campaigns/{id}(id=${order.id},page=${pageNumber - 1})}">← Trang trước</a>
+    <span class="muted" th:text="|Trang ${pageNumber + 1} / ${totalPages == 0 ? 1 : totalPages}|"></span>
+    <a class="btn btn-outline btn-small" th:if="${hasNext}"
+       th:href="@{/campaigns/{id}(id=${order.id},page=${pageNumber + 1})}">Trang sau →</a>
+  </nav>
+  <p class="footnote">Trạng thái là tiến độ xử lý nội bộ; không xác nhận thanh toán hoặc kết quả quảng cáo.</p>
+</main>
+</body>
+</html>
