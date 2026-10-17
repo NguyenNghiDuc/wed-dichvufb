@@ -20,10 +20,14 @@ public class ContentDraftController {
     public ContentDraftController(ContentDraftService service){this.service=service;}
 
     @GetMapping
-    public String list(@RequestParam(defaultValue="0") int page,Model model,Principal principal){
+    public String list(@RequestParam(defaultValue="0") int page,
+                       @RequestParam(required=false) SocialPlatform platform,
+                       @RequestParam(required=false) DraftStatus status,
+                       @RequestParam(required=false,name="q") String search,
+                       Model model,Principal principal){
         Page<ContentDraft> records;
         try{
-            records=service.pageMine(principal.getName(),page);
+            records=service.searchMine(principal.getName(),page,platform,status,search);
         }catch(IllegalArgumentException ex){
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Trang không hợp lệ.");
         }
@@ -33,6 +37,10 @@ public class ContentDraftController {
         model.addAttribute("hasNext",records.hasNext());
         model.addAttribute("totalPages",records.getTotalPages());
         model.addAttribute("platforms",SocialPlatform.values());
+        model.addAttribute("statuses",DraftStatus.values());
+        model.addAttribute("selectedPlatform",platform);
+        model.addAttribute("selectedStatus",status);
+        model.addAttribute("searchQuery",search==null?"":search.strip());
         return "content_calendar";
     }
 
@@ -46,7 +54,7 @@ public class ContentDraftController {
             return "redirect:/content-calendar";
         }catch(IllegalArgumentException ex){
             model.addAttribute("error",ex.getMessage());
-            return list(0,model,principal);
+            return list(0,null,null,null,model,principal);
         }
     }
 
