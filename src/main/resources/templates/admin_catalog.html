@@ -1,0 +1,13 @@
+<!doctype html><html lang="vi" xmlns:th="http://www.thymeleaf.org"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Admin · Bảng giá GrowLab</title><link rel="stylesheet" th:href="@{/style.css}"></head><body>
+<main class="page container"><a th:href="@{/admin/campaign-orders}" class="table-link">← Dashboard Admin</a>
+<div class="page-header"><div><div class="eyebrow">Quản lý dịch vụ</div><h1>Bảng giá và trạng thái bán</h1><p class="muted">Giá được đọc từ database khi khách tạo đơn. Giá cũ trong các đơn đã lập được giữ nguyên.</p></div></div>
+<p class="error" th:if="${error}" th:text="${error}"></p><div class="card-grid">
+<article th:each="s : ${services}" class="card"><h3 th:text="${s.title}"></h3><p th:text="${s.code}" class="muted"></p>
+<form method="post" th:action="@{/admin/catalog/{type}(type=${s.code})}">
+<input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+<div class="field"><label>Giá bán (VND)</label><input type="number" name="price" min="10000" max="50000000" th:value="${s.priceVnd}" required></div>
+<div class="field"><label><input class="check-input" type="checkbox" name="enabled" value="true" th:checked="${s.enabled}"> Nhận đơn mới</label></div>
+<button class="btn" type="submit">Lưu dịch vụ</button></form></article>
+</div><section class="section"><h2>Nhật ký điều chỉnh gần đây</h2><div class="table-panel"><table class="data-table"><thead><tr><th>Thời gian</th><th>Admin</th><th>Dịch vụ</th><th>Giá cũ</th><th>Giá mới</th><th>Trạng thái</th></tr></thead><tbody>
+<tr th:each="e : ${events}"><td th:text="${#temporals.format(e.createdAt,'dd/MM/yyyy HH:mm')}"></td><td th:text="${e.actor}"></td><td th:text="${e.serviceCode}"></td><td th:text="${e.oldPrice}"></td><td th:text="${e.newPrice}"></td><td th:text="|${e.oldEnabled} → ${e.newEnabled}|"></td></tr>
+<tr th:if="${#lists.isEmpty(events)}"><td colspan="6">Chưa có điều chỉnh nào.</td></tr></tbody></table></div></section></main></body></html>

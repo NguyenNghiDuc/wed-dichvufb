@@ -1,0 +1,20 @@
+<!doctype html><html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GrowLab · Quản trị tổng quan</title><link rel="stylesheet" th:href="@{/style.css}"></head>
+<body><header class="topbar"><nav class="nav container"><a class="brand" th:href="@{/}"><span class="brand-icon">↗</span>Grow<strong>Lab</strong></a>
+<div class="nav-links"><a th:href="@{/admin/campaign-orders}">Đơn hàng</a><a th:href="@{/admin/users}">Tài khoản</a><a th:href="@{/admin/catalog}">Dịch vụ</a><a th:href="@{/admin/support}">Hỗ trợ</a>
+<form method="post" th:action="@{/logout}"><input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"><button type="submit" class="logout">Đăng xuất</button></form></div></nav></header>
+<main class="page container"><div class="page-header"><div><div class="eyebrow">Dashboard Admin</div><h1>Tổng quan vận hành GrowLab</h1><p class="muted">Số liệu được lấy từ database, không mô phỏng doanh thu.</p></div></div>
+<div class="metrics-grid">
+<article class="card"><div class="muted">Tổng tài khoản</div><div class="metric" th:text="${metrics.totalUsers}">0</div><span class="muted" th:text="|${metrics.enabledUsers} đang hoạt động|"></span></article>
+<article class="card"><div class="muted">Tổng chiến dịch</div><div class="metric" th:text="${metrics.totalCampaigns}">0</div></article>
+<article class="card"><div class="muted">Chiến dịch cần duyệt</div><div class="metric" th:text="${metrics.pendingCampaigns}">0</div></article>
+<article class="card"><div class="muted">Phiếu hỗ trợ cần xử lý</div><div class="metric" th:text="${metrics.openTickets}">0</div></article>
+<article class="card"><div class="muted">Yêu cầu nạp đang chờ</div><div class="metric" th:text="${metrics.pendingDepositRequests}">0</div></article>
+<article class="card"><div class="muted">Dịch vụ đang mở</div><div class="metric" th:text="${metrics.activeServices}">0</div></article>
+</div>
+<section class="section"><div class="page-header"><h2>Mười chiến dịch mới nhất</h2><a class="btn btn-outline btn-small" th:href="@{/admin/campaign-orders}">Tất cả chiến dịch →</a></div>
+<div class="table-panel"><table class="data-table"><thead><tr><th>Mã</th><th>Người dùng</th><th>Dịch vụ</th><th>Báo giá</th><th>Trạng thái</th></tr></thead>
+<tbody><tr th:each="c : ${latest}"><td th:text="${c.id}"></td><td th:text="${c.ownerUsername}"></td><td th:text="${c.serviceType.displayName}"></td><td th:text="|${c.quotedPriceVnd} đ|"></td><td><span class="status" th:text="${c.status.displayName}"></span></td></tr>
+<tr th:if="${#lists.isEmpty(latest)}"><td colspan="5">Chưa có chiến dịch nào.</td></tr></tbody></table></div></section>
+<p class="notice">Chưa có thanh toán thật hoặc báo cáo doanh thu đã đối soát. Các yêu cầu nạp tiền chỉ là dữ liệu thử nghiệm.</p></main></body></html>

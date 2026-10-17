@@ -12,7 +12,11 @@ import org.springframework.web.server.ResponseStatusException;
 @RequestMapping("/campaigns")
 public class CampaignWebController {
     private final CampaignOrderService service;
-    public CampaignWebController(CampaignOrderService service) { this.service = service; }
+    private final com.example.fbservice.catalog.ServiceCatalogService catalog;
+    public CampaignWebController(CampaignOrderService service,
+        com.example.fbservice.catalog.ServiceCatalogService catalog) {
+        this.service=service;this.catalog=catalog;
+    }
 
     @GetMapping
     public String list(@RequestParam(defaultValue = "0") int page, Model model, Principal principal) {
@@ -33,7 +37,7 @@ public class CampaignWebController {
     @GetMapping("/new")
     public String form(Model model) {
         model.addAttribute("platforms", SocialPlatform.values());
-        model.addAttribute("plans", CampaignServiceType.values());
+        model.addAttribute("plans", catalog.available());
         return "campaign_form";
     }
 
