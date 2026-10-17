@@ -5,6 +5,7 @@ import com.example.fbservice.campaign.*;
 import com.example.fbservice.model.User;
 import com.example.fbservice.repository.UserRepository;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -25,6 +26,12 @@ class AdminStaffDirectoryIntegrationTest {
     @Autowired UserRepository users;
     @Autowired CampaignOrderRepository orders;
     @Autowired MockMvc mvc;
+
+    @BeforeEach
+    void clearDirectoryFixtures() {
+        orders.deleteAll();
+        users.deleteAll();
+    }
 
     private void account(String username, String role, boolean enabled) {
         User u = new User();u.setUsername(username);
