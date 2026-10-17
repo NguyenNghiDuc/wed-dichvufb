@@ -10,3 +10,16 @@
 @media(max-width:980px){.customer-filter-form{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:560px){.customer-filter-form{grid-template-columns:minmax(0,1fr);gap:8px}.customer-filter-form label{margin-top:7px}.customer-filter-form .btn{width:100%}.customer-review{padding:16px}.customer-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.data-table td,.data-table th{padding:12px}}
 @media(max-width:380px){.customer-metrics{grid-template-columns:1fr}}
+
+/* Customer-only read-only progress timeline. */
+.customer-progress{margin:24px 0;padding:22px;border:1px solid #f0e5db;border-radius:20px;background:white}
+.customer-progress-header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.customer-progress-header h2{margin:0;font-size:20px}
+.customer-progress-header strong{color:#d84d0d}
+.customer-progress-steps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;list-style:none;padding:12px 0 0;margin:8px 0}
+.customer-progress-steps li{display:flex;flex-direction:column;gap:6px;min-width:0;align-items:flex-start;color:#697682;font-size:13px;font-weight:650}
+.customer-step-dot{display:block;width:24px;height:24px;border:3px solid #e9d9ca;border-radius:50%;background:#fff}
+.customer-progress-steps li.is-done .customer-step-dot{background:#f26922;border-color:#f26922}
+.customer-progress-steps li.is-active .customer-step-dot{background:#fff0e4;border-color:#f26922;box-shadow:0 0 0 4px #f2692217}
+.customer-progress-steps li.is-active{color:#d84d0d}
+@media(max-width:560px){.customer-progress{padding:16px}.customer-progress-steps{grid-template-columns:repeat(2,minmax(0,1fr))}.customer-progress-header h2{font-size:18px}}

@@ -16,11 +16,12 @@ public class CampaignWebController {
     private final CampaignOrderService service;
     private final CampaignReviewService reviews;
     private final CampaignAttentionService attention;
+    private final CampaignProgressService progress;
     private final com.example.fbservice.catalog.ServiceCatalogService catalog;
     public CampaignWebController(CampaignOrderService service,
         com.example.fbservice.catalog.ServiceCatalogService catalog,
-        CampaignReviewService reviews, CampaignAttentionService attention) {
-        this.service=service;this.catalog=catalog;this.reviews=reviews;this.attention=attention;
+        CampaignReviewService reviews, CampaignAttentionService attention, CampaignProgressService progress) {
+        this.service=service;this.catalog=catalog;this.reviews=reviews;this.attention=attention;this.progress=progress;
     }
 
     @GetMapping
@@ -105,6 +106,7 @@ public class CampaignWebController {
         model.addAttribute("order", service.findMineById(principal.getName(), id));
         model.addAttribute("review", reviews.findForOwner(principal.getName(), id).orElse(null));
         model.addAttribute("attention", attention.inspect(service.findMineById(principal.getName(), id)));
+        model.addAttribute("progress", progress.view(service.findMineById(principal.getName(), id)));
         model.addAttribute("events", history.getContent());
         model.addAttribute("pageNumber", page);
         model.addAttribute("totalPages", history.getTotalPages());

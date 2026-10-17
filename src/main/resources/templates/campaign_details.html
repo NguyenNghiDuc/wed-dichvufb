@@ -23,6 +23,21 @@
     <div class="step"><strong>Dịch vụ</strong><p th:text="${order.serviceType.displayName}"></p></div>
     <div class="step"><strong>Báo giá dự kiến</strong><p th:text="|${order.quotedPriceVnd} đ|"></p></div>
   </div>
+  <section class="customer-progress" aria-label="Tiến độ xử lý đơn">
+    <div class="customer-progress-header"><h2>Tiến độ thực hiện</h2>
+      <strong th:unless="${progress.closedWithoutCompletion()}" th:text="|${progress.percent()}%|">0%</strong>
+      <strong th:if="${progress.closedWithoutCompletion()}">Đơn đã đóng</strong>
+    </div>
+    <ol class="customer-progress-steps">
+      <li th:each="step : ${progress.steps()}" 
+          th:classappend="${step.active() ? 'is-active' : (step.done() ? 'is-done' : '')}">
+        <span class="customer-step-dot" aria-hidden="true"></span>
+        <span th:text="${step.label()}">Bước</span>
+      </li>
+    </ol>
+    <p class="footnote" th:if="${progress.closedWithoutCompletion()}">Đơn đã đóng mà chưa hoàn thành; liên hệ hỗ trợ để tìm hiểu thêm.</p>
+    <p class="footnote" th:unless="${progress.closedWithoutCompletion()}">Tiến độ là trạng thái xử lý nội bộ, không phải số liệu hiệu quả quảng cáo.</p>
+  </section>
   <div class="notice" th:if="${attention.needsAttention()}">
     <strong th:text="${attention.shortLabel()}">Cần hỗ trợ</strong>
     <p th:text="${attention.message()}"></p>
