@@ -12,6 +12,7 @@
 <article class="card"><div class="muted">Phiếu hỗ trợ cần xử lý</div><div class="metric" th:text="${metrics.openTickets}">0</div></article>
 <article class="card"><div class="muted">Yêu cầu nạp đang chờ</div><div class="metric" th:text="${metrics.pendingDepositRequests}">0</div></article>
 <article class="card"><div class="muted">Dịch vụ đang mở</div><div class="metric" th:text="${metrics.activeServices}">0</div></article>
+<article class="card"><div class="muted">Chiến dịch quá hạn nội bộ</div><div class="metric" th:text="${metrics.overdueCampaigns}">0</div><a class="table-link" th:href="@{/admin/campaign-orders(overdueOnly=true)}">Xem các đơn quá hạn →</a></article>
 </div>
 <section class="section"><div class="page-header"><h2>Mười chiến dịch mới nhất</h2><a class="btn btn-outline btn-small" th:href="@{/admin/campaign-orders}">Tất cả chiến dịch →</a></div>
 <div class="table-panel"><table class="data-table"><thead><tr><th>Mã</th><th>Người dùng</th><th>Dịch vụ</th><th>Báo giá</th><th>Trạng thái</th></tr></thead>

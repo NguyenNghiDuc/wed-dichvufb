@@ -21,14 +21,16 @@ public class CampaignAdminController {
     }
 
     @GetMapping
-    public String list(@RequestParam(defaultValue = "0") int page, Model model) {
+    public String list(@RequestParam(defaultValue = "0") int page,
+                       @RequestParam(defaultValue = "false") boolean overdueOnly, Model model) {
         Page<CampaignOrder> records;
         try {
-            records = service.pageForAdmin(page);
+            records = overdueOnly ? service.overdueForAdmin(page) : service.pageForAdmin(page);
         } catch (IllegalArgumentException exception) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid pagination");
         }
         model.addAttribute("orders", records.getContent());
+        model.addAttribute("overdueOnly", overdueOnly);
         model.addAttribute("employees", assignments.eligibleStaff());
         model.addAttribute("statuses", CampaignStatus.values());
         model.addAttribute("pageNumber", page);
@@ -46,7 +48,7 @@ public class CampaignAdminController {
             return "redirect:/admin/campaign-orders";
         } catch (IllegalArgumentException exception) {
             model.addAttribute("error", exception.getMessage());
-            return list(0, model);
+            return list(0, false, model);
         }
     }
 }

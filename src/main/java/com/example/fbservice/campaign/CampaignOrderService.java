@@ -13,12 +13,15 @@ import org.springframework.web.server.ResponseStatusException;
 public class CampaignOrderService {
     private final com.example.fbservice.catalog.ServiceCatalogService catalog;
     private final CampaignOrderRepository orders;
+    private final CampaignSlaPolicy slaPolicy;
     private final CampaignEventRepository events;
     private final AccountNotificationRepository notifications;
 
     public CampaignOrderService(CampaignOrderRepository orders, CampaignEventRepository events,
                                 AccountNotificationRepository notifications,
-                                com.example.fbservice.catalog.ServiceCatalogService catalog) {
+                                com.example.fbservice.catalog.ServiceCatalogService catalog,
+                                CampaignSlaPolicy slaPolicy) {
+        this.slaPolicy=slaPolicy;
         this.catalog=catalog;
         this.orders = orders;
         this.events = events;
@@ -29,7 +32,9 @@ public class CampaignOrderService {
     public CampaignOrder create(String username, CampaignOrderRequest request) {
         if (username == null || username.isBlank()) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
         validate(request);
-        CampaignOrder order = orders.save(new CampaignOrder(username, request, catalog.quote(request.serviceType())));
+        CampaignOrder draft = new CampaignOrder(username,request,catalog.quote(request.serviceType()));
+        draft.scheduleDeadline(slaPolicy.pendingDeadline());
+        CampaignOrder order=orders.save(draft);
         events.save(new CampaignEvent(order.getId(), null, CampaignStatus.PENDING_REVIEW, username, "Chiến dịch được tạo"));
         notifications.save(new AccountNotification(username, "Đã nhận chiến dịch #" + order.getId(),
                 "Yêu cầu đang chờ kiểm duyệt."));
@@ -55,6 +60,16 @@ public class CampaignOrderService {
             throw new IllegalArgumentException("Trang không hợp lệ.");
         return orders.findAll(PageRequest.of(page, 20,
                 Sort.by(Sort.Order.desc("createdAt"), Sort.Order.desc("id"))));
+    }
+
+    @Transactional(readOnly = true)
+    public Page<CampaignOrder> overdueForAdmin(int page) {
+        if(page<0||page>10000)throw new IllegalArgumentException("Trang không hợp lệ.");
+        return orders.findByStatusInAndDueAtBefore(
+            CampaignSlaAlertService.ACTIVE,
+            java.time.LocalDateTime.now(java.time.ZoneOffset.UTC),
+            PageRequest.of(page,20,Sort.by(
+                Sort.Order.asc("dueAt"),Sort.Order.asc("id"))));
     }
 
     @Transactional(readOnly = true)
@@ -95,6 +110,7 @@ public class CampaignOrderService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         CampaignStatus from = order.getStatus();
         order.changeStatus(status);
+        if(status==CampaignStatus.APPROVED) order.scheduleDeadline(slaPolicy.executionDeadline());
         events.save(new CampaignEvent(id, from, status, actor, "Quản trị viên cập nhật trạng thái"));
         notifications.save(new AccountNotification(order.getOwnerUsername(), "Chiến dịch #" + id + " đã cập nhật",
                 "Trạng thái mới: " + status.getDisplayName()));

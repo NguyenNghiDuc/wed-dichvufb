@@ -6,16 +6,26 @@
 <p class="muted">Chỉ nhìn thấy các đơn do Admin giao cho tài khoản của bạn.</p></div><a class="btn btn-outline" th:href="@{/admin/support}">Hỗ trợ khách hàng</a></div>
 <p class="notice" th:if="${notice}" th:text="${notice}"></p>
 <p class="error" th:if="${error}" th:text="${error}"></p>
-<div class="table-panel"><table class="data-table"><thead><tr><th>Mã</th><th>Nền tảng</th><th>Dịch vụ</th><th>Khách hàng</th><th>Trạng thái</th><th>Xử lý</th></tr></thead>
+<div class="metrics-grid">
+<article class="card"><div class="muted">Tổng đơn được giao</div><div class="metric" th:text="${metrics.totalAssigned}"></div></article>
+<article class="card"><div class="muted">Chờ Admin duyệt</div><div class="metric" th:text="${metrics.awaitingApproval}"></div></article>
+<article class="card"><div class="muted">Cần bắt đầu</div><div class="metric" th:text="${metrics.readyToStart}"></div></article>
+<article class="card"><div class="muted">Đang xử lý</div><div class="metric" th:text="${metrics.inProgress}"></div></article>
+<article class="card"><div class="muted">Đã hoàn thành</div><div class="metric" th:text="${metrics.completed}"></div></article>
+<article class="card"><div class="muted">Quá mốc xử lý nội bộ</div><div class="metric" th:text="${metrics.overdue}"></div></article>
+</div>
+<div class="table-panel"><table class="data-table"><thead><tr><th>Mã</th><th>Nền tảng</th><th>Dịch vụ</th><th>Khách hàng</th><th>Trạng thái</th><th>Hạn xử lý (UTC)</th><th>Xử lý</th></tr></thead>
 <tbody><tr th:each="o : ${orders}"><td th:text="${o.id}"></td><td th:text="${o.platform.displayName}"></td><td th:text="${o.serviceType.displayName}"></td>
-<td th:text="${o.ownerUsername}"></td><td><span class="status" th:text="${o.status.displayName}"></span></td>
+<td th:text="${o.ownerUsername}"></td><td><span class="status" th:text="${o.status.displayName}"></span>
+<span th:if="${o.overdue}" class="status">Quá hạn</span></td>
+<td th:text="${o.dueAt != null ? #temporals.format(o.dueAt,'dd/MM/yyyy HH:mm') : 'Chưa đặt'}"></td>
 <td><form th:if="${o.status.name() == 'APPROVED' or o.status.name() == 'IN_PROGRESS'}"
  method="post" th:action="@{/staff/campaign-orders/{id}/progress(id=${o.id})}">
 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
 <input type="hidden" name="status" th:value="${o.status.name() == 'APPROVED' ? 'IN_PROGRESS' : 'COMPLETED'}">
 <button class="btn btn-small" th:text="${o.status.name() == 'APPROVED' ? 'Bắt đầu' : 'Hoàn thành'}"></button></form>
 <span th:if="${o.status.name() == 'PENDING_REVIEW'}" class="muted">Chờ Admin duyệt</span></td></tr>
-<tr th:if="${#lists.isEmpty(orders)}"><td colspan="6">Chưa có chiến dịch được giao.</td></tr></tbody></table></div>
+<tr th:if="${#lists.isEmpty(orders)}"><td colspan="7">Chưa có chiến dịch được giao.</td></tr></tbody></table></div>
 <nav class="actions"><a th:if="${hasPrevious}" th:href="@{/staff/campaign-orders(page=${page - 1})}" class="btn btn-outline btn-small">← Trước</a>
 <a th:if="${hasNext}" th:href="@{/staff/campaign-orders(page=${page + 1})}" class="btn btn-outline btn-small">Sau →</a></nav>
 </main></body></html>
