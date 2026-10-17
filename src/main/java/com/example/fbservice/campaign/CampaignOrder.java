@@ -8,7 +8,6 @@ import java.time.LocalDateTime;
 public class CampaignOrder {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
     @Column(name = "owner_username", nullable = false, length = 100)
     private String ownerUsername;
     @Enumerated(EnumType.STRING) @Column(nullable = false, length = 20)
@@ -29,39 +28,38 @@ public class CampaignOrder {
     private LocalDateTime updatedAt = LocalDateTime.now();
 
     protected CampaignOrder() {}
-    public CampaignOrder(String ownerUsername, CampaignOrderRequest request) {
-        this.ownerUsername = ownerUsername;
-        this.platform = request.platform();
-        this.serviceType = request.serviceType();
-        this.targetUrl = request.targetUrl().trim();
-        this.brief = request.brief().trim();
-        this.quotedPriceVnd = request.serviceType().getPriceVnd();
+
+    public CampaignOrder(String ownerUsername,CampaignOrderRequest request,long quotedPriceVnd){
+        this.ownerUsername=ownerUsername;
+        this.platform=request.platform();
+        this.serviceType=request.serviceType();
+        this.targetUrl=request.targetUrl().trim();
+        this.brief=request.brief().trim();
+        this.quotedPriceVnd=quotedPriceVnd;
     }
 
-    @PreUpdate
-    public void beforeUpdate() { updatedAt = LocalDateTime.now(); }
+    @PreUpdate public void beforeUpdate(){updatedAt=LocalDateTime.now();}
 
-    public void changeStatus(CampaignStatus next) {
-        if (next == null || next == status) throw new IllegalArgumentException("Trạng thái không hợp lệ.");
-        boolean valid = switch (status) {
-            case PENDING_REVIEW -> next == CampaignStatus.APPROVED || next == CampaignStatus.REJECTED ||
-                next == CampaignStatus.CANCELLED;
-            case APPROVED -> next == CampaignStatus.IN_PROGRESS || next == CampaignStatus.REJECTED;
-            case IN_PROGRESS -> next == CampaignStatus.COMPLETED;
-            case COMPLETED, REJECTED, CANCELLED -> false;
+    public void changeStatus(CampaignStatus next){
+        if(next==null||next==status)throw new IllegalArgumentException("Trạng thái không hợp lệ.");
+        boolean valid=switch(status){
+            case PENDING_REVIEW -> next==CampaignStatus.APPROVED||next==CampaignStatus.REJECTED||next==CampaignStatus.CANCELLED;
+            case APPROVED -> next==CampaignStatus.IN_PROGRESS||next==CampaignStatus.REJECTED;
+            case IN_PROGRESS -> next==CampaignStatus.COMPLETED;
+            case COMPLETED,REJECTED,CANCELLED -> false;
         };
-        if (!valid) throw new IllegalArgumentException("Không thể chuyển trạng thái từ " + status + " sang " + next);
-        this.status = next;
+        if(!valid)throw new IllegalArgumentException("Không thể chuyển trạng thái từ "+status+" sang "+next);
+        this.status=next;
     }
 
-    public Long getId() { return id; }
-    public String getOwnerUsername() { return ownerUsername; }
-    public SocialPlatform getPlatform() { return platform; }
-    public CampaignServiceType getServiceType() { return serviceType; }
-    public String getTargetUrl() { return targetUrl; }
-    public String getBrief() { return brief; }
-    public long getQuotedPriceVnd() { return quotedPriceVnd; }
-    public CampaignStatus getStatus() { return status; }
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public Long getId(){return id;}
+    public String getOwnerUsername(){return ownerUsername;}
+    public SocialPlatform getPlatform(){return platform;}
+    public CampaignServiceType getServiceType(){return serviceType;}
+    public String getTargetUrl(){return targetUrl;}
+    public String getBrief(){return brief;}
+    public long getQuotedPriceVnd(){return quotedPriceVnd;}
+    public CampaignStatus getStatus(){return status;}
+    public LocalDateTime getCreatedAt(){return createdAt;}
+    public LocalDateTime getUpdatedAt(){return updatedAt;}
 }
