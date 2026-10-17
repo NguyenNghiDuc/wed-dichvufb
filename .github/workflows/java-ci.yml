@@ -67,6 +67,8 @@ jobs:
             -H 'X-Forwarded-Host: example-8000.app.github.dev' \
             http://127.0.0.1:8080/login -o /tmp/login-forwarded.html
           grep -qi '^X-GrowLab-Auth-Revision: session-recovery-v2' /tmp/login-forwarded.headers
+          # Exercise the same diagnostic script used in Codespaces against the packaged JAR.
+          PORT=8080 bash scripts/codespaces-login.sh check
           # A stale browser session cookie must not block the public login page.
           curl -fsS -D /tmp/login-stale.headers \
             -H 'Cookie: JSESSIONID=stale-session-from-old-codespace' \
