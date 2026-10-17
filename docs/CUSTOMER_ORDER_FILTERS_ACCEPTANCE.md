@@ -1,23 +1,25 @@
 # Customer order filtering — acceptance contract
 
-Status: PROPOSED / NOT IMPLEMENTED / NOT ACCEPTED. Related to roadmap #019 and #022, issue #3.
+Status: IMPLEMENTED PROTOTYPE / NOT SECURITY-ACCEPTED / NOT UAT-ACCEPTED. Related to roadmap #019 and #022, issue #3.
+
+## Implementation (draft PR #6)
+- `CampaignOrderService.pageMine(..., orderId, status)`: typed database Criteria predicates **always** apply owner scope to both results and counts; bounded page and size.
+- `GET /api/v1/campaign-orders/page?orderId=<positive integer>&status=<enum>` (both optional). The unchanged `GET /api/v1/campaign-orders` remains a backwards-compatible bounded list.
+- `GET /campaigns`: customer search form and preserved filters in pagination links.
+- MockMvc H2 regression tests in `CampaignOrderFilteringIntegrationTest` plus real PostgreSQL query test in `PostgresCampaignFilteringIntegrationTest`.
+- Java CI run 39034675236 (commit a4b1d51): **44 tests, no failures**, Flyway v7, production JAR and Docker build passed.
+- CodeQL run 39034675155: job succeeded, **but rule `java/csrf-unprotected-request-type` raised SARIF graph-processing errors for `registerPage` and `loginPage`**. Security triage is still required. Newer Actions workflow at commit `fbc4294` is being verified independently.
 
 ## Functional contract
-- An authenticated customer may filter only their own orders by exact order identifier and allowlisted order status; invalid values return a controlled validation error.
-- Use bounded pagination with deterministic ordering; enforce maximum page size and reject negative indexes.
-- Do not accept user IDs or tenant IDs as client-controlled authorization selectors. Apply ownership restrictions at repository/query level before pagination and counts.
-- Do not expose another customer's order existence through detail, search, totals, or error messages.
-- Admin/staff views retain their separate, explicit role and assignment policies; customer filters must not expand their privileges.
+- Authenticated users filter only their own orders by exact order identifier and allowlisted status.
+- Invalid values produce a controlled 400 response. Pagination is deterministic and bounded.
+- User IDs or tenant IDs are never accepted as client-controlled authorization selectors.
+- Both page results and aggregate counts enforce ownership before returning to the client.
+- Admin and staff authorization boundaries are unchanged.
 
-## Required tests before implementation is marked done
-1. Customer A sees their matching orders, correct page totals, and stable ordering.
-2. Customer A cannot find Customer B's orders by exact ID, status, pagination, or crafted query parameters.
-3. Anonymous access is rejected; staff/admin privileges remain unchanged.
-4. Unknown statuses, malformed IDs, oversized/negative pages, and empty filters are handled predictably.
-5. CSRF is preserved for any state-changing action; GET filtering has no side effects.
-6. PostgreSQL integration tests verify query scoping and pagination, including concurrent changes.
-7. Java/PostgreSQL/Flyway CI, CodeQL findings, JaCoCo, and manual mobile UAT are reviewed with linked run evidence.
-
-## Owner sign-off
-- Review API response semantics, UI labels, maximum page size, staging UAT and rollback plan.
-- No production integration or real social-media engagement automation is authorized by this document.
+## Acceptance gaps and owner sign-off
+- Test concurrent updates while paginating and confirm stable client pagination behavior.
+- Security review of CodeQL findings, including the reported path graph processing errors.
+- Review JaCoCo coverage, human code review, staging mobile/browser UAT, accessibility, operational rollback and backups.
+- Review API parameter naming and UI labels with the owner. Do not mark roadmap #019/#022 as completed yet.
+- No production integrations, real financial transactions or artificial social-media engagement are authorized.
