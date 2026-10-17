@@ -16,4 +16,18 @@ public record AiContentRequest(
     public AiContentRequest(SocialPlatform platform, String topic, String audience) {
         this(platform,topic,audience,null,null,null,null);
     }
+    /** Enforce platform-specific formats without guessing publishing permissions. */
+    @AssertTrue(message="Ý tưởng TikTok chỉ áp dụng cho nền tảng TikTok; Shorts chỉ áp dụng cho YouTube.")
+    public boolean isTaskPlatformCompatible() {
+        return platform==null || task==null ||
+            (task!=AiContentTask.TIKTOK_IDEAS || platform==SocialPlatform.TIKTOK) &&
+            (task!=AiContentTask.YOUTUBE_SHORTS || platform==SocialPlatform.YOUTUBE);
+    }
+
+    @AssertTrue(message="Cần cung cấp bản nháp để tối ưu.")
+    public boolean isOptimizeDraftPresent() {
+        return task!=AiContentTask.OPTIMIZE ||
+            (existingContent!=null && !existingContent.isBlank());
+    }
+
 }
