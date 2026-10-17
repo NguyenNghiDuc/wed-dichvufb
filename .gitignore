@@ -1,0 +1,14 @@
+# Java / Maven
+target/
+*.class
+*.log
+# Local data & IDE
+data/
+*.mv.db
+*.trace.db
+.idea/
+.DS_Store
+# Secrets
+.env
+.env.*
+!.env.example
