@@ -9,8 +9,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class User {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(nullable = false, unique = true, length = 100)
@@ -19,8 +18,12 @@ public class User {
     @Column(nullable = false)
     private String password;
 
+    @Column(length = 255)
     private String email;
 
     @Column(nullable = false, length = 16)
     private String role = "USER";
+
+    @Column(nullable = false)
+    private boolean enabled = true;
 }
