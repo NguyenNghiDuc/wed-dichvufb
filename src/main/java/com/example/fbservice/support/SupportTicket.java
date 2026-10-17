@@ -6,7 +6,8 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "support_tickets", indexes = {
     @Index(name = "idx_support_owner", columnList = "owner_username"),
-    @Index(name = "idx_support_staff_queue", columnList = "status,priority,updated_at,id")
+    @Index(name = "idx_support_staff_queue", columnList = "status,priority,updated_at,id"),
+    @Index(name = "idx_support_assignee", columnList = "assignee_username,status,updated_at")
 })
 public class SupportTicket {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -23,6 +24,8 @@ public class SupportTicket {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 16)
     private TicketPriority priority = TicketPriority.NORMAL;
+    @Column(name = "assignee_username", length = 100)
+    private String assigneeUsername;
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
     @Column(nullable = false)
@@ -51,6 +54,20 @@ public class SupportTicket {
     }
     public void ensureOpen() {
         if (status == TicketStatus.CLOSED) throw new IllegalArgumentException("Yêu cầu đã đóng.");
+    }
+
+    public String getAssigneeUsername() { return assigneeUsername; }
+    public void claim(String username) {
+        ensureOpen();
+        if (username == null || username.isBlank())
+            throw new IllegalArgumentException("Nhân viên không hợp lệ.");
+        if (assigneeUsername != null && !assigneeUsername.equals(username))
+            throw new IllegalArgumentException("Yêu cầu đang được nhân viên khác xử lý.");
+        assigneeUsername = username;
+    }
+    public void ensureAssignedStaff(String username) {
+        if (assigneeUsername != null && !assigneeUsername.equals(username))
+            throw new IllegalArgumentException("Yêu cầu được giao cho nhân viên khác.");
     }
 
     public TicketPriority getPriority() { return priority; }

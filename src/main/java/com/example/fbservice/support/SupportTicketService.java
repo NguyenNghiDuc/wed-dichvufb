@@ -1,6 +1,7 @@
 package com.example.fbservice.support;
 
 import com.example.fbservice.config.TrafficLimiter;
+import com.example.fbservice.repository.UserRepository;
 import com.example.fbservice.notification.*;
 import java.time.Duration;
 import java.util.List;
@@ -20,13 +21,16 @@ public class SupportTicketService {
     private final SupportMessageRepository messages;
     private final AccountNotificationRepository notices;
     private final TrafficLimiter limiter;
+    private final UserRepository users;
 
     public SupportTicketService(SupportTicketRepository tickets, SupportMessageRepository messages,
-                                AccountNotificationRepository notices, TrafficLimiter limiter) {
+                                AccountNotificationRepository notices, TrafficLimiter limiter,
+                                UserRepository users) {
         this.tickets = tickets;
         this.messages = messages;
         this.notices = notices;
         this.limiter = limiter;
+        this.users = users;
     }
 
     @Transactional
@@ -149,11 +153,31 @@ public class SupportTicketService {
         messages.save(new SupportMessage(id, user, message.strip()));
     }
 
+    /**
+     * A ticket can be claimed once. A repeated claim by the same staff member
+     * is idempotent; another staff member receives a conflict, under row locking.
+     */
+    @Transactional
+    public void claimAsStaff(String staff, Long id) {
+        var user = users.findByUsername(staff)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN));
+        if (!user.isEnabled() || !("STAFF".equals(user.getRole()) || "ADMIN".equals(user.getRole())))
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        SupportTicket ticket = tickets.lockForAdmin(id)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        if (staff.equals(ticket.getAssigneeUsername())) return;
+        ticket.claim(staff);
+        notices.save(new AccountNotification(ticket.getOwnerUsername(),
+                "Hỗ trợ #" + id + " đã được tiếp nhận",
+                "Nhân viên hỗ trợ đang xử lý yêu cầu của bạn."));
+    }
+
     @Transactional
     public void replyAsAdmin(String admin, Long id, String message) {
         validate(message, 2, 2000);
         SupportTicket ticket = tickets.lockForAdmin(id)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        ticket.ensureAssignedStaff(admin);
         ticket.staffReplied();
         messages.save(new SupportMessage(id, admin, message.strip()));
         notices.save(new AccountNotification(ticket.getOwnerUsername(),
@@ -164,6 +188,7 @@ public class SupportTicketService {
     public void closeAsAdmin(String admin, Long id) {
         SupportTicket ticket = tickets.lockForAdmin(id)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        ticket.ensureAssignedStaff(admin);
         ticket.close();
         notices.save(new AccountNotification(ticket.getOwnerUsername(),
             "Hỗ trợ #" + id + " đã đóng", "Yêu cầu đã được đóng bởi nhân viên " + admin + "."));
