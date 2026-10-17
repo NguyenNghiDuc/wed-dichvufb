@@ -38,6 +38,22 @@ GROUP BY deposit_request_id HAVING COUNT(*) > 1;
 
 Do not claim financial revenue from internal settlement events. Real VNPay requires its own sandbox credential, provider-specific checksum/response semantics, merchant-order mapping, webhook acknowledgement/retries and reconciliation against signed provider records, plus owner approval.
 
+## Protected integrity endpoint (read only)
+
+`GET /api/v1/admin/payments/reconciliation` is restricted by the existing
+`/api/v1/admin/**` ADMIN role boundary. It executes **one** aggregate SQL
+statement, applies `Cache-Control: no-store`, and returns only numeric
+integrity counts and a UTC generated-at timestamp. No personally identifying
+data, receipt event IDs, signatures or secret material are sent to the caller.
+`approvedWithoutReceipt` counts approved requests with no matching receipt;
+`inconsistentReceipts` counts wrong amount or non-approved state;
+`internalReceipts` is a count of sandbox callback records only.
+`requiresManualReview=true` means an operator should investigate; the
+endpoint **never updates rows** and is **not financial reconciliation**.
+Anonymous, USER and STAFF requests are rejected. The payment service uses
+`@Transactional(readOnly=true)`, but deployment permissions should still use
+read-only database roles for external monitoring/reporting where feasible.
+
 ## Flyway / indexes / deployment
 Clean PostgreSQL schema is managed with versioned `src/main/resources/db/migration/V*.sql` (production `validate`; no production Hibernate auto-DDL). V3 has receipt uniqueness; V10 adds indexes `idx_deposit_owner_created` and `idx_payment_receipts_created_at`; additive V11 replaces the owner/time index with `idx_deposit_owner_created_id` to support deterministic `ORDER BY created_at DESC, id DESC` over bounded 20-row pages. NEVER edit checksums of applied Flyway scripts or run Flyway `repair` automatically. Inspect `flyway_schema_history` and review query plans on realistic staging data. For owner listing inspect `EXPLAIN (ANALYZE, BUFFERS)` with sampled but redacted data, not live personally identifying data in tickets.
 
