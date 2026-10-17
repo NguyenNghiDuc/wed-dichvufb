@@ -55,6 +55,17 @@ jobs:
               pg_restore -h 127.0.0.1 -U growlab --no-owner --no-privileges -d growlab_restore /backups/ci-postgres.dump
               psql -h 127.0.0.1 -U growlab -d growlab_restore -v ON_ERROR_STOP=1 -Atc "SELECT COUNT(*) FROM payment_receipts" | grep -Eq "^[0-9]+$"
               psql -h 127.0.0.1 -U growlab -d growlab_restore -v ON_ERROR_STOP=1 -Atc "SELECT COUNT(*) FROM flyway_schema_history" | grep -Eq "^[1-9][0-9]*$"
+              # Compare actual restored row counts, not just table existence.
+              for table in users deposit_request payment_receipts campaign_orders flyway_schema_history; do
+                before=$(psql -h 127.0.0.1 -U growlab -d growlab_ci -v ON_ERROR_STOP=1 -Atc "SELECT COUNT(*) FROM $table")
+                after=$(psql -h 127.0.0.1 -U growlab -d growlab_restore -v ON_ERROR_STOP=1 -Atc "SELECT COUNT(*) FROM $table")
+                test "$before" = "$after" || { echo "Restored row-count mismatch in $table"; exit 1; }
+              done
+              before_amount=$(psql -h 127.0.0.1 -U growlab -d growlab_ci -v ON_ERROR_STOP=1 -Atc "SELECT COALESCE(SUM(amount_vnd), 0) FROM payment_receipts")
+              after_amount=$(psql -h 127.0.0.1 -U growlab -d growlab_restore -v ON_ERROR_STOP=1 -Atc "SELECT COALESCE(SUM(amount_vnd), 0) FROM payment_receipts")
+              test "$before_amount" = "$after_amount" || { echo "Restored internal-receipt sum mismatch"; exit 1; }
+              psql -h 127.0.0.1 -U growlab -d growlab_restore -v ON_ERROR_STOP=1 -Atc "SELECT indexname FROM pg_indexes" | grep -qx idx_deposit_owner_created_id
+              psql -h 127.0.0.1 -U growlab -d growlab_restore -v ON_ERROR_STOP=1 -Atc "SELECT indexname FROM pg_indexes" | grep -qx idx_payment_receipts_created_at
             '
           rm -f "$RUNNER_TEMP/ci-postgres.dump"
       - name: Package application
