@@ -74,6 +74,26 @@ public class SupportTicketService {
         return tickets.findAll(ticketFilters(null, subject, status, priority), paging(page));
     }
 
+    /**
+     * Staff queue filter: MINE uses the authenticated staff principal, not a
+     * username supplied by the browser. UNASSIGNED excludes already owned work.
+     */
+    @Transactional(readOnly = true)
+    public Page<SupportTicket> searchForStaff(int page, String subject, TicketStatus status,
+                                               TicketPriority priority, String staff,
+                                               TicketAssignmentFilter assignment) {
+        if (assignment == null) throw new IllegalArgumentException("Bộ lọc phân công không hợp lệ.");
+        Specification<SupportTicket> filters = ticketFilters(null, subject, status, priority);
+        if (assignment == TicketAssignmentFilter.MINE) {
+            if (staff == null || staff.isBlank())
+                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+            filters = filters.and((root, query, cb) -> cb.equal(root.get("assigneeUsername"), staff));
+        } else if (assignment == TicketAssignmentFilter.UNASSIGNED) {
+            filters = filters.and((root, query, cb) -> cb.isNull(root.get("assigneeUsername")));
+        }
+        return tickets.findAll(filters, paging(page));
+    }
+
     private Specification<SupportTicket> ticketFilters(String owner, String subject,
                                                          TicketStatus status, TicketPriority priority) {
         String cleaned = subject == null ? "" : subject.strip();

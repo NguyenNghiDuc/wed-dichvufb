@@ -17,13 +17,17 @@ public class SupportAdminController {
                        @RequestParam(required = false) String subject,
                        @RequestParam(required = false) TicketStatus status,
                        @RequestParam(required = false) TicketPriority priority,
-                       Model model) {
-        Page<SupportTicket> records = service.searchForStaff(page, subject, status, priority);
+                       @RequestParam(defaultValue = "ALL") TicketAssignmentFilter assignment,
+                       Model model, Principal principal) {
+        Page<SupportTicket> records = service.searchForStaff(
+            page, subject, status, priority, principal.getName(), assignment);
         model.addAttribute("tickets", records.getContent());
         model.addAttribute("pageNumber", page);
         model.addAttribute("subject", subject);
         model.addAttribute("selectedStatus", status);
         model.addAttribute("selectedPriority", priority);
+        model.addAttribute("selectedAssignment", assignment);
+        model.addAttribute("assignments", TicketAssignmentFilter.values());
         model.addAttribute("statuses", TicketStatus.values());
         model.addAttribute("priorities", TicketPriority.values());
         model.addAttribute("hasPrevious", records.hasPrevious());

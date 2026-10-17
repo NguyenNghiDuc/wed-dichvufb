@@ -6,7 +6,12 @@
 <label for="staffSupportSearch">Tiêu đề</label><input id="staffSupportSearch" name="subject" maxlength="80" th:value="${subject}" placeholder="Tìm tiêu đề">
 <label for="staffSupportStatus">Trạng thái</label><select id="staffSupportStatus" name="status"><option value="">Tất cả</option><option th:each="s : ${statuses}" th:value="${s.name()}" th:selected="${s == selectedStatus}" th:text="${s.title}"></option></select>
 <label for="staffSupportPriority">Ưu tiên</label><select id="staffSupportPriority" name="priority"><option value="">Tất cả</option><option th:each="p : ${priorities}" th:value="${p.name()}" th:selected="${p == selectedPriority}" th:text="${p.title}"></option></select>
+<label for="staffQueueAssignment">Phân công</label>
+<select id="staffQueueAssignment" name="assignment">
+<option th:each="a : ${assignments}" th:value="${a.name()}"
+ th:selected="${a == selectedAssignment}" th:text="${a.title}"></option>
+</select>
 <button class="btn btn-small" type="submit">Lọc</button><a class="btn btn-outline btn-small" th:href="@{/admin/support}">Xóa lọc</a></form>
 <div class="table-panel"><table class="data-table"><thead><tr><th>Mã</th><th>Khách hàng</th><th>Tiêu đề</th><th>Trạng thái</th><th>Ưu tiên</th><th>Nhân viên</th></tr></thead><tbody>
 <tr th:each="t : ${tickets}"><td th:text="${t.id}"></td><td th:text="${t.ownerUsername}"></td><td><a class="table-link" th:href="@{/admin/support/{id}(id=${t.id})}" th:text="${t.subject}"></a></td><td th:text="${t.status.title}"></td><td><span class="status" th:text="${t.priority.title}"></span></td><td th:text="${t.assigneeUsername != null ? t.assigneeUsername : 'Chưa tiếp nhận'}"></td></tr><tr th:if="${#lists.isEmpty(tickets)}"><td colspan="6">Không có yêu cầu.</td></tr></tbody></table></div>
-<nav class="actions" aria-label="Phân trang"><a th:if="${hasPrevious}" class="btn btn-outline btn-small" th:href="@{/admin/support(page=${pageNumber - 1},subject=${subject},status=${selectedStatus},priority=${selectedPriority})}">← Trước</a><a th:if="${hasNext}" class="btn btn-outline btn-small" th:href="@{/admin/support(page=${pageNumber + 1},subject=${subject},status=${selectedStatus},priority=${selectedPriority})}">Sau →</a></nav></main></body></html>
+<nav class="actions" aria-label="Phân trang"><a th:if="${hasPrevious}" class="btn btn-outline btn-small" th:href="@{/admin/support(page=${pageNumber - 1},subject=${subject},status=${selectedStatus},priority=${selectedPriority},assignment=${selectedAssignment})}">← Trước</a><a th:if="${hasNext}" class="btn btn-outline btn-small" th:href="@{/admin/support(page=${pageNumber + 1},subject=${subject},status=${selectedStatus},priority=${selectedPriority})}">Sau →</a></nav></main></body></html>
