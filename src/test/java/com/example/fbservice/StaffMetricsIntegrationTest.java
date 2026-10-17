@@ -56,11 +56,21 @@ class StaffMetricsIntegrationTest {
         mvc.perform(get("/staff/campaign-orders").with(user("metrics-staff").roles("STAFF")))
             .andExpect(status().isOk())
             .andExpect(content().string(org.hamcrest.Matchers.containsString("Quá hạn")));
+        mvc.perform(get("/admin/campaign-orders").param("overdueOnly","true"))
+            .andExpect(status().isOk())
+            .andExpect(content().string(org.hamcrest.Matchers.containsString("metrics-customer")));
+        mvc.perform(get("/admin/campaign-orders").param("overdueOnly","true")
+                .with(user("metrics-staff").roles("STAFF")))
+            .andExpect(status().isForbidden());
         mvc.perform(get("/admin/dashboard")).andExpect(status().isOk())
             .andExpect(content().string(org.hamcrest.Matchers.containsString("Chiến dịch quá hạn nội bộ")));
 
         campaigns.updateStatusForAdmin(order.getId(),CampaignStatus.APPROVED,"metrics-admin");
         assertThat(performance.metricsForStaff("metrics-staff").overdue()).isZero();
+        mvc.perform(get("/admin/campaign-orders").param("overdueOnly","true"))
+            .andExpect(status().isOk())
+            .andExpect(content().string(org.hamcrest.Matchers.not(
+                org.hamcrest.Matchers.containsString("metrics-customer"))));
         assignments.progress(order.getId(),CampaignStatus.IN_PROGRESS,"metrics-staff");
         assignments.progress(order.getId(),CampaignStatus.COMPLETED,"metrics-staff");
         assertThat(performance.metricsForStaff("metrics-staff").completed()).isEqualTo(1);

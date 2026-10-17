@@ -63,6 +63,16 @@ public class CampaignOrderService {
     }
 
     @Transactional(readOnly = true)
+    public Page<CampaignOrder> overdueForAdmin(int page) {
+        if(page<0||page>10000)throw new IllegalArgumentException("Trang không hợp lệ.");
+        return orders.findByStatusInAndDueAtBefore(
+            CampaignSlaAlertService.ACTIVE,
+            java.time.LocalDateTime.now(java.time.ZoneOffset.UTC),
+            PageRequest.of(page,20,Sort.by(
+                Sort.Order.asc("dueAt"),Sort.Order.asc("id"))));
+    }
+
+    @Transactional(readOnly = true)
     public CampaignOrder findMineById(String username, Long id) {
         return orders.findByIdAndOwnerUsername(id, username)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));

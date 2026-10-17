@@ -14,6 +14,8 @@ public interface CampaignOrderRepository extends JpaRepository<CampaignOrder, Lo
     Optional<CampaignOrder> findByIdAndOwnerUsername(Long id, String username);
     List<CampaignOrder> findAllByOrderByCreatedAtDesc();
     long countByStatus(CampaignStatus status);
+    Page<CampaignOrder> findByStatusInAndDueAtBefore(
+        List<CampaignStatus> active,java.time.LocalDateTime nowUtc,Pageable pageable);
     long countByAssigneeUsername(String username);
     long countByAssigneeUsernameAndStatus(String username, CampaignStatus status);
     long countByAssigneeUsernameAndStatusInAndDueAtBefore(String username,
