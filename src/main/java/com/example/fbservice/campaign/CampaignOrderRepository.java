@@ -7,7 +7,7 @@ import org.springframework.data.domain.*;
 import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 
-public interface CampaignOrderRepository extends JpaRepository<CampaignOrder, Long> {
+public interface CampaignOrderRepository extends JpaRepository<CampaignOrder, Long>, JpaSpecificationExecutor<CampaignOrder> {
     List<CampaignOrder> findByOwnerUsernameOrderByCreatedAtDesc(String username);
     Page<CampaignOrder> findByOwnerUsername(String username, Pageable pageable);
     Page<CampaignOrder> findByAssigneeUsername(String username, Pageable pageable);
