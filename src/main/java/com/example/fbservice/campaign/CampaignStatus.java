@@ -5,15 +5,10 @@ public enum CampaignStatus {
     APPROVED("Đã duyệt"),
     IN_PROGRESS("Đang thực hiện"),
     COMPLETED("Hoàn thành"),
-    REJECTED("Từ chối");
+    REJECTED("Từ chối"),
+    CANCELLED("Đã hủy");
 
     private final String displayName;
-
-    CampaignStatus(String displayName) {
-        this.displayName = displayName;
-    }
-
-    public String getDisplayName() {
-        return displayName;
-    }
+    CampaignStatus(String displayName) { this.displayName = displayName; }
+    public String getDisplayName() { return displayName; }
 }
