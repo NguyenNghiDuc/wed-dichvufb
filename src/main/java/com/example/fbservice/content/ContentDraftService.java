@@ -4,6 +4,10 @@ import com.example.fbservice.campaign.SocialPlatform;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.ArrayList;
+import java.util.Locale;
+import jakarta.persistence.criteria.Predicate;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -33,6 +37,37 @@ public class ContentDraftService {
         if(page<0||page>10000)throw new IllegalArgumentException("Trang không hợp lệ.");
         return drafts.findByOwnerUsername(owner,PageRequest.of(page,PAGE_SIZE,
             Sort.by(Sort.Order.desc("createdAt"),Sort.Order.desc("id"))));
+    }
+
+    /**
+     * Always apply the authenticated owner restriction inside the database query.
+     * Escape LIKE metacharacters so '%' and '_' are literal user search text.
+     */
+    @Transactional(readOnly=true)
+    public Page<ContentDraft> searchMine(String owner, int page, SocialPlatform platform,
+                                         DraftStatus status, String search) {
+        if(owner==null||owner.isBlank())throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+        if(page<0||page>10000)throw new IllegalArgumentException("Trang không hợp lệ.");
+        String q=search==null?"":search.strip();
+        if(q.length()>100 || q.chars().anyMatch(ch -> Character.isISOControl(ch)))
+            throw new IllegalArgumentException("Từ khóa phải tối đa 100 ký tự, không có ký tự điều khiển.");
+        String pattern="%"+escapeLike(q.toLowerCase(Locale.ROOT))+"%";
+        Specification<ContentDraft> scope=(root,query,cb)->{
+            List<Predicate> filters=new ArrayList<>();
+            filters.add(cb.equal(root.get("ownerUsername"),owner));
+            if(platform!=null)filters.add(cb.equal(root.get("platform"),platform));
+            if(status!=null)filters.add(cb.equal(root.get("status"),status));
+            if(!q.isBlank())filters.add(cb.or(
+                cb.like(cb.lower(root.get("title")),pattern,'\\'),
+                cb.like(cb.lower(root.get("body")),pattern,'\\')));
+            return cb.and(filters.toArray(new Predicate[0]));
+        };
+        return drafts.findAll(scope,PageRequest.of(page,PAGE_SIZE,
+            Sort.by(Sort.Order.desc("createdAt"),Sort.Order.desc("id"))));
+    }
+
+    private static String escapeLike(String value) {
+        return value.replace("\\","\\\\").replace("%","\\%").replace("_","\\_");
     }
 
     @Transactional(readOnly=true)
