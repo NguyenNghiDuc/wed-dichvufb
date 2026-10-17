@@ -21,6 +21,14 @@ public class ContentDraft {
         this.ownerUsername=owner;this.platform=platform;this.title=title;this.body=body;
         this.scheduledAtUtc=when;this.status=when==null?DraftStatus.DRAFT:DraftStatus.PLANNED;
     }
+    /** The saved plan can be revised without publishing content to a platform. */
+    void revise(SocialPlatform platform, String title, String body, LocalDateTime when) {
+        this.platform = platform;
+        this.title = title;
+        this.body = body;
+        this.scheduledAtUtc = when;
+        this.status = when == null ? DraftStatus.DRAFT : DraftStatus.PLANNED;
+    }
     public Long getId(){return id;}
     public String getOwnerUsername(){return ownerUsername;}
     public SocialPlatform getPlatform(){return platform;}
