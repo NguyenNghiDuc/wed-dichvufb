@@ -46,7 +46,17 @@ public class ContentDraftService {
     @Transactional(readOnly=true)
     public Page<ContentDraft> searchMine(String owner, int page, SocialPlatform platform,
                                          DraftStatus status, String search) {
+        return searchMine(owner,page,platform,status,search,null,null);
+    }
+
+    @Transactional(readOnly=true)
+    public Page<ContentDraft> searchMine(String owner, int page, SocialPlatform platform,
+                                         DraftStatus status, String search,
+                                         LocalDateTime fromUtc, LocalDateTime toUtc) {
         if(owner==null||owner.isBlank())throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+        if(fromUtc!=null&&toUtc!=null
+            && (fromUtc.isAfter(toUtc)||fromUtc.isBefore(toUtc.minusYears(1))))
+            throw new IllegalArgumentException("Khoảng lịch UTC không hợp lệ hoặc vượt quá một năm.");
         if(page<0||page>10000)throw new IllegalArgumentException("Trang không hợp lệ.");
         String q=search==null?"":search.strip();
         if(q.length()>100 || q.chars().anyMatch(ch -> Character.isISOControl(ch)))
@@ -57,6 +67,8 @@ public class ContentDraftService {
             filters.add(cb.equal(root.get("ownerUsername"),owner));
             if(platform!=null)filters.add(cb.equal(root.get("platform"),platform));
             if(status!=null)filters.add(cb.equal(root.get("status"),status));
+            if(fromUtc!=null)filters.add(cb.greaterThanOrEqualTo(root.get("scheduledAtUtc"),fromUtc));
+            if(toUtc!=null)filters.add(cb.lessThanOrEqualTo(root.get("scheduledAtUtc"),toUtc));
             if(!q.isBlank())filters.add(cb.or(
                 cb.like(cb.lower(root.get("title")),pattern,'\\'),
                 cb.like(cb.lower(root.get("body")),pattern,'\\')));
