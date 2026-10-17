@@ -5,6 +5,7 @@ import jakarta.validation.Valid;
 import java.security.Principal;
 import java.time.Duration;
 import java.util.Map;
+import java.util.Arrays;
 import org.springframework.web.bind.annotation.*;
 
 @RestController @RequestMapping("/api/v1/ai")
@@ -14,6 +15,22 @@ public class AiContentController {
     public AiContentController(AiContentService service,TrafficLimiter limiter){
         this.service=service;this.limiter=limiter;
     }
+    /** Authenticated capability discovery; never expose the configured provider key. */
+    @GetMapping("/capabilities")
+    public Map<String,Object> capabilities() {
+        boolean configured=service.isConfigured();
+        return Map.of(
+            "mode",configured?"GENERATIVE_AI_CONFIGURED":"LOCAL_TEMPLATES_ONLY",
+            "providerConfigured",configured,
+            "supportedTasks",Arrays.stream(AiContentTask.values()).map(Enum::name).toList(),
+            "supportedLanguages",Arrays.stream(AiContentLanguage.values()).map(Enum::name).toList(),
+            "perUserPerMinute",5,
+            "perUserPer24Hours",25,
+            "quotaScope","PER_INSTANCE_ONLY",
+            "publishingEnabled",false
+        );
+    }
+
     @PostMapping({"/caption","/generate"})
     public Map<String,String> generate(@Valid @RequestBody AiContentRequest input,Principal principal){
         // Defense-in-depth per-instance budget (production needs a shared atomic quota store).
