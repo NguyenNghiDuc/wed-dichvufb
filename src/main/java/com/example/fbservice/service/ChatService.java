@@ -1,6 +1,8 @@
 package com.example.fbservice.service;
 
 import com.example.fbservice.model.ChatMessage;
+import com.example.fbservice.config.TrafficLimiter;
+import java.time.Duration;
 import com.example.fbservice.repository.ChatMessageRepository;
 import com.example.fbservice.repository.UserRepository;
 import com.example.fbservice.notification.AccountNotification;
@@ -23,16 +25,21 @@ public class ChatService {
     private final ChatMessageRepository messages;
     private final UserRepository users;
     private final AccountNotificationRepository notifications;
+    private final TrafficLimiter limiter;
 
     public ChatService(ChatMessageRepository messages, UserRepository users,
-                       AccountNotificationRepository notifications) {
+                       AccountNotificationRepository notifications, TrafficLimiter limiter) {
         this.messages = messages;
         this.users = users;
         this.notifications = notifications;
+        this.limiter = limiter;
     }
 
     @Transactional
     public ChatMessage saveMessage(ChatMessage message) {
+        if (message == null || message.getSender() == null || message.getSender().isBlank())
+            throw new IllegalArgumentException("Sender is required");
+        limiter.check("chat:send:" + message.getSender(), 120, Duration.ofHours(1));
         ChatMessage saved = messages.save(message);
         // Never send user-controlled message bodies in notifications.
         // No notification rows for nonexistent or self-addressed accounts.
