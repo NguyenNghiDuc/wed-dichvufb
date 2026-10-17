@@ -8,10 +8,15 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/payments/webhooks")
 public class PaymentWebhookController {
     private final PaymentWebhookService service;
-    public PaymentWebhookController(PaymentWebhookService service){this.service=service;}
-    @PostMapping(value="/internal",consumes=MediaType.APPLICATION_JSON_VALUE)
-    public Map<String,Object> receive(@RequestBody String body,
-        @RequestHeader(value="X-GrowLab-Signature",required=false) String signature){
-        return service.accept(body,signature);
+
+    public PaymentWebhookController(PaymentWebhookService service) {
+        this.service = service;
+    }
+
+    @PostMapping(value = "/internal", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public Map<String, Object> receive(@RequestBody byte[] body,
+            @RequestHeader(value = "X-GrowLab-Signature", required = false) String signature,
+            @RequestHeader(value = "X-GrowLab-Timestamp", required = false) String timestamp) {
+        return service.accept(body, signature, timestamp);
     }
 }
