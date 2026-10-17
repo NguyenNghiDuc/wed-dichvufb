@@ -128,8 +128,8 @@ class PaymentWebhookIntegrationTest {
     void rejectsDuplicateJsonKeysTrailingDocumentsAndAmountsOutsideDepositLimit() throws Exception {
         DepositRequest valid = newDeposit("webhook-json-owner", 50000);
         String base = event("sandboxJsonEvent123", valid.getId(), 50000, "SETTLED");
-        String duplicated = base.replace("\\"eventId\\":",
-                "\\"eventId\\":\\"otherEvent123\\",\\"eventId\\":");
+        String duplicated = base.replace("\"eventId\":",
+                "\"eventId\":\"otherEvent123\",\"eventId\":");
         long before = receipts.count();
         mvc.perform(request(duplicated, now())).andExpect(status().isBadRequest());
         mvc.perform(request(base + " {}", now())).andExpect(status().isBadRequest());
