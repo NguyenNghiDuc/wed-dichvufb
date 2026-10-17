@@ -103,10 +103,12 @@ public class CampaignWebController {
         } catch (IllegalArgumentException exception) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid history page");
         }
-        model.addAttribute("order", service.findMineById(principal.getName(), id));
+        // Load the owned order once; reuse it for independent read-only view models.
+        CampaignOrder order = service.findMineById(principal.getName(), id);
+        model.addAttribute("order", order);
         model.addAttribute("review", reviews.findForOwner(principal.getName(), id).orElse(null));
-        model.addAttribute("attention", attention.inspect(service.findMineById(principal.getName(), id)));
-        model.addAttribute("progress", progress.view(service.findMineById(principal.getName(), id)));
+        model.addAttribute("attention", attention.inspect(order));
+        model.addAttribute("progress", progress.view(order));
         model.addAttribute("events", history.getContent());
         model.addAttribute("pageNumber", page);
         model.addAttribute("totalPages", history.getTotalPages());
