@@ -2,6 +2,9 @@ package com.example.fbservice.admin;
 
 import com.example.fbservice.model.User;
 import com.example.fbservice.repository.UserRepository;
+import jakarta.persistence.criteria.Predicate;
+import java.util.ArrayList;
+import org.springframework.data.jpa.domain.Specification;
 import java.util.List;
 import org.springframework.data.domain.*;
 import org.springframework.http.HttpStatus;
@@ -21,13 +24,46 @@ public class AdminUserService {
 
     @Transactional(readOnly=true)
     public Page<User> page(int page) {
-        if(page<0||page>10000) throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Invalid page");
-        return users.findAllByOrderByIdDesc(PageRequest.of(page,20));
+        return page(page, null, null, null);
+    }
+
+    /** Exact matching only: no wildcards, free-form JPQL or unbounded results. */
+    @Transactional(readOnly=true)
+    public Page<User> page(int page, String username, String role, Boolean enabled) {
+        validatePage(page);
+        String exactUsername = username == null || username.isBlank() ? null : username.trim();
+        String exactRole = role == null || role.isBlank() ? null : role.trim();
+        if (exactUsername != null && !exactUsername.matches("[a-zA-Z0-9._-]{3,40}"))
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid username");
+        if (exactRole != null && !List.of("USER", "STAFF", "ADMIN").contains(exactRole))
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid role");
+
+        Specification<User> conditions = (root, query, builder) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            if (exactUsername != null) predicates.add(builder.equal(root.get("username"), exactUsername));
+            if (exactRole != null) predicates.add(builder.equal(root.get("role"), exactRole));
+            if (enabled != null) predicates.add(builder.equal(root.get("enabled"), enabled));
+            return builder.and(predicates.toArray(new Predicate[0]));
+        };
+        return users.findAll(conditions,
+            PageRequest.of(page, 20, Sort.by(Sort.Order.desc("id"))));
+    }
+
+    @Transactional(readOnly=true)
+    public Page<AdminAccountAudit> pageAudit(int page) {
+        validatePage(page);
+        return audit.findAll(PageRequest.of(page, 20,
+                Sort.by(Sort.Order.desc("createdAt"), Sort.Order.desc("id"))));
     }
 
     @Transactional(readOnly=true)
     public List<AdminAccountAudit> recentAudit() {
-        return audit.findTop100ByOrderByCreatedAtDesc();
+        return pageAudit(0).getContent();
+    }
+
+    private static void validatePage(int page) {
+        if (page < 0 || page > 10000)
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid page");
     }
 
     @Transactional

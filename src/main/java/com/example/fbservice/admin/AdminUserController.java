@@ -13,47 +13,61 @@ public class AdminUserController {
     private final AdminUserService service;
 
     public AdminUserController(AdminUserService service) {
-        this.service=service;
+        this.service = service;
     }
 
     @GetMapping
-    public String list(@RequestParam(defaultValue="0") int page, Model model, Principal principal) {
-        Page<User> users=service.page(page);
-        model.addAttribute("users", users.getContent());
+    public String list(@RequestParam(defaultValue = "0") int page,
+                       @RequestParam(required = false) String username,
+                       @RequestParam(required = false) String role,
+                       @RequestParam(required = false) Boolean enabled,
+                       Model model, Principal principal) {
+        Page<User> records = service.page(page, username, role, enabled);
+        model.addAttribute("users", records.getContent());
         model.addAttribute("page", page);
-        model.addAttribute("hasNext", users.hasNext());
-        model.addAttribute("hasPrevious", users.hasPrevious());
-        model.addAttribute("ownUsername",principal.getName());
+        model.addAttribute("totalPages", records.getTotalPages());
+        model.addAttribute("totalUsers", records.getTotalElements());
+        model.addAttribute("hasNext", records.hasNext());
+        model.addAttribute("hasPrevious", records.hasPrevious());
+        model.addAttribute("usernameFilter", username == null ? "" : username.trim());
+        model.addAttribute("roleFilter", role == null ? "" : role.trim());
+        model.addAttribute("enabledFilter", enabled);
+        model.addAttribute("ownUsername", principal.getName());
         return "admin_users";
     }
 
     @PostMapping("/{id}/enabled")
-    public String changeEnabled(@PathVariable Long id,@RequestParam boolean enabled,
-                                Principal principal,Model model) {
-        try{
-            service.setEnabled(principal.getName(),id,enabled);
+    public String changeEnabled(@PathVariable Long id, @RequestParam boolean enabled,
+                                Principal principal, Model model) {
+        try {
+            service.setEnabled(principal.getName(), id, enabled);
             return "redirect:/admin/users";
-        }catch(IllegalArgumentException ex){
-            model.addAttribute("error",ex.getMessage());
-            return list(0,model,principal);
+        } catch (IllegalArgumentException ex) {
+            model.addAttribute("error", ex.getMessage());
+            return list(0, null, null, null, model, principal);
         }
     }
 
     @PostMapping("/{id}/role")
-    public String changeRole(@PathVariable Long id,@RequestParam String role,
-                             Principal principal,Model model) {
-        try{
-            service.setRole(principal.getName(),id,role);
+    public String changeRole(@PathVariable Long id, @RequestParam String role,
+                             Principal principal, Model model) {
+        try {
+            service.setRole(principal.getName(), id, role);
             return "redirect:/admin/users";
-        }catch(IllegalArgumentException ex){
-            model.addAttribute("error",ex.getMessage());
-            return list(0,model,principal);
+        } catch (IllegalArgumentException ex) {
+            model.addAttribute("error", ex.getMessage());
+            return list(0, null, null, null, model, principal);
         }
     }
 
     @GetMapping("/audit")
-    public String audit(Model model) {
-        model.addAttribute("events",service.recentAudit());
+    public String audit(@RequestParam(defaultValue = "0") int page, Model model) {
+        Page<AdminAccountAudit> records = service.pageAudit(page);
+        model.addAttribute("events", records.getContent());
+        model.addAttribute("auditPage", page);
+        model.addAttribute("hasPrevious", records.hasPrevious());
+        model.addAttribute("hasNext", records.hasNext());
+        model.addAttribute("totalAuditPages", records.getTotalPages());
         return "admin_user_audit";
     }
 }
