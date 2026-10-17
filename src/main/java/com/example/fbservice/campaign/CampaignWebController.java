@@ -82,6 +82,23 @@ public class CampaignWebController {
         }
     }
 
+    /**
+     * An explicit, editable new request for a rejected order.
+     * Does not reopen, approve, pay for or mutate the original.
+     */
+    @GetMapping("/{id}/copy")
+    public String copyRejected(@PathVariable Long id, Principal principal, Model model) {
+        CampaignOrder original = service.findMineById(principal.getName(), id);
+        if (original.getStatus() != CampaignStatus.REJECTED)
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Only rejected campaigns can be copied");
+        model.addAttribute("submittedPlatform", original.getPlatform());
+        model.addAttribute("submittedServiceType", original.getServiceType());
+        model.addAttribute("submittedTargetUrl", original.getTargetUrl());
+        model.addAttribute("submittedBrief", original.getBrief());
+        model.addAttribute("notice", "Đây là yêu cầu mới. Giá và tình trạng gói sẽ được kiểm tra lại khi gửi.");
+        return form(model);
+    }
+
     @PostMapping("/{id}/cancel")
     public String cancel(@PathVariable Long id, Principal principal,
             org.springframework.web.servlet.mvc.support.RedirectAttributes flash) {

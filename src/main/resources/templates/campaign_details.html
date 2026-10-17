@@ -38,6 +38,11 @@
     <p class="footnote" th:if="${progress.closedWithoutCompletion()}">Đơn đã đóng mà chưa hoàn thành; liên hệ hỗ trợ để tìm hiểu thêm.</p>
     <p class="footnote" th:unless="${progress.closedWithoutCompletion()}">Tiến độ là trạng thái xử lý nội bộ, không phải số liệu hiệu quả quảng cáo.</p>
   </section>
+  <p th:if="${order.status.name() == 'REJECTED'}">
+    <a class="btn btn-outline" th:href="@{/campaigns/{id}/copy(id=${order.id})}">
+      + Tạo yêu cầu mới từ đơn bị từ chối
+    </a>
+  </p>
   <div class="notice" th:if="${attention.needsAttention()}">
     <strong th:text="${attention.shortLabel()}">Cần hỗ trợ</strong>
     <p th:text="${attention.message()}"></p>
