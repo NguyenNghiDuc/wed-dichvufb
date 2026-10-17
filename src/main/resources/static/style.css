@@ -7,3 +7,11 @@
 .field input.check-input{width:18px;height:18px;vertical-align:middle;accent-color:var(--accent);margin-right:7px}
 
 .metrics-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}.metric{font-size:36px;letter-spacing:-1.5px;font-weight:800;color:var(--accent);margin:9px 0}@media(max-width:800px){.metrics-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:500px){.metrics-grid{grid-template-columns:1fr}}
+/* Customer campaign overview: clean white/orange cards, responsive without inline styles. */
+.customer-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-bottom:26px}
+.customer-metrics .card{padding:21px}
+.customer-metrics .metric{font-size:33px;margin:5px 0}
+.customer-metrics p{margin-top:0}
+.customer-metrics .footnote{margin:0}
+@media(max-width:800px){.customer-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:520px){.customer-metrics{grid-template-columns:1fr}}

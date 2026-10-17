@@ -10,6 +10,13 @@
 <main class="page container">
 <div class="page-header"><div><div class="eyebrow">Dashboard</div><h1>Chiến dịch của tôi</h1><p class="muted">Theo dõi quá trình xét duyệt và xử lý yêu cầu.</p></div><a class="btn" th:href="@{/campaigns/new}">+ Tạo chiến dịch</a></div>
 
+<section class="customer-metrics" aria-label="Thống kê chiến dịch của tôi">
+<article class="card"><p class="muted">Tổng chiến dịch</p><p class="metric" th:text="${summary.total()}">0</p><p class="footnote">Tất cả trạng thái</p></article>
+<article class="card"><p class="muted">Chờ duyệt</p><p class="metric" th:text="${summary.pendingReview()}">0</p><p class="footnote">Đang chờ nhân viên xem xét</p></article>
+<article class="card"><p class="muted">Đang xử lý</p><p class="metric" th:text="${summary.approved() + summary.inProgress()}">0</p><p class="footnote">Đã duyệt hoặc đang thực hiện</p></article>
+<article class="card"><p class="muted">Đã hoàn thành</p><p class="metric" th:text="${summary.completed()}">0</p><p class="footnote">Hoàn tất xử lý yêu cầu</p></article>
+</section>
+
 <form method="get" th:action="@{/campaigns}" class="actions" role="search" aria-label="Lọc chiến dịch">
 <label for="orderId">Mã đơn</label>
 <input id="orderId" name="orderId" type="number" min="1" step="1" placeholder="VD: 123" th:value="${orderId}">
@@ -18,6 +25,7 @@
 <option th:each="s : ${statuses}" th:value="${s.name()}" th:text="${s.displayName}" th:selected="${s == selectedStatus}"></option></select>
 <button type="submit" class="btn btn-small">Tìm kiếm</button>
 <a class="btn btn-outline btn-small" th:href="@{/campaigns}">Xóa lọc</a>
+<a class="btn btn-outline btn-small" th:href="@{/campaigns/export.csv(orderId=${orderId},status=${selectedStatus})}">↓ Xuất CSV theo bộ lọc</a>
 </form>
 
 <div class="table-panel"><table class="data-table"><thead><tr><th>Mã đơn</th><th>Nền tảng</th><th>Gói dịch vụ</th><th>Báo giá</th><th>Ngày tạo</th><th>Trạng thái</th><th>Thao tác</th></tr></thead><tbody>

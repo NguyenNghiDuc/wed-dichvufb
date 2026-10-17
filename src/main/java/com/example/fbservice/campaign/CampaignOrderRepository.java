@@ -11,6 +11,16 @@ import org.springframework.data.repository.query.Param;
 public interface CampaignOrderRepository extends JpaRepository<CampaignOrder, Long>,
         JpaSpecificationExecutor<CampaignOrder> {
     List<CampaignOrder> findByOwnerUsernameOrderByCreatedAtDesc(String username);
+
+    // One grouped, owner-scoped read instead of querying each status individually.
+    interface OwnerStatusCount {
+        CampaignStatus getStatus();
+        long getTotal();
+    }
+
+    @Query("select c.status as status, count(c.id) as total from CampaignOrder c " +
+           "where c.ownerUsername = :username group by c.status")
+    List<OwnerStatusCount> countStatusesForOwner(@Param("username") String username);
     Page<CampaignOrder> findByOwnerUsername(String username, Pageable pageable);
     Page<CampaignOrder> findByAssigneeUsername(String username, Pageable pageable);
     Optional<CampaignOrder> findByIdAndOwnerUsername(Long id, String username);

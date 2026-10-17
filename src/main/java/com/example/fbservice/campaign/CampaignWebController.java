@@ -29,6 +29,8 @@ public class CampaignWebController {
         } catch (IllegalArgumentException exception) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid filters or pagination");
         }
+        // Aggregate across every page, including orders hidden by the current filter.
+        model.addAttribute("summary", service.summaryForOwner(principal.getName()));
         model.addAttribute("orders", records.getContent());
         model.addAttribute("pageNumber", page);
         model.addAttribute("hasPrevious", records.hasPrevious());

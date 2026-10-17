@@ -40,6 +40,25 @@ public class CampaignOrderService {
     }
 
     @Transactional(readOnly = true)
+    public CampaignSummary summaryForOwner(String username) {
+        if (username == null || username.isBlank())
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+        long[] counts = new long[CampaignStatus.values().length];
+        for (CampaignOrderRepository.OwnerStatusCount count : orders.countStatusesForOwner(username)) {
+            counts[count.getStatus().ordinal()] = count.getTotal();
+        }
+        long total = 0;
+        for (long count : counts) total += count;
+        return new CampaignSummary(total,
+            counts[CampaignStatus.PENDING_REVIEW.ordinal()],
+            counts[CampaignStatus.APPROVED.ordinal()],
+            counts[CampaignStatus.IN_PROGRESS.ordinal()],
+            counts[CampaignStatus.COMPLETED.ordinal()],
+            counts[CampaignStatus.REJECTED.ordinal()],
+            counts[CampaignStatus.CANCELLED.ordinal()]);
+    }
+
+    @Transactional(readOnly = true)
     public List<CampaignOrder> findMine(String username) {
         return orders.findByOwnerUsernameOrderByCreatedAtDesc(username);
     }

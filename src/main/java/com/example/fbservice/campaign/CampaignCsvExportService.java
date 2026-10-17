@@ -13,9 +13,11 @@ public class CampaignCsvExportService {
     private static final int MAX_ROWS = 5000;
     private static final DateTimeFormatter DATE = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private final CampaignOrderRepository orders;
+    private final CampaignOrderService customerOrders;
 
-    public CampaignCsvExportService(CampaignOrderRepository orders) {
+    public CampaignCsvExportService(CampaignOrderRepository orders, CampaignOrderService customerOrders) {
         this.orders = orders;
+        this.customerOrders = customerOrders;
     }
 
     @Transactional(readOnly = true)
@@ -35,6 +37,32 @@ public class CampaignCsvExportService {
                     order.getId(), order.getOwnerUsername(), order.getPlatform(),
                     order.getServiceType(), order.getStatus(), order.getQuotedPriceVnd(),
                     DATE.format(order.getCreatedAt()), order.getTargetUrl(), order.getBrief());
+                exported++;
+            }
+            if (!page.hasNext()) break;
+            pageNumber++;
+        }
+        return csv.toString();
+    }
+
+    /** Export only the authenticated customer's rows, respecting the same filters as the list. */
+    @Transactional(readOnly = true)
+    public String exportMine(String username, Long orderId, CampaignStatus status) {
+        StringBuilder csv = new StringBuilder("\uFEFF");
+        csv.append("id,platform,service,status,price_vnd,created_at,target_url,brief\r\n");
+        int exported = 0;
+        int pageNumber = 0;
+        while (exported < MAX_ROWS) {
+            // pageMine applies ownership in the database query, validates the filters,
+            // and caps each batch at 50 rows; do not fetch all users and filter in Java.
+            Page<CampaignOrder> page = customerOrders.pageMine(username, pageNumber, 50, orderId, status);
+            if (page.isEmpty()) break;
+            for (CampaignOrder order : page.getContent()) {
+                if (exported >= MAX_ROWS) break;
+                appendRow(csv,
+                    order.getId(), order.getPlatform(), order.getServiceType(), order.getStatus(),
+                    order.getQuotedPriceVnd(), DATE.format(order.getCreatedAt()),
+                    order.getTargetUrl(), order.getBrief());
                 exported++;
             }
             if (!page.hasNext()) break;
