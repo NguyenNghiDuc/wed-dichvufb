@@ -7,13 +7,17 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.intercept.AuthorizationFilter;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 @Configuration
 public class WebSecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, UserRepository users) throws Exception {
         return http
-            .csrf(csrf -> csrf.ignoringRequestMatchers("/api/v1/payments/webhooks/internal"))
+            .csrf(csrf -> csrf.ignoringRequestMatchers(
+                // The signed machine-to-machine callback is the ONLY CSRF exception.
+                // Restrict it to POST; all other state-changing methods remain protected.
+                new AntPathRequestMatcher("/api/v1/payments/webhooks/internal", "POST")))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/", "/login", "/register", "/help", "/style.css", "/favicon.ico",
                     "/actuator/health", "/actuator/health/**").permitAll()
