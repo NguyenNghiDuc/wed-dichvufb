@@ -3,6 +3,8 @@ package com.example.fbservice.config;
 import com.example.fbservice.repository.UserRepository;
 import jakarta.servlet.DispatcherType;
 import org.springframework.context.annotation.*;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -13,7 +15,7 @@ import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 @Configuration
 public class WebSecurityConfig {
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http, UserRepository users) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, UserRepository users, AuthenticationRateLimitFilter loginLimiter) throws Exception {
         return http
             .csrf(csrf -> csrf.ignoringRequestMatchers(
                 // The signed machine-to-machine callback is the ONLY CSRF exception.
@@ -31,10 +33,20 @@ public class WebSecurityConfig {
             .headers(headers -> headers.contentSecurityPolicy(csp -> csp.policyDirectives(
                 "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; " +
                 "form-action 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:")))
+            .addFilterBefore(loginLimiter, UsernamePasswordAuthenticationFilter.class)
             .addFilterBefore(new AccountStatusFilter(users), AuthorizationFilter.class)
             .formLogin(form -> form.loginPage("/login").defaultSuccessUrl("/campaigns", true).permitAll())
             .logout(logout -> logout.logoutSuccessUrl("/").permitAll())
             .build();
+    }
+
+    /** Register in the Spring Security chain only, after CsrfFilter. */
+    @Bean
+    public FilterRegistrationBean<AuthenticationRateLimitFilter> authenticationLimiterServletRegistration(
+            AuthenticationRateLimitFilter filter) {
+        var registration = new FilterRegistrationBean<>(filter);
+        registration.setEnabled(false);
+        return registration;
     }
 
     @Bean
