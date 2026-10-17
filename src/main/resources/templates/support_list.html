@@ -1,7 +1,7 @@
 <!doctype html><html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Yêu cầu hỗ trợ · GrowLab</title><link rel="stylesheet" th:href="@{/style.css}"></head>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Yêu cầu hỗ trợ · GrowLab</title><link rel="stylesheet" th:href="@{/style.css}"><link rel="stylesheet" th:href="@{/support-chat.css}"></head>
 <body><main class="page container"><a th:href="@{/campaigns}" class="table-link">← Dashboard</a><div class="page-header"><div><div class="eyebrow">Trung tâm hỗ trợ</div><h1>Yêu cầu hỗ trợ của tôi</h1></div><div class="actions"><a class="btn btn-outline" th:href="@{/chat/ui}">Nhắn tin hỗ trợ</a><a class="btn" th:href="@{/support/new}">+ Tạo yêu cầu</a></div></div>
-<form method="get" th:action="@{/support}" class="actions" role="search" aria-label="Tìm yêu cầu hỗ trợ">
+<form method="get" th:action="@{/support}" class="actions support-filters" role="search" aria-label="Tìm yêu cầu hỗ trợ">
 <label for="customerSupportSearch">Tiêu đề</label>
 <input id="customerSupportSearch" name="subject" maxlength="80" th:value="${subject}" placeholder="Tìm theo tiêu đề">
 <label for="customerSupportStatus">Trạng thái</label>

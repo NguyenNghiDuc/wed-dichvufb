@@ -1,0 +1,19 @@
+/* GrowLab support/chat scoped styles; leave main global theme unchanged. */
+.support-filters{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:#fff;
+ border:1px solid var(--line);border-radius:18px;padding:16px;margin:16px 0 22px}
+.support-filters label{font-weight:700;font-size:13px;color:var(--ink)}
+.support-filters input,.support-filters select{font:inherit;background:#fff;color:var(--ink);
+ border:1px solid #e9d9ca;border-radius:10px;padding:10px 12px;min-height:42px;min-width:130px;max-width:270px}
+.support-filters input:focus-visible,.support-filters select:focus-visible{
+ outline:3px solid #f2692250;outline-offset:1px;border-color:var(--accent)}
+.support-filters .btn{white-space:normal;text-align:center}
+.chat-bubble{line-height:1.6}
+.chat-bubble .chat-meta{margin-bottom:5px}
+.chat-bubble small{color:#767d87}
+.chat-composer textarea{min-height:100px}
+@media(max-width:700px){
+ .support-filters{flex-direction:column;align-items:stretch}
+ .support-filters input,.support-filters select{width:100%;max-width:none}
+ .support-filters .btn{width:100%}
+ .chat-bubble{width:100%}
+}

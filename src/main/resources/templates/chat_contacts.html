@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Nhắn tin hỗ trợ · GrowLab</title><link rel="stylesheet" th:href="@{/style.css}"></head>
+<title>Nhắn tin hỗ trợ · GrowLab</title><link rel="stylesheet" th:href="@{/style.css}"><link rel="stylesheet" th:href="@{/support-chat.css}"></head>
 <body><main class="page container">
 <a class="table-link" th:href="@{/support}">← Trung tâm hỗ trợ</a>
 <div class="page-header"><div><div class="eyebrow">GrowLab chat</div><h1>Nhắn tin hỗ trợ</h1>
@@ -13,7 +13,7 @@
 <button type="submit" class="btn">Mở hội thoại</button></form></div>
 <section class="section">
 <h2>Hội thoại của tôi</h2>
-<form method="get" th:action="@{/chat/ui}" class="actions" role="search" aria-label="Tìm hội thoại">
+<form method="get" th:action="@{/chat/ui}" class="actions support-filters" role="search" aria-label="Tìm hội thoại">
 <label for="chatSearch">Tìm theo tên tài khoản</label>
 <input id="chatSearch" name="q" type="search" maxlength="40" th:value="${query}"
        placeholder="Tên người đã trò chuyện">

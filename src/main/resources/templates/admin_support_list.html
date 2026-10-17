@@ -1,8 +1,8 @@
 <!doctype html><html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Hỗ trợ khách hàng · GrowLab Admin</title><link rel="stylesheet" th:href="@{/style.css}"></head>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Hỗ trợ khách hàng · GrowLab Admin</title><link rel="stylesheet" th:href="@{/style.css}"><link rel="stylesheet" th:href="@{/support-chat.css}"></head>
 <body><main class="page container"><a th:href="@{/admin/campaign-orders}" class="table-link">← Quản lý đơn</a>
 <div class="page-header"><div><div class="eyebrow">Admin</div><h1>Yêu cầu hỗ trợ</h1></div><a class="btn btn-outline" th:href="@{/chat/ui}">Mở hộp thoại</a></div>
-<form method="get" th:action="@{/admin/support}" class="actions" role="search" aria-label="Tìm ticket">
+<form method="get" th:action="@{/admin/support}" class="actions support-filters" role="search" aria-label="Tìm ticket">
 <label for="staffSupportSearch">Tiêu đề</label><input id="staffSupportSearch" name="subject" maxlength="80" th:value="${subject}" placeholder="Tìm tiêu đề">
 <label for="staffSupportStatus">Trạng thái</label><select id="staffSupportStatus" name="status"><option value="">Tất cả</option><option th:each="s : ${statuses}" th:value="${s.name()}" th:selected="${s == selectedStatus}" th:text="${s.title}"></option></select>
 <label for="staffSupportPriority">Ưu tiên</label><select id="staffSupportPriority" name="priority"><option value="">Tất cả</option><option th:each="p : ${priorities}" th:value="${p.name()}" th:selected="${p == selectedPriority}" th:text="${p.title}"></option></select>

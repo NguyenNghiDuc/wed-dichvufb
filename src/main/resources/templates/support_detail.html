@@ -1,5 +1,5 @@
 <!doctype html><html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Chi tiết hỗ trợ · GrowLab</title><link rel="stylesheet" th:href="@{/style.css}"></head>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Chi tiết hỗ trợ · GrowLab</title><link rel="stylesheet" th:href="@{/style.css}"><link rel="stylesheet" th:href="@{/support-chat.css}"></head>
 <body><main class="page container"><a th:href="@{/support}" class="table-link">← Các yêu cầu</a>
 <div class="page-header"><div><div class="eyebrow">Yêu cầu hỗ trợ</div><h1 th:text="${ticket.subject}"></h1><span class="status" th:text="${ticket.status.title}"></span></div></div>
 <article class="card"><p th:text="${ticket.description}"></p></article>
