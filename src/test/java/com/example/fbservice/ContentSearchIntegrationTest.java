@@ -85,6 +85,35 @@ class ContentSearchIntegrationTest {
             .andExpect(content().string(not(containsString("value=\"<script>"))));
     }
 
+    @Test @WithMockUser(username="search-utc-window")
+    void utcScheduleRangeFiltersWithoutCrossOwnerLeakage() throws Exception {
+        LocalDateTime now=LocalDateTime.now(ZoneOffset.UTC).withSecond(0).withNano(0);
+        drafts.save("search-utc-window",SocialPlatform.TIKTOK,"Early planned",
+            "Write a useful tutorial",now.plusDays(3));
+        drafts.save("search-utc-window",SocialPlatform.TIKTOK,"Late planned",
+            "Share a lesson learned",now.plusDays(12));
+        drafts.save("secret-schedule-owner",SocialPlatform.TIKTOK,"FOREIGN private content",
+            "Never show other owner data",now.plusDays(3));
+
+        LocalDateTime from=now.plusDays(2),to=now.plusDays(5);
+        var page=drafts.searchMine("search-utc-window",0,SocialPlatform.TIKTOK,
+            DraftStatus.PLANNED,null,from,to);
+        assertThat(page.getTotalElements()).isEqualTo(1);
+        assertThat(page.getContent().get(0).getTitle()).isEqualTo("Early planned");
+
+        mvc.perform(get("/content-calendar").param("fromUtc",from.toString())
+                .param("toUtc",to.toString()).param("status","PLANNED"))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString("Early planned")))
+            .andExpect(content().string(not(containsString("Late planned"))))
+            .andExpect(content().string(not(containsString("FOREIGN private content"))));
+        mvc.perform(get("/content-calendar").param("fromUtc",to.toString())
+                .param("toUtc",from.toString()))
+            .andExpect(status().isBadRequest());
+        mvc.perform(get("/content-calendar").param("fromUtc","not-a-date"))
+            .andExpect(status().isBadRequest());
+    }
+
     @Test @WithMockUser(username="search-pages")
     void paginationPreservesTheActiveSearchFilters() throws Exception {
         for(int i=0;i<21;i++)
