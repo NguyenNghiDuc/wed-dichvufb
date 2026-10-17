@@ -4,6 +4,7 @@ import com.example.fbservice.admin.AdminAttentionQueueService;
 import com.example.fbservice.campaign.*;
 import java.time.LocalDateTime;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -24,6 +25,10 @@ class AdminAttentionQueueIntegrationTest {
     @Autowired AdminAttentionQueueService queue;
     @Autowired CampaignOrderRepository orders;
     @Autowired MockMvc mvc;
+
+    // Independent fixtures: pagination tests insert old orders into the same H2 database.
+    @BeforeEach
+    void clearTestOrders() { orders.deleteAll(); }
 
     private CampaignOrder create(String owner, CampaignStatus status,
                                  LocalDateTime createdAt, LocalDateTime updatedAt) {
