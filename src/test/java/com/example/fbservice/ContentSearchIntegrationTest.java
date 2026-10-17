@@ -104,4 +104,18 @@ class ContentSearchIntegrationTest {
         mvc.perform(get("/content-calendar").param("q","anything"))
             .andExpect(status().is3xxRedirection());
     }
+    @Test @WithMockUser(username="search-ai-form")
+    void assistantPreviewIsAccessibleButNeverPostsAutomatically() throws Exception {
+        mvc.perform(get("/content-calendar"))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString("Trợ lý viết nội dung")))
+            .andExpect(content().string(containsString("content-assistant.js")))
+            .andExpect(content().string(containsString("Xóa bộ lọc")));
+        mvc.perform(get("/content-assistant.js"))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString("credentials: \"same-origin\"")))
+            .andExpect(content().string(containsString("result.value = responseData.content")))
+            .andExpect(content().string(not(containsString("innerHTML"))));
+    }
+
 }
