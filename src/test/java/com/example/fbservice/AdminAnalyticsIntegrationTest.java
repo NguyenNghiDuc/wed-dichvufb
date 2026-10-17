@@ -40,8 +40,11 @@ class AdminAnalyticsIntegrationTest {
         CampaignOrder pending = newOrder("w4-analytic-customer");
         CampaignOrder approved = newOrder("w4-analytic-customer2");
         campaigns.updateStatusForAdmin(approved.getId(), CampaignStatus.APPROVED, "w4-analytics-admin");
-        approved.assignTo("w4-analytics-staff");
-        orders.saveAndFlush(approved);
+        // Reload after a separate service transaction; never merge a stale PENDING entity.
+        CampaignOrder assigned = orders.findById(approved.getId()).orElseThrow();
+        assertThat(assigned.getStatus()).isEqualTo(CampaignStatus.APPROVED);
+        assigned.assignTo("w4-analytics-staff");
+        orders.saveAndFlush(assigned);
         var after = dashboard.operations();
 
         assertThat(after.pipelineQuotedValueVnd())
