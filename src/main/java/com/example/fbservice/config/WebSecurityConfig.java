@@ -1,6 +1,7 @@
 package com.example.fbservice.config;
 
 import com.example.fbservice.repository.UserRepository;
+import jakarta.servlet.DispatcherType;
 import org.springframework.context.annotation.*;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -19,8 +20,10 @@ public class WebSecurityConfig {
                 // Restrict it to POST; all other state-changing methods remain protected.
                 new AntPathRequestMatcher("/api/v1/payments/webhooks/internal", "POST")))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/", "/login", "/register", "/help", "/style.css", "/favicon.ico",
-                    "/actuator/health", "/actuator/health/**").permitAll()
+                // Spring Boot forwards 404/500 requests to /error; never save them as login targets.
+                .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
+                .requestMatchers("/", "/login", "/register", "/help", "/error", "/style.css",
+                    "/favicon.ico", "/favicon.svg", "/actuator/health", "/actuator/health/**").permitAll()
                 .requestMatchers("/api/v1/payments/webhooks/internal").permitAll()
                 .requestMatchers("/admin/support/**", "/staff/**").hasAnyRole("ADMIN", "STAFF")
                 .requestMatchers("/admin/**", "/api/v1/admin/**").hasRole("ADMIN")
@@ -29,7 +32,7 @@ public class WebSecurityConfig {
                 "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; " +
                 "form-action 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:")))
             .addFilterBefore(new AccountStatusFilter(users), AuthorizationFilter.class)
-            .formLogin(form -> form.loginPage("/login").defaultSuccessUrl("/campaigns", false).permitAll())
+            .formLogin(form -> form.loginPage("/login").defaultSuccessUrl("/campaigns", true).permitAll())
             .logout(logout -> logout.logoutSuccessUrl("/").permitAll())
             .build();
     }
