@@ -18,10 +18,11 @@
   <form method="post" th:action="@{/content-calendar}">
     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
     <div class="field"><label for="platform">Nền tảng</label><select id="platform" name="platform" required><option th:each="p : ${platforms}" th:value="${p.name()}" th:text="${p.displayName}"></option></select></div>
-    <div class="field"><label for="title">Tiêu đề</label><input id="title" name="title" maxlength="120" required></div>
-    <div class="field"><label for="body">Nội dung</label><textarea id="body" name="body" maxlength="3000" required></textarea></div>
+    <div class="field"><label for="title">Tiêu đề</label><input id="title" name="title" maxlength="120" required aria-describedby="title-count"><small id="title-count" aria-live="polite">0 / 120 ký tự</small></div>
+    <div class="field"><label for="body">Nội dung</label><textarea id="body" name="body" maxlength="3000" required aria-describedby="body-count"></textarea><small id="body-count" aria-live="polite">0 / 3000 ký tự</small><small id="body-stats" aria-live="polite">0 từ · 0 hashtag</small></div>
     <div class="field"><label for="schedule">Giờ dự kiến (UTC, không bắt buộc)</label><input id="schedule" type="datetime-local" name="scheduledAtUtc"><small>Để trống để lưu bản nháp; không tự đăng bài.</small></div>
-    <button class="btn" type="submit">Lưu nội dung</button>
+    <div class="form-panel" aria-label="Xem trước bài viết"><h3>Xem trước bản nháp</h3><p class="muted">Chỉ xem trên trình duyệt; không tự lưu hoặc đăng.</p><strong id="preview-title">Chưa có tiêu đề</strong><p id="preview-body" style="white-space:pre-wrap;overflow-wrap:anywhere">Chưa có nội dung</p></div>
+    <button class="btn" type="submit" id="save-draft">Lưu nội dung</button>
   </form>
 </div>
 <section class="section">
@@ -37,7 +38,11 @@
   <td th:text="${d.scheduledAtUtc != null ? #temporals.format(d.scheduledAtUtc,'dd/MM/yyyy HH:mm') : 'Chưa đặt'}"></td>
   <td><div class="actions">
     <a class="btn btn-outline btn-small" th:href="@{/content-calendar/{id}/edit(id=${d.id})}">Sửa</a>
-    <form method="post" th:action="@{/content-calendar/{id}/delete(id=${d.id})}">
+    <form method="post" th:action="@{/content-calendar/{id}/duplicate(id=${d.id})}">
+      <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+      <button type="submit" class="btn btn-outline btn-small" aria-label="Nhân bản bản nháp">Nhân bản</button>
+    </form>
+    <form method="post" th:action="@{/content-calendar/{id}/delete(id=${d.id})}" onsubmit="return window.confirm('Bạn chắc chắn muốn xóa bản nháp này? Thao tác không thể hoàn tác.')">
       <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
       <button type="submit" class="btn btn-outline btn-small" aria-label="Xóa bản nháp">Xóa</button>
     </form>
@@ -53,4 +58,54 @@
   <a class="btn btn-outline btn-small" th:if="${hasNext}" th:href="@{/content-calendar(page=${pageNumber + 1})}">Trang sau →</a>
 </nav>
 </section>
-</main></body></html>
+</main>
+<script>
+  // Preview uses textContent, never innerHTML.
+  const previewTitle = document.getElementById('preview-title');
+  const previewBody = document.getElementById('preview-body');
+  const draftTitle = document.getElementById('title');
+  const draftBody = document.getElementById('body');
+  if (previewTitle && previewBody && draftTitle && draftBody) {
+    const updatePreview = () => {
+      previewTitle.textContent = draftTitle.value || 'Chưa có tiêu đề';
+      previewBody.textContent = draftBody.value || 'Chưa có nội dung';
+    };
+    draftTitle.addEventListener('input', updatePreview);
+    draftBody.addEventListener('input', updatePreview);
+    updatePreview();
+  }
+  // Counters use textContent only; never render user input as HTML.
+  const createForm = document.getElementById("save-draft")?.form;
+  if (createForm) {
+    createForm.addEventListener("submit", () => {
+      if (createForm.checkValidity()) {
+        const button = document.getElementById("save-draft");
+        button.disabled = true;
+        button.textContent = "Đang lưu…";
+      }
+    });
+  }
+  const bodyField = document.getElementById('body');
+  const bodyStats = document.getElementById('body-stats');
+  if (bodyField && bodyStats) {
+    const refreshStats = () => {
+      const content = bodyField.value.trim();
+      const words = content ? content.split(/\s+/u).length : 0;
+      const hashtags = (content.match(/#[\p{L}\p{N}_]+/gu) || []).length;
+      bodyStats.textContent = words + ' từ · ' + hashtags + ' hashtag';
+    };
+    bodyField.addEventListener('input', refreshStats);
+    refreshStats();
+  }
+  for (const item of [{fieldId:'title', counterId:'title-count', limit:120}, {fieldId:'body', counterId:'body-count', limit:3000}]) {
+    const {fieldId, counterId, limit} = item;
+    const field = document.getElementById(fieldId);
+    const counter = document.getElementById(counterId);
+    if (field && counter) {
+      const refresh = () => { counter.textContent = field.value.length + ' / ' + limit + ' ký tự'; };
+      field.addEventListener('input', refresh);
+      refresh();
+    }
+  }
+</script>
+</body></html>

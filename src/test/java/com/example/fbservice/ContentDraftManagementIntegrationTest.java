@@ -121,6 +121,32 @@ class ContentDraftManagementIntegrationTest {
         assertThat(drafts.pageMine("editor-outsider",0).getTotalElements()).isZero();
     }
 
+    @Test @WithMockUser(username="duplicate-owner")
+    void duplicateRequiresCsrfAndCopiesOnlyOwnedDraftWithoutSchedule() throws Exception {
+        ContentDraft original = drafts.save("duplicate-owner", SocialPlatform.FACEBOOK,
+            "Bài gốc", "Nội dung bản gốc", LocalDateTime.now(ZoneOffset.UTC).plusDays(3));
+        ContentDraft foreign = add("duplicate-other", "Bài riêng");
+
+        mvc.perform(post("/content-calendar/" + original.getId() + "/duplicate"))
+            .andExpect(status().isForbidden());
+        mvc.perform(post("/content-calendar/" + foreign.getId() + "/duplicate").with(csrf()))
+            .andExpect(status().isNotFound());
+        mvc.perform(post("/content-calendar/" + original.getId() + "/duplicate").with(csrf()))
+            .andExpect(status().is3xxRedirection())
+            .andExpect(redirectedUrl("/content-calendar"));
+
+        var copies = drafts.mine("duplicate-owner");
+        assertThat(copies).hasSize(2);
+        ContentDraft copy = copies.stream().filter(d -> !d.getId().equals(original.getId()))
+            .findFirst().orElseThrow();
+        assertThat(copy.getTitle()).isEqualTo(original.getTitle());
+        assertThat(copy.getBody()).isEqualTo(original.getBody());
+        assertThat(copy.getPlatform()).isEqualTo(original.getPlatform());
+        assertThat(copy.getStatus()).isEqualTo(DraftStatus.DRAFT);
+        assertThat(copy.getScheduledAtUtc()).isNull();
+        assertThat(drafts.mine("duplicate-other")).hasSize(1);
+    }
+
     @Test
     void anonymousCannotManageDrafts() throws Exception {
         mvc.perform(get("/content-calendar")).andExpect(status().is3xxRedirection());

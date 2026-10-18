@@ -74,6 +74,12 @@ public class ContentDraftController {
         }
     }
 
+    @PostMapping("/{id}/duplicate")
+    public String duplicate(@PathVariable Long id, Principal principal) {
+        service.duplicateMine(principal.getName(), id);
+        return "redirect:/content-calendar";
+    }
+
     @PostMapping("/{id}/delete")
     public String delete(@PathVariable Long id,Principal principal){
         service.deleteMine(principal.getName(),id);
