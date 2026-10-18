@@ -36,15 +36,12 @@ for item in "$archive" "$archive.sha256"; do
     exit 2
   }
 done
-# Check only the expected file, not arbitrary paths embedded in a checksum manifest.
-expected="$(cut -d ' ' -f1 < "$archive.sha256")"
-[[ "$expected" =~ ^[0-9a-fA-F]{64}$ ]] || {
-  echo 'Invalid SHA-256 manifest' >&2
-  exit 2
-}
+# Require the exact one-entry manifest emitted by backup.sh; no extra entries or
+# alternate file names may be silently accepted.
+expected_line="$(cat -- "$archive.sha256")"
 actual="$(sha256sum "$archive" | cut -d ' ' -f1)"
-[[ "$expected" == "$actual" ]] || {
-  echo 'Checksum mismatch; refusing to restore' >&2
+[[ "$expected_line" == "$actual  $file" ]] || {
+  echo 'Checksum or checksum-manifest filename mismatch; refusing to restore' >&2
   exit 1
 }
 compose=(docker compose -f compose.yaml -f compose.recovery.yaml --profile recovery)
