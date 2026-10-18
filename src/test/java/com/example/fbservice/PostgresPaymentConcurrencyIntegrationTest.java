@@ -84,6 +84,31 @@ class PostgresPaymentConcurrencyIntegrationTest {
     }
 
     @Test
+    void databaseRejectsNewOutOfRangeAmountsWithoutRewritingLegacyRows() {
+        Integer checks = jdbc.queryForObject("""
+                SELECT COUNT(*) FROM pg_constraint
+                WHERE conname IN (
+                    'chk_deposit_request_amount_vnd',
+                    'chk_payment_receipt_amount_vnd'
+                ) AND contype = 'c' AND convalidated = false
+                """, Integer.class);
+        assertThat(checks).isEqualTo(2);
+
+        assertThatThrownBy(() -> jdbc.update(
+                "INSERT INTO deposit_request (owner_username, amount, status) VALUES (?, ?, ?)",
+                "pg-invalid-amount", 0L, "PENDING"))
+                .isInstanceOf(org.springframework.dao.DataIntegrityViolationException.class);
+
+        DepositRequest valid = createDeposit("pg-receipt-constraint");
+        assertThatThrownBy(() -> jdbc.update(
+                "INSERT INTO payment_receipts (event_id, deposit_request_id, amount_vnd, created_at) " +
+                        "VALUES (?, ?, ?, CURRENT_TIMESTAMP)",
+                "pgInvalidReceipt999", valid.getId(), 0L))
+                .isInstanceOf(org.springframework.dao.DataIntegrityViolationException.class);
+        assertThat(deposits.findById(valid.getId()).orElseThrow().getStatus()).isEqualTo("PENDING");
+    }
+
+    @Test
     void concurrentDifferentEventsForOneDepositProduceExactlyOneReceipt() throws Exception {
         DepositRequest deposit = createDeposit("pg-concurrent-owner-1");
         String first = "pgRaceSameDepositA";
