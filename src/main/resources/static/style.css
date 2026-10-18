@@ -44,3 +44,6 @@
 /* Account sessions: long browser identifiers stay inside responsive cards. */
 .security-session-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}.session-card{min-width:0}.session-card-heading{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}.session-card-heading h3{margin:0}.session-device{font-size:12px;color:var(--muted);overflow-wrap:anywhere}.account-page .security-history-table{min-width:850px}.security-history-table th{white-space:nowrap}.security-history-table td:nth-child(4){max-width:360px}.session-card .order-definition{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
 @media(max-width:700px){.security-session-grid{grid-template-columns:minmax(0,1fr)}}
+
+.review-stars{color:#ffd659;font-weight:700;white-space:nowrap}.review-comment{white-space:pre-wrap;overflow-wrap:anywhere}.account-page td.review-comment{min-width:240px;max-width:420px}
+.faq-list{display:grid;gap:12px}.faq-item{padding:20px}.faq-item summary{font-weight:700;cursor:pointer;overflow-wrap:anywhere}.faq-item p{color:var(--muted);margin-bottom:0}.faq-item[open]{border-color:#ff147266}.faq-item summary:focus-visible{outline:2px solid #4fdfda;outline-offset:6px}

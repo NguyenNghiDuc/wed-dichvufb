@@ -50,6 +50,6 @@
   </nav>
   <p class="footnote">Trạng thái là tiến độ xử lý nội bộ; không xác nhận thanh toán hoặc kết quả quảng cáo.</p>
 <div th:replace="~{fragments/campaign_controls :: cancelDialog}"></div>
-</main>
+<div class="actions" th:if="${order.status.name() == 'COMPLETED'}"><a class="btn btn-outline" th:href="@{/reviews/CAMPAIGN/{id}(id=${order.id})}">Đánh giá / xem đánh giá dịch vụ</a></div></main>
 </body>
 </html>
