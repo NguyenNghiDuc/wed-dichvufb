@@ -13,8 +13,5 @@
     health_interval 30s
     health_timeout 5s
   }
-  log {
-    output stdout
-    format json
-  }
+  # Access logs deliberately disabled until PII-safe redaction/retention is approved.
 }
