@@ -16,4 +16,20 @@
  <a class="btn btn-outline btn-small" th:if="${hasPrevious}" th:href="@{/support/{id}(id=${ticket.id},page=${messagePage - 1},q=${query})}">← Trang trước</a>
  <span class="muted" th:text="|Trang ${messagePage + 1}|">Trang 1</span>
  <a class="btn btn-outline btn-small" th:if="${hasNext}" th:href="@{/support/{id}(id=${ticket.id},page=${messagePage + 1},q=${query})}">Trang sau →</a>
- </nav><div class="form-panel" th:if="${ticket.status.name() != 'CLOSED'}"><p class="error" th:if="${error}" th:text="${error}"></p><form method="post" th:action="@{/support/{id}/reply(id=${ticket.id})}"><input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"><div class="field"><label>Trả lời</label><textarea name="message" required minlength="2" maxlength="2000"></textarea></div><button type="submit" class="btn">Gửi phản hồi</button></form></div></section></main></body></html>
+ </nav>
+<div class="form-panel" th:if="${ticket.status.name() == 'CLOSED'}">
+  <h2>Mở lại yêu cầu đã đóng</h2>
+  <p class="muted">Nếu vấn đề chưa được giải quyết, bạn có thể mở lại yêu cầu.
+  Lịch sử phản hồi trước đây vẫn được giữ nguyên.</p>
+  <p class="error" th:if="${error}" th:text="${error}"></p>
+  <form method="post" th:action="@{/support/{id}/reopen(id=${ticket.id})}">
+    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+    <div class="field">
+      <label for="supportReopenReason">Lý do mở lại</label>
+      <textarea id="supportReopenReason" name="reason" required minlength="10"
+                maxlength="500" placeholder="Vấn đề nào vẫn chưa được giải quyết?"></textarea>
+    </div>
+    <button type="submit" class="btn">Mở lại yêu cầu</button>
+  </form>
+</div>
+<div class="form-panel" th:if="${ticket.status.name() != 'CLOSED'}"><p class="error" th:if="${error}" th:text="${error}"></p><form method="post" th:action="@{/support/{id}/reply(id=${ticket.id})}"><input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"><div class="field"><label>Trả lời</label><textarea name="message" required minlength="2" maxlength="2000"></textarea></div><button type="submit" class="btn">Gửi phản hồi</button></form></div></section></main></body></html>
