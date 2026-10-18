@@ -1,8 +1,11 @@
 package com.example.fbservice;
 
 import com.example.fbservice.model.DepositRequest;
+import com.example.fbservice.notification.AccountNotificationRepository;
+import com.example.fbservice.payment.PaymentReceiptRepository;
 import com.example.fbservice.repository.DepositRequestRepository;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.HexFormat;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -10,44 +13,248 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import static org.assertj.core.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@SpringBootTest @AutoConfigureMockMvc
-@TestPropertySource(properties={"spring.datasource.url=jdbc:h2:mem:paymenttest;DB_CLOSE_DELAY=-1",
-    "growth.payments.webhook-secret=0123456789abcdef0123456789abcdef"})
+@SpringBootTest
+@AutoConfigureMockMvc
+@TestPropertySource(properties = {
+        "spring.datasource.url=jdbc:h2:mem:paymenttest;DB_CLOSE_DELAY=-1",
+        "growth.payments.webhook-secret=0123456789abcdef0123456789abcdef"
+})
 class PaymentWebhookIntegrationTest {
     @Autowired MockMvc mvc;
     @Autowired DepositRequestRepository deposits;
-    private static final String SECRET="0123456789abcdef0123456789abcdef";
-    private String sign(String body) throws Exception{
-        Mac mac=Mac.getInstance("HmacSHA256");
-        mac.init(new SecretKeySpec(SECRET.getBytes(StandardCharsets.UTF_8),"HmacSHA256"));
-        return HexFormat.of().formatHex(mac.doFinal(body.getBytes(StandardCharsets.UTF_8)));
+    @Autowired PaymentReceiptRepository receipts;
+    @Autowired AccountNotificationRepository notifications;
+    private static final String SECRET = "0123456789abcdef0123456789abcdef";
+
+    private String sign(String timestamp, String body) throws Exception {
+        Mac mac = Mac.getInstance("HmacSHA256");
+        mac.init(new SecretKeySpec(SECRET.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
+        return HexFormat.of().formatHex(mac.doFinal(
+                (timestamp + "." + body).getBytes(StandardCharsets.UTF_8)));
     }
+
+    private String now() {
+        return Long.toString(Instant.now().getEpochSecond());
+    }
+
+    private String event(String eventId, long id, long amount, String status) {
+        return "{\"eventId\":\"" + eventId + "\",\"depositRequestId\":" + id
+                + ",\"amountVnd\":" + amount + ",\"status\":\"" + status + "\"}";
+    }
+
+    private DepositRequest newDeposit(String owner, long amount) {
+        DepositRequest deposit = new DepositRequest();
+        deposit.setOwnerUsername(owner);
+        deposit.setAmount(amount);
+        return deposits.save(deposit);
+    }
+
+    private org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder request(
+            String body, String timestamp) throws Exception {
+        return post("/api/v1/payments/webhooks/internal")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("X-GrowLab-Timestamp", timestamp)
+                .header("X-GrowLab-Signature", sign(timestamp, body))
+                .content(body);
+    }
+
     @Test
-    void rejectsInvalidSignatureAndAmountAndDeduplicatesSettledEvent() throws Exception{
-        DepositRequest d=new DepositRequest();d.setOwnerUsername("pay-owner");d.setAmount(50000L);
-        d=deposits.save(d);
-        String body="{\"eventId\":\"event12345\",\"depositRequestId\":"+d.getId()
-            +",\"amountVnd\":50000,\"status\":\"SETTLED\"}";
-        mvc.perform(post("/api/v1/payments/webhooks/internal").contentType("application/json")
-            .header("X-GrowLab-Signature","0".repeat(64)).content(body))
-            .andExpect(status().isUnauthorized());
-        assertThat(deposits.findById(d.getId()).orElseThrow().getStatus()).isEqualTo("PENDING");
-        String badAmount=body.replace("50000","40000");
-        mvc.perform(post("/api/v1/payments/webhooks/internal").contentType("application/json")
-            .header("X-GrowLab-Signature",sign(badAmount)).content(badAmount))
-            .andExpect(status().isConflict());
-        mvc.perform(post("/api/v1/payments/webhooks/internal").contentType("application/json")
-            .header("X-GrowLab-Signature",sign(body)).content(body))
-            .andExpect(status().isOk()).andExpect(jsonPath("$.duplicate").value(false));
-        mvc.perform(post("/api/v1/payments/webhooks/internal").contentType("application/json")
-            .header("X-GrowLab-Signature",sign(body)).content(body))
-            .andExpect(status().isOk()).andExpect(jsonPath("$.duplicate").value(true));
-        assertThat(deposits.findById(d.getId()).orElseThrow().getStatus()).isEqualTo("APPROVED");
+    void signedSettlementIsRecordedExactlyOnceWithoutCreditingWallet() throws Exception {
+        DepositRequest deposit = newDeposit("webhook-owner-a", 50000);
+        String body = event("sandboxEventA123", deposit.getId(), 50000, "SETTLED");
+        String timestamp = now();
+        long beforeReceipts = receipts.count();
+        long beforeNotifications = notifications.count();
+        mvc.perform(request(body, timestamp)).andExpect(status().isOk())
+                .andExpect(jsonPath("$.duplicate").value(false));
+        mvc.perform(request(body, timestamp)).andExpect(status().isOk())
+                .andExpect(jsonPath("$.duplicate").value(true));
+        assertThat(receipts.count()).isEqualTo(beforeReceipts + 1);
+        assertThat(notifications.count()).isEqualTo(beforeNotifications + 1);
+        assertThat(deposits.findById(deposit.getId()).orElseThrow().getStatus()).isEqualTo("APPROVED");
+        mvc.perform(request(event("sandboxEventB123", deposit.getId(), 50000, "SETTLED"), now()))
+                .andExpect(status().isConflict());
+        assertThat(receipts.count()).isEqualTo(beforeReceipts + 1);
+    }
+
+    @Test
+    void rejectsMissingForgedExpiredAndFutureSignaturesWithoutMutation() throws Exception {
+        DepositRequest deposit = newDeposit("webhook-owner-b", 70000);
+        String body = event("sandboxEventC123", deposit.getId(), 70000, "SETTLED");
+        String timestamp = now();
+        mvc.perform(post("/api/v1/payments/webhooks/internal")
+                        .contentType(MediaType.APPLICATION_JSON).content(body)
+                        .header("X-GrowLab-Signature", sign(timestamp, body)))
+                .andExpect(status().isUnauthorized());
+        mvc.perform(post("/api/v1/payments/webhooks/internal")
+                        .contentType(MediaType.APPLICATION_JSON).content(body)
+                        .header("X-GrowLab-Timestamp", timestamp)
+                        .header("X-GrowLab-Signature", "0".repeat(64)))
+                .andExpect(status().isUnauthorized());
+        mvc.perform(request(body, Long.toString(Instant.now().minusSeconds(301).getEpochSecond())))
+                .andExpect(status().isUnauthorized());
+        mvc.perform(request(body, Long.toString(Instant.now().plusSeconds(301).getEpochSecond())))
+                .andExpect(status().isUnauthorized());
+        mvc.perform(request(body, timestamp).content(body.replace("70000", "70001")))
+                .andExpect(status().isUnauthorized());
+        assertThat(deposits.findById(deposit.getId()).orElseThrow().getStatus()).isEqualTo("PENDING");
+    }
+
+    @Test
+    void rejectsInvalidAmountStatusUnknownDepositAndCrossDepositEventIdReuse() throws Exception {
+        DepositRequest first = newDeposit("webhook-owner-c", 80000);
+        DepositRequest second = newDeposit("webhook-owner-d", 80000);
+        mvc.perform(request(event("sandboxEventD123", first.getId(), 80001, "SETTLED"), now()))
+                .andExpect(status().isConflict());
+        mvc.perform(request(event("sandboxEventD123", first.getId(), 80000, "PENDING"), now()))
+                .andExpect(status().isBadRequest());
+        mvc.perform(request(event("sandboxEventD123", Long.MAX_VALUE, 80000, "SETTLED"), now()))
+                .andExpect(status().isNotFound());
+        mvc.perform(request(event("sandboxEventD123", first.getId(), 80000, "SETTLED"), now()))
+                .andExpect(status().isOk());
+        mvc.perform(request(event("sandboxEventD123", second.getId(), 80000, "SETTLED"), now()))
+                .andExpect(status().isConflict());
+        assertThat(deposits.findById(second.getId()).orElseThrow().getStatus()).isEqualTo("PENDING");
+    }
+
+    @Test
+    void rejectsDuplicateJsonKeysTrailingDocumentsAndAmountsOutsideDepositLimit() throws Exception {
+        DepositRequest valid = newDeposit("webhook-json-owner", 50000);
+        String base = event("sandboxJsonEvent123", valid.getId(), 50000, "SETTLED");
+        String duplicated = base.replace("\"eventId\":",
+                "\"eventId\":\"otherEvent123\",\"eventId\":");
+        long before = receipts.count();
+        mvc.perform(request(duplicated, now())).andExpect(status().isBadRequest());
+        mvc.perform(request(base + " {}", now())).andExpect(status().isBadRequest());
+        DepositRequest excessive = newDeposit("webhook-max-owner", 1000000001L);
+        mvc.perform(request(event("sandboxHugeEvent123", excessive.getId(),
+                        1000000001L, "SETTLED"), now()))
+                .andExpect(status().isBadRequest());
+        assertThat(receipts.count()).isEqualTo(before);
+        assertThat(deposits.findById(valid.getId()).orElseThrow().getStatus())
+                .isEqualTo("PENDING");
+    }
+
+    @Test
+    void unknownSignedPaymentFieldsCannotBeSilentlyIgnored() throws Exception {
+        DepositRequest deposit = newDeposit("webhook-owner-unknown-fields", 62000);
+        String valid = event("unknownFieldEvt123", deposit.getId(), 62000, "SETTLED");
+        String withUnknown = valid.replace("\"status\":", "\"bankTransactionId\":\"unverified\",\"status\":");
+        long priorReceipts = receipts.count();
+        mvc.perform(request(withUnknown, now())).andExpect(status().isBadRequest());
+        assertThat(receipts.count()).isEqualTo(priorReceipts);
+        assertThat(deposits.findById(deposit.getId()).orElseThrow().getStatus())
+                .isEqualTo("PENDING");
+    }
+
+    @Test
+    void rejectsCoercedOrFractionalSignedPaymentAmountsAndIds() throws Exception {
+        DepositRequest deposit = newDeposit("webhook-owner-strict-numbers", 50000);
+        String valid = event("strictNumericEvt123", deposit.getId(), 50000, "SETTLED");
+        String quotedAmount = valid.replace("\"amountVnd\":50000", "\"amountVnd\":\"50000\"");
+        String fractional = valid.replace("\"amountVnd\":50000", "\"amountVnd\":50000.9");
+        String exponential = valid.replace("\"amountVnd\":50000", "\"amountVnd\":5e4");
+        String quotedId = valid.replace("\"depositRequestId\":" + deposit.getId(),
+                "\"depositRequestId\":\"" + deposit.getId() + "\"");
+        long before = receipts.count();
+        mvc.perform(request(quotedAmount, now())).andExpect(status().isBadRequest());
+        mvc.perform(request(fractional, now())).andExpect(status().isBadRequest());
+        mvc.perform(request(exponential, now())).andExpect(status().isBadRequest());
+        mvc.perform(request(quotedId, now())).andExpect(status().isBadRequest());
+        assertThat(receipts.count()).isEqualTo(before);
+        assertThat(deposits.findById(deposit.getId()).orElseThrow().getStatus())
+                .isEqualTo("PENDING");
+    }
+
+    @Test
+    void transportLimitsRawBodyWithoutPersistingSettlement() throws Exception {
+        DepositRequest deposit = newDeposit("webhook-owner-limit", 99000);
+        String timestamp = now();
+        long before = receipts.count();
+
+        // At exactly the transport limit, signature is processed but non-JSON is rejected.
+        mvc.perform(request(" ".repeat(4096), timestamp))
+                .andExpect(status().isBadRequest());
+        // 4097 bytes must be rejected before Jackson or database operations.
+        mvc.perform(request(" ".repeat(4097), timestamp))
+                .andExpect(status().is(413));
+        mvc.perform(post("/api/v1/payments/webhooks/internal")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(" ".repeat(12000))
+                        .header("X-GrowLab-Timestamp", timestamp))
+                .andExpect(status().is(413));
+        assertThat(receipts.count()).isEqualTo(before);
+        assertThat(deposits.findById(deposit.getId()).orElseThrow().getStatus())
+                .isEqualTo("PENDING");
+    }
+
+    @Test
+    void duplicateEventCannotAcknowledgeTamperedDepositState() throws Exception {
+        DepositRequest deposit = newDeposit("webhook-owner-state-check", 78000);
+        String body = event("stateTamperEvent123", deposit.getId(), 78000, "SETTLED");
+        mvc.perform(request(body, now())).andExpect(status().isOk());
+        long receiptCount = receipts.count();
+        long notificationCount = notifications.count();
+
+        DepositRequest modified = deposits.findById(deposit.getId()).orElseThrow();
+        modified.setStatus("PENDING");
+        deposits.saveAndFlush(modified);
+        mvc.perform(request(body, now())).andExpect(status().isConflict());
+
+        modified.setStatus("APPROVED");
+        modified.setAmount(78100);
+        deposits.saveAndFlush(modified);
+        mvc.perform(request(body, now())).andExpect(status().isConflict());
+
+        modified.setAmount(78000);
+        deposits.saveAndFlush(modified);
+        mvc.perform(request(body, now())).andExpect(status().isOk())
+                .andExpect(jsonPath("$.duplicate").value(true));
+        assertThat(receipts.count()).isEqualTo(receiptCount);
+        assertThat(notifications.count()).isEqualTo(notificationCount);
+    }
+
+    @Test
+    void rejectsRepeatedAuthenticationHeadersEvenWithValidSignature() throws Exception {
+        DepositRequest deposit = newDeposit("webhook-owner-ambiguous-headers", 68000);
+        String body = event("repeatHeaderEvt123", deposit.getId(), 68000, "SETTLED");
+        String timestamp = now();
+        String signature = sign(timestamp, body);
+        long before = receipts.count();
+
+        mvc.perform(post("/api/v1/payments/webhooks/internal")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("X-GrowLab-Timestamp", timestamp, timestamp)
+                        .header("X-GrowLab-Signature", signature)
+                        .content(body))
+                .andExpect(status().isUnauthorized());
+        mvc.perform(post("/api/v1/payments/webhooks/internal")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("X-GrowLab-Timestamp", timestamp)
+                        .header("X-GrowLab-Signature", signature, signature)
+                        .content(body))
+                .andExpect(status().isUnauthorized());
+        assertThat(receipts.count()).isEqualTo(before);
+        assertThat(deposits.findById(deposit.getId()).orElseThrow().getStatus())
+                .isEqualTo("PENDING");
+    }
+
+    @Test
+    void rejectsMalformedOversizedAndUnauthenticatedBody() throws Exception {
+        String timestamp = now();
+        mvc.perform(request("not-json", timestamp)).andExpect(status().isBadRequest());
+        mvc.perform(request("x".repeat(4097), timestamp)).andExpect(status().is(413));
+        mvc.perform(post("/api/v1/payments/webhooks/internal")
+                        .contentType(MediaType.APPLICATION_JSON).content("{}"))
+                .andExpect(status().isUnauthorized());
+        mvc.perform(request("{\"eventId\":\"short\"}", timestamp))
+                .andExpect(status().isBadRequest());
     }
 }

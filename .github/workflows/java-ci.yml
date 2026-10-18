@@ -4,6 +4,10 @@ on:
     branches: [main, 'feature/**']
   pull_request:
     branches: [main, 'feature/**']
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 jobs:
@@ -43,6 +47,31 @@ jobs:
           path: target/site/jacoco/
           if-no-files-found: warn
           retention-days: 7
+      # Safe CI-only restore rehearsal: seeded test database, never a production instance.
+      - name: PostgreSQL backup and isolated restore smoke
+        run: |
+          docker run --rm --network host \
+            -e PGPASSWORD=testpass \
+            -v "$RUNNER_TEMP:/backups" postgres:16-alpine sh -ec '
+              pg_dump -h 127.0.0.1 -U growlab -d growlab_ci --format=custom -f /backups/ci-postgres.dump
+              pg_restore --list /backups/ci-postgres.dump >/dev/null
+              createdb -h 127.0.0.1 -U growlab growlab_restore
+              pg_restore -h 127.0.0.1 -U growlab --no-owner --no-privileges -d growlab_restore /backups/ci-postgres.dump
+              psql -h 127.0.0.1 -U growlab -d growlab_restore -v ON_ERROR_STOP=1 -Atc "SELECT COUNT(*) FROM payment_receipts" | grep -Eq "^[0-9]+$"
+              psql -h 127.0.0.1 -U growlab -d growlab_restore -v ON_ERROR_STOP=1 -Atc "SELECT COUNT(*) FROM flyway_schema_history" | grep -Eq "^[1-9][0-9]*$"
+              # Compare actual restored row counts, not just table existence.
+              for table in users deposit_request payment_receipts campaign_orders flyway_schema_history; do
+                before=$(psql -h 127.0.0.1 -U growlab -d growlab_ci -v ON_ERROR_STOP=1 -Atc "SELECT COUNT(*) FROM $table")
+                after=$(psql -h 127.0.0.1 -U growlab -d growlab_restore -v ON_ERROR_STOP=1 -Atc "SELECT COUNT(*) FROM $table")
+                test "$before" = "$after" || { echo "Restored row-count mismatch in $table"; exit 1; }
+              done
+              before_amount=$(psql -h 127.0.0.1 -U growlab -d growlab_ci -v ON_ERROR_STOP=1 -Atc "SELECT COALESCE(SUM(amount_vnd), 0) FROM payment_receipts")
+              after_amount=$(psql -h 127.0.0.1 -U growlab -d growlab_restore -v ON_ERROR_STOP=1 -Atc "SELECT COALESCE(SUM(amount_vnd), 0) FROM payment_receipts")
+              test "$before_amount" = "$after_amount" || { echo "Restored internal-receipt sum mismatch"; exit 1; }
+              psql -h 127.0.0.1 -U growlab -d growlab_restore -v ON_ERROR_STOP=1 -Atc "SELECT indexname FROM pg_indexes" | grep -qx idx_deposit_owner_created_id
+              psql -h 127.0.0.1 -U growlab -d growlab_restore -v ON_ERROR_STOP=1 -Atc "SELECT indexname FROM pg_indexes" | grep -qx idx_payment_receipts_created_at
+            '
+          rm -f "$RUNNER_TEMP/ci-postgres.dump"
       - name: Package application
         run: test -f target/fbservice-0.0.1-SNAPSHOT.jar
       - name: Launch production JAR smoke test
@@ -64,3 +93,24 @@ jobs:
           curl -fsS http://127.0.0.1:8080/register | grep -q csrf
       - name: Validate Docker image
         run: docker build -t growlab-ci:latest .
+      - name: Boot Docker image against CI-only PostgreSQL
+        run: |
+          docker run --rm -d --name growlab-ci-runtime --network host --no-healthcheck \
+            -e SPRING_PROFILES_ACTIVE=prod \
+            -e DB_URL=jdbc:postgresql://localhost:5432/growlab_ci \
+            -e DB_USERNAME=growlab -e DB_PASSWORD=testpass \
+            -e SERVER_PORT=18080 growlab-ci:latest >/dev/null
+          trap 'docker stop growlab-ci-runtime >/dev/null 2>&1 || true' EXIT
+          for i in {1..50}; do
+            if curl --fail --silent http://127.0.0.1:18080/actuator/health | grep -q UP; then
+              exit 0
+            fi
+            sleep 1
+          done
+          docker logs --tail 60 growlab-ci-runtime
+          exit 1
+      - name: Validate Compose syntax without deployment
+        env:
+          POSTGRES_PASSWORD: ci-only-placeholder-not-for-any-real-service
+        run: docker compose config --quiet
+

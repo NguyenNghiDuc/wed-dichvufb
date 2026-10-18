@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Đối soát sandbox — GrowLab</title>
+  <link rel="stylesheet" th:href="@{/payment-review.css}" href="/payment-review.css">
+</head>
+<body>
+  <div class="review-container">
+    <header class="review-header">
+      <div>
+        <p class="review-eyebrow">GROWLAB · W6</p>
+        <h1>Đối soát thử nghiệm</h1>
+        <p class="review-subtitle">Chỉ ADMIN · chỉ đọc · không xác nhận tiền ngân hàng</p>
+      </div>
+      <a class="home-link" th:href="@{/}" href="/">Trang chủ</a>
+    </header>
+
+    <aside class="notice" role="note">
+      <strong>Chỉ dành cho môi trường sandbox.</strong>
+      Các số liệu dưới đây là bản ghi nội bộ đã ký; không phải doanh thu,
+      số dư ví hay bằng chứng chuyển khoản. Trường hợp bất thường phải được kiểm tra thủ công.
+    </aside>
+
+    <section aria-labelledby="integrity-title">
+      <h2 id="integrity-title">Tình trạng toàn vẹn</h2>
+      <div class="review-stats">
+        <article class="stat-card">
+          <span>Biên nhận nội bộ</span>
+          <strong th:text="${summary['internalReceipts']}">0</strong>
+        </article>
+        <article class="stat-card">
+          <span>Đã duyệt nhưng thiếu biên nhận</span>
+          <strong th:text="${summary['approvedWithoutReceipt']}">0</strong>
+        </article>
+        <article class="stat-card">
+          <span>Biên nhận không khớp</span>
+          <strong th:text="${summary['inconsistentReceipts']}">0</strong>
+        </article>
+      </div>
+      <p class="review-status" th:classappend="${summary['requiresManualReview']} ? ' is-alert' : ' is-ok'"
+         th:text="${summary['requiresManualReview']} ? 'Cần kiểm tra thủ công' : 'Không phát hiện bất thường theo các kiểm tra hiện tại'">
+        Trạng thái kiểm tra
+      </p>
+    </section>
+
+    <section aria-labelledby="trend-title" class="daily-section">
+      <div class="section-heading">
+        <div>
+          <h2 id="trend-title">Biên nhận theo ngày</h2>
+          <p>Ngày được tính theo múi giờ máy chủ (<span th:text="${trend['timeZone']}">UTC</span>).</p>
+        </div>
+        <form method="get" th:action="@{/admin/payments/review}" action="/admin/payments/review">
+          <label for="days">Khoảng ngày</label>
+          <select id="days" name="days">
+            <option value="7" th:selected="${days == 7}">7 ngày</option>
+            <option value="14" th:selected="${days == 14}">14 ngày</option>
+            <option value="31" th:selected="${days == 31}">31 ngày</option>
+          </select>
+          <button type="submit">Xem</button>
+          <a class="export-link" th:href="@{/api/v1/admin/payments/reconciliation/daily.csv(days=${days})}"
+             href="/api/v1/admin/payments/reconciliation/daily.csv">Xuất CSV</a>
+        </form>
+      </div>
+      <div class="table-scroll">
+        <table>
+          <caption>Biên nhận nội bộ theo ngày, mới nhất trước</caption>
+          <thead><tr><th scope="col">Ngày</th><th scope="col">Sự kiện</th><th scope="col">Tổng VND thử nghiệm</th></tr></thead>
+          <tbody>
+            <tr th:each="day : ${trend['daily']}">
+              <td th:text="${day.date()}">2026-10-18</td>
+              <td th:text="${day.internalReceiptCount()}">0</td>
+              <td th:text="${day.internalAmountVnd()}">0</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="review-footnote">Dữ liệu tổng hợp không chứa tên khách hàng, tài khoản ngân hàng hoặc mã sự kiện.</p>
+    </section>
+  </div>
+</body>
+</html>

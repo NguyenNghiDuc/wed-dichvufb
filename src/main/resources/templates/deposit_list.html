@@ -1,1 +1,44 @@
-<!doctype html><html lang="vi" xmlns:th="http://www.thymeleaf.org"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Yêu cầu nạp tiền · GrowLab</title><link rel="stylesheet" th:href="@{/style.css}"></head><body><main class="page container"><div class="page-header"><h1>Lịch sử yêu cầu nạp tiền</h1><a class="btn" th:href="@{/deposit/new}">+ Tạo yêu cầu</a></div><div class="table-panel"><table class="data-table"><thead><tr><th>Mã</th><th>Ngày tạo</th><th>Số tiền</th><th>Trạng thái</th></tr></thead><tbody><tr th:each="d : ${deposits}"><td th:text="${d.id}"></td><td th:text="${#temporals.format(d.createdAt, 'dd/MM/yyyy HH:mm')}"></td><td th:text="|${d.amount} đ|"></td><td><span class="status" th:text="${d.status}"></span></td></tr><tr th:if="${#lists.isEmpty(deposits)}"><td colspan="4">Chưa có yêu cầu nào.</td></tr></tbody></table></div><p class="footnote"><a class="table-link" th:href="@{/campaigns}">Quay về dashboard</a></p></main></body></html>
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lịch sử yêu cầu nạp tiền · GrowLab</title>
+  <link rel="stylesheet" th:href="@{/style.css}">
+</head>
+<body>
+<main class="page container">
+  <div class="page-header">
+    <div>
+      <h1>Lịch sử yêu cầu nạp tiền</h1>
+      <p class="muted">Đây chỉ là yêu cầu thử nghiệm, không xác nhận chuyển tiền hoặc ghi có ví.</p>
+    </div>
+    <a class="btn" th:href="@{/deposit/new}">+ Tạo yêu cầu</a>
+  </div>
+  <div class="table-panel" role="region" aria-label="Lịch sử yêu cầu" tabindex="0">
+    <table class="data-table">
+      <thead><tr><th>Mã</th><th>Ngày tạo</th><th>Số tiền</th><th>Trạng thái</th></tr></thead>
+      <tbody>
+      <tr th:each="d : ${deposits}">
+        <td th:text="${d.id}"></td>
+        <td th:text="${#temporals.format(d.createdAt, 'dd/MM/yyyy HH:mm')}"></td>
+        <td th:text="|${d.amount} đ|"></td>
+        <td><span class="status" th:text="${d.status}"></span></td>
+      </tr>
+      <tr th:if="${#lists.isEmpty(deposits)}">
+        <td colspan="4">Không có yêu cầu ở trang này.</td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+  <nav class="actions" aria-label="Phân trang lịch sử">
+    <a class="btn btn-outline" th:if="${hasPrevious}"
+       th:href="@{/deposit/list(page=${previousPage})}">← Trang trước</a>
+    <span class="footnote" th:text="|Trang ${pageNumber + 1} · Tổng ${totalElements} yêu cầu|"></span>
+    <a class="btn btn-outline" th:if="${hasNext}"
+       th:href="@{/deposit/list(page=${nextPage})}">Trang sau →</a>
+  </nav>
+  <p class="footnote"><a class="table-link" th:href="@{/campaigns}">Quay về dashboard</a></p>
+</main>
+</body>
+</html>
