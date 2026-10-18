@@ -181,6 +181,26 @@ class AdminAttentionQueueIntegrationTest {
     }
 
     @Test
+    @WithMockUser(roles="ADMIN")
+    void recentInProgressQueueSeparatesActiveUpdatesFromStaleOrders() throws Exception {
+        var now = LocalDateTime.now();
+        CampaignOrder recent = create("w4-recent-progress", CampaignStatus.IN_PROGRESS,
+            now.minusDays(12), now.minusHours(6));
+        CampaignOrder stale = create("w4-stale-progress", CampaignStatus.IN_PROGRESS,
+            now.minusDays(12), now.minusDays(9));
+        create("w4-approved-not-progress", CampaignStatus.APPROVED,
+            now.minusDays(2), now.minusHours(1));
+
+        assertThat(queue.find(AdminAttentionQueueService.Queue.RECENT_IN_PROGRESS, 0).rows())
+            .extracting(CampaignOrder::getId).containsExactly(recent.getId());
+        assertThat(queue.find(AdminAttentionQueueService.Queue.OVERDUE_IN_PROGRESS, 0).rows())
+            .extracting(CampaignOrder::getId).containsExactly(stale.getId());
+        mvc.perform(get("/admin/attention").param("queue", "RECENT_IN_PROGRESS"))
+            .andExpect(status().isOk()).andExpect(model().attribute("orders", hasSize(1)))
+            .andExpect(content().string(containsString("w4-recent-progress")));
+    }
+
+    @Test
     void onlyAdminCanViewPriorityQueue() throws Exception {
         mvc.perform(get("/admin/attention")).andExpect(status().is3xxRedirection());
         mvc.perform(get("/admin/attention").with(user("w4-staff").roles("STAFF")))
