@@ -202,16 +202,35 @@ public class SupportTicketService {
 
     @Transactional(readOnly = true)
     public Page<SupportMessage> pageMessagesForOwner(String user, Long id, int page) {
-        PageRequest paging = messagePaging(page);
-        detailForOwner(user, id);
-        return messages.findByTicketId(id, paging);
+        return searchMessagesForOwner(user, id, page, null);
     }
 
     @Transactional(readOnly = true)
     public Page<SupportMessage> pageMessagesForStaff(Long id, int page) {
+        return searchMessagesForStaff(id, page, null);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<SupportMessage> searchMessagesForOwner(String user, Long id, int page, String term) {
+        PageRequest paging = messagePaging(page);
+        detailForOwner(user, id);
+        return pageFilteredTicketMessages(id, term, paging);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<SupportMessage> searchMessagesForStaff(Long id, int page, String term) {
         PageRequest paging = messagePaging(page);
         detailForAdmin(id);
-        return messages.findByTicketId(id, paging);
+        return pageFilteredTicketMessages(id, term, paging);
+    }
+
+    private Page<SupportMessage> pageFilteredTicketMessages(Long id, String term, PageRequest paging) {
+        String normalized = term == null ? "" : term.strip().toLowerCase(Locale.ROOT);
+        if (normalized.length() > 80)
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Từ khóa phản hồi quá dài.");
+        return normalized.isEmpty()
+            ? messages.findByTicketId(id, paging)
+            : messages.searchByBody(id, normalized, paging);
     }
 
     @Transactional
