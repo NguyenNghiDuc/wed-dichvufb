@@ -67,3 +67,25 @@ docker compose -f compose.yaml -f compose.staging.yaml \
 - The base Compose app/DB pass passwords via environment variables. This is adequate for local proof-of-concept only; **Docker inspect exposes these to privileged host administrators**. A production design requires secret manager, least-privilege backup credentials, rest/encrypted transit, file retention and audited access.
 - Dockerfile still builds from Maven image without pinning by digest. Before internet-facing rollout choose reviewed, SHA256-pinned base images and scan dependency/CVE data. A green GitHub workflow cannot substitute for image provenance review.
 - HTTPS certificate issuance, registered domain, firewall controls, backup encryption/off-site storage, authorized roles, provider keys and real data were **not** configured. No production process or user accounts have been changed.
+
+
+## W10 optional local release gates
+
+```bash
+bash scripts/ops/check_25_items.sh
+bash scripts/ops/test_guardrails.sh
+bash scripts/ops/test_secret_guard.sh
+bash scripts/ops/secret_guard.sh
+```
+
+The 25-item gate uses **source checks and offline/mock negative tests**; it never deploys, restores live data, changes DNS or connects to real staging. The Git-index secret guard refuses tracked `.env`, private-key files and private-key headers without echoing any credential values. It is only a quick regression tripwire; use W9's reviewed secret scanners and review the **entire Git history** for real incident response.
+
+For an operator-approved read-only monitor (external scheduler/alert receiver is a separate task):
+
+```bash
+bash scripts/ops/monitor.sh --local --backup-dir /approved/private/backups 24
+# Only when approved HTTPS staging DNS and backup location exist:
+bash scripts/ops/monitor.sh --tls --backup-dir /approved/private/backups 24
+```
+
+The monitor checks app health, readiness, liveness, all backup checksums, restrictive filesystem modes and maximum backup age. It returns nonzero on failures, but does NOT install cron, page on-call, authenticate a monitoring service or collect personal data. **Never pass an actual production backup path until an operator authorizes access.** A schedule/notification channel needs separate approval.
