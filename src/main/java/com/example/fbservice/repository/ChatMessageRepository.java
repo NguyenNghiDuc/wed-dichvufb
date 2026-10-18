@@ -74,6 +74,16 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
                     @Param("messageId") Long messageId,
                     @Param("readAt") LocalDateTime readAt);
 
+    /** Web UI: enforce both participants and the exact incoming message ID. */
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("update ChatMessage m set m.readAt = :readAt " +
+           "where m.id = :messageId and m.receiver = :viewer " +
+           "and m.sender = :contact and m.readAt is null")
+    int markOneReadFrom(@Param("viewer") String viewer,
+                        @Param("contact") String contact,
+                        @Param("messageId") Long messageId,
+                        @Param("readAt") LocalDateTime readAt);
+
     /** Atomic read receipt for messages actually addressed to this recipient. */
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("update ChatMessage m set m.readAt = :readAt " +
