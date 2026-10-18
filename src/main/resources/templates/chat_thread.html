@@ -15,7 +15,13 @@
 <div class="chat-meta"><strong th:text="${m.sender == viewer ? 'Bạn' : m.sender}">Người gửi</strong>
 <small th:text="${#temporals.format(m.timestamp,'dd/MM/yyyy HH:mm')}"></small></div>
 <p th:text="${m.content}"></p><small th:if="${m.sender == viewer}"
-th:text="${m.readAt != null ? 'Đã đọc' : 'Chưa đọc'}"></small></article>
+th:text="${m.readAt != null ? 'Đã đọc' : 'Chưa đọc'}"></small>
+<form th:if="${m.receiver == viewer and m.readAt == null}" method="post"
+      th:action="@{/chat/ui/{other}/messages/{id}/read(other=${other},id=${m.id})}"
+      class="chat-inline-read">
+<input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+<button type="submit" class="btn btn-outline btn-small">Đánh dấu tin này đã đọc</button>
+</form></article>
 <p class="muted" th:if="${#lists.isEmpty(messages)}">Chưa có tin nhắn trong cuộc hội thoại này.</p></section>
 <nav class="actions" aria-label="Phân trang tin nhắn">
 <a th:if="${hasPrevious}" class="btn btn-outline btn-small" th:href="@{/chat/ui/{other}(other=${other},page=${pageNumber - 1})}">← Tin mới hơn</a>
