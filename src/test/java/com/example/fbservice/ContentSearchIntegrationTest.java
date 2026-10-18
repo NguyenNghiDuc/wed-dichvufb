@@ -144,6 +144,8 @@ class ContentSearchIntegrationTest {
             .andExpect(content().string(containsString("data-plan-fallback-url")))
             .andExpect(content().string(containsString("data-ideas-fallback-url")))
             .andExpect(content().string(containsString("content-metrics.js")))
+            .andExpect(content().string(containsString("content-workspace.css")))
+            .andExpect(content().string(containsString("content-workspace")))
             .andExpect(content().string(containsString("content-metrics-batch-form")))
             .andExpect(content().string(containsString("TIKTOK,2026-10-01T12:00,120,10,1,2,0")))
             .andExpect(content().string(containsString("không xác minh số liệu")))
@@ -165,6 +167,12 @@ class ContentSearchIntegrationTest {
             .andExpect(content().string(containsString("posts.length")))
             .andExpect(content().string(containsString("batchResult.textContent")))
             .andExpect(content().string(not(containsString("innerHTML"))));
+        mvc.perform(get("/content-workspace.css"))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString("prefers-reduced-motion")))
+            .andExpect(content().string(containsString("@media(max-width:760px)")))
+            .andExpect(content().string(containsString(".content-workspace")));
+
     }
 
 }
