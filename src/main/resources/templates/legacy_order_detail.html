@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Chi tiết đơn hàng cũ · GrowLab</title>
+<link rel="stylesheet" th:href="@{/style.css}">
+<link rel="stylesheet" th:href="@{/customer.css}">
+</head>
+<body>
+<main class="page container legacy-customer-page">
+<a class="table-link" th:href="@{/order/list}">← Đơn hàng cũ của tôi</a>
+<div class="page-header"><div><div class="eyebrow">Chi tiết đơn hàng cũ</div>
+<h1 th:text="|Đơn #${order.id}|">Đơn hàng</h1>
+<p class="muted">Dữ liệu lưu nội bộ, không xác nhận đã cung cấp dịch vụ hoặc nhận thanh toán.</p>
+</div></div>
+<section class="card legacy-detail" aria-label="Thông tin đơn hàng">
+<dl class="legacy-detail-grid">
+<div><dt>Dịch vụ</dt><dd th:text="${order.serverName ?: 'Chưa nhập'}">Dịch vụ</dd></div>
+<div><dt>Link</dt><dd th:text="${order.linkOrder}">Link</dd></div>
+<div><dt>Số lượng</dt><dd th:text="${order.quantity}">0</dd></div>
+<div><dt>Giá đơn vị</dt><dd th:text="|${order.pricePerUnit} VND|">Giá</dd></div>
+<div><dt>Thành tiền</dt><dd th:text="|${order.totalPrice} VND|">Tổng</dd></div>
+<div><dt>Ngày tạo</dt><dd th:text="${#temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm')}">Ngày</dd></div>
+<div class="wide"><dt>Ghi chú</dt><dd th:text="${order.note ?: 'Không có'}">Không có</dd></div>
+</dl>
+</section>
+<p class="footnote">Nếu cần theo dõi duyệt và tiến độ, vui lòng tạo chiến dịch mới.</p>
+<a class="btn btn-outline" th:href="@{/campaigns/new}">Tạo chiến dịch mới</a>
+</main>
+</body>
+</html>

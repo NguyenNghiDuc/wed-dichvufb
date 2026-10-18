@@ -4,38 +4,81 @@
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Chiến dịch của tôi · GrowLab</title>
 <link rel="stylesheet" th:href="@{/style.css}">
+<link rel="stylesheet" th:href="@{/customer.css}">
 </head>
 <body>
 <header class="topbar"><nav class="nav container"><a class="brand" th:href="@{/}"><span class="brand-icon">↗</span>Grow<strong>Lab</strong></a><div class="nav-links"><a th:href="@{/}">Trang chủ</a><a th:href="@{/deposit/new}">Yêu cầu nạp tiền</a><a th:href="@{/support}">Hỗ trợ</a><a th:href="@{/profile}">Tài khoản</a><a th:href="@{/content-calendar}">Lịch nội dung</a><form method="post" th:action="@{/logout}"><input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"><button class="logout" type="submit">Đăng xuất</button></form></div></nav></header>
 <main class="page container">
-<div class="page-header"><div><div class="eyebrow">Dashboard</div><h1>Chiến dịch của tôi</h1><p class="muted">Theo dõi quá trình xét duyệt và xử lý yêu cầu.</p></div><a class="btn" th:href="@{/campaigns/new}">+ Tạo chiến dịch</a></div>
+<div class="page-header"><div><div class="eyebrow">Dashboard</div><h1>Chiến dịch của tôi</h1><p class="muted">Theo dõi quá trình xét duyệt và xử lý yêu cầu.</p></div><div class="actions"><a class="btn btn-outline" th:href="@{/campaigns/reviews}">★ Đánh giá của tôi</a><a class="btn" th:href="@{/campaigns/new}">+ Tạo chiến dịch</a></div></div>
 
+<p class="notice" role="status" th:if="${notice}" th:text="${notice}"></p>
+<p class="error" role="alert" th:if="${error}" th:text="${error}"></p>
 <section class="customer-metrics" aria-label="Thống kê chiến dịch của tôi">
 <article class="card"><p class="muted">Tổng chiến dịch</p><p class="metric" th:text="${summary.total()}">0</p><p class="footnote">Tất cả trạng thái</p></article>
 <article class="card"><p class="muted">Chờ duyệt</p><p class="metric" th:text="${summary.pendingReview()}">0</p><p class="footnote">Đang chờ nhân viên xem xét</p></article>
 <article class="card"><p class="muted">Đang xử lý</p><p class="metric" th:text="${summary.approved() + summary.inProgress()}">0</p><p class="footnote">Đã duyệt hoặc đang thực hiện</p></article>
 <article class="card"><p class="muted">Đã hoàn thành</p><p class="metric" th:text="${summary.completed()}">0</p><p class="footnote">Hoàn tất xử lý yêu cầu</p></article>
 </section>
+<section class="customer-service-breakdown" aria-label="Tổng số đơn theo dịch vụ">
+<h2>Đơn hàng theo dịch vụ</h2>
+<p class="footnote">Số đơn thuộc tài khoản của bạn, tính trên tất cả trạng thái và không phụ thuộc bộ lọc đang chọn.</p>
+<ul class="customer-service-counts" th:unless="${#lists.isEmpty(serviceBreakdown)}">
+<li th:each="item : ${serviceBreakdown}">
+<span th:text="${item.displayName()}">Dịch vụ</span>
+<strong th:text="${item.count()}">0</strong>
+</li>
+</ul>
+<p th:if="${#lists.isEmpty(serviceBreakdown)}" class="muted">Bạn chưa có đơn dịch vụ nào.</p>
+</section>
 
-<form method="get" th:action="@{/campaigns}" class="actions" role="search" aria-label="Lọc chiến dịch">
+<section class="customer-monthly-trend" aria-label="Số chiến dịch theo tháng">
+  <h2>Xu hướng chiến dịch 6 tháng gần nhất</h2>
+  <p class="footnote">Thống kê theo tháng tạo yêu cầu, chỉ tính chiến dịch của tài khoản này.</p>
+  <a class="btn btn-outline btn-small" th:href="@{/campaigns/summary/monthly.csv}">↓ Xuất thống kê 6 tháng (CSV)</a>
+  <ol>
+    <li th:each="item : ${monthlyCounts}">
+      <span th:text="${item.month()}">2026-10</span>
+      <strong th:text="${item.orders()}">0</strong>
+    </li>
+  </ol>
+</section>
+<form method="get" th:action="@{/campaigns}" class="actions customer-filter-form" role="search" aria-label="Lọc chiến dịch">
+<label for="campaignKeyword">Từ khóa</label>
+<input id="campaignKeyword" type="search" name="q" maxlength="80" placeholder="Mục tiêu hoặc link kênh" th:value="${query}">
 <label for="orderId">Mã đơn</label>
 <input id="orderId" name="orderId" type="number" min="1" step="1" placeholder="VD: 123" th:value="${orderId}">
 <label for="status">Trạng thái</label>
 <select id="status" name="status"><option value="">Tất cả trạng thái</option>
 <option th:each="s : ${statuses}" th:value="${s.name()}" th:text="${s.displayName}" th:selected="${s == selectedStatus}"></option></select>
+<label for="platformFilter">Nền tảng</label>
+<select id="platformFilter" name="platform">
+  <option value="">Tất cả nền tảng</option>
+  <option th:each="p : ${platforms}" th:value="${p.name()}"
+          th:text="${p.displayName}" th:selected="${p == selectedPlatform}"></option>
+</select>
+<label for="serviceType">Dịch vụ</label>
+<select id="serviceType" name="serviceType"><option value="">Tất cả dịch vụ</option>
+<option th:each="service : ${serviceTypes}" th:value="${service.name()}" th:text="${service.displayName}" th:selected="${service == selectedServiceType}"></option></select>
+<label for="from">Từ ngày</label>
+<input id="from" name="from" type="date" th:value="${from}">
+<label for="to">Đến ngày</label>
+<input id="to" name="to" type="date" th:value="${to}">
 <button type="submit" class="btn btn-small">Tìm kiếm</button>
 <a class="btn btn-outline btn-small" th:href="@{/campaigns}">Xóa lọc</a>
-<a class="btn btn-outline btn-small" th:href="@{/campaigns/export.csv(orderId=${orderId},status=${selectedStatus})}">↓ Xuất CSV theo bộ lọc</a>
+<a class="btn btn-outline btn-small" th:href="@{/campaigns/export.csv(orderId=${orderId},status=${selectedStatus},serviceType=${selectedServiceType},from=${from},to=${to},q=${query},platform=${selectedPlatform})}">↓ Xuất CSV theo bộ lọc</a>
 </form>
 
+<p class="muted" role="status" th:text="|Tìm thấy ${matchedOrders} chiến dịch trong tài khoản của bạn.|">Tìm thấy 0 chiến dịch.</p>
 <div class="table-panel"><table class="data-table"><thead><tr><th>Mã đơn</th><th>Nền tảng</th><th>Gói dịch vụ</th><th>Báo giá</th><th>Ngày tạo</th><th>Trạng thái</th><th>Thao tác</th></tr></thead><tbody>
-<tr th:each="o : ${orders}"><td><a th:href="@{/campaigns/{id}(id=${o.id})}" th:text="|#${o.id}|"></a></td><td th:text="${o.platform.displayName}"></td><td th:text="${o.serviceType.displayName}"></td><td th:text="|${o.quotedPriceVnd} đ|"></td><td th:text="${#temporals.format(o.createdAt, 'dd/MM/yyyy HH:mm')}"></td><td><span class="status" th:text="${o.status.displayName}"></span></td><td><form th:if="${o.status.name() == 'PENDING_REVIEW'}" method="post" th:action="@{/campaigns/{id}/cancel(id=${o.id})}"><input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"><button type="submit" class="btn btn-outline btn-small">Hủy yêu cầu</button></form></td></tr>
+<tr th:each="o : ${orders}"><td><a th:href="@{/campaigns/{id}(id=${o.id})}" th:text="|#${o.id}|"></a></td><td th:text="${o.platform.displayName}"></td><td th:text="${o.serviceType.displayName}"></td><td th:text="|${o.quotedPriceVnd} đ|"></td><td th:text="${#temporals.format(o.createdAt, 'dd/MM/yyyy HH:mm')}"></td><td><span class="status" th:text="${o.status.displayName}"></span>
+<span class="customer-attention-tag" th:if="${attentionById[o.id].needsAttention()}" th:text="${attentionById[o.id].shortLabel()}"></span></td><td><form th:if="${o.status.name() == 'PENDING_REVIEW'}" method="post" th:action="@{/campaigns/{id}/cancel(id=${o.id})}"><input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"><label class="customer-cancel-reason">Lý do hủy (không bắt buộc)<input name="reason" maxlength="200" placeholder="Ví dụ: cần thay đổi nội dung"></label><button type="submit" class="btn btn-outline btn-small">Hủy yêu cầu</button></form>
+<a class="table-link" th:if="${attentionById[o.id].needsAttention()}" th:href="@{/support/new}">Liên hệ hỗ trợ</a></td></tr>
 <tr th:if="${#lists.isEmpty(orders)}"><td colspan="7" class="muted">Không tìm thấy chiến dịch phù hợp.</td></tr>
 </tbody></table></div>
 <nav class="actions" aria-label="Phân trang">
-<a class="btn btn-outline btn-small" th:if="${hasPrevious}" th:href="@{/campaigns(page=${pageNumber - 1},orderId=${orderId},status=${selectedStatus})}">← Trang trước</a>
+<a class="btn btn-outline btn-small" th:if="${hasPrevious}" th:href="@{/campaigns(page=${pageNumber - 1},orderId=${orderId},status=${selectedStatus},serviceType=${selectedServiceType},from=${from},to=${to},q=${query},platform=${selectedPlatform})}">← Trang trước</a>
 <span class="muted" th:text="|Trang ${pageNumber + 1} / ${totalPages == 0 ? 1 : totalPages}|"></span>
-<a class="btn btn-outline btn-small" th:if="${hasNext}" th:href="@{/campaigns(page=${pageNumber + 1},orderId=${orderId},status=${selectedStatus})}">Trang sau →</a>
+<a class="btn btn-outline btn-small" th:if="${hasNext}" th:href="@{/campaigns(page=${pageNumber + 1},orderId=${orderId},status=${selectedStatus},serviceType=${selectedServiceType},from=${from},to=${to},q=${query},platform=${selectedPlatform})}">Trang sau →</a>
 </nav>
 <p class="footnote">Bản thử nghiệm: dịch vụ cần xét duyệt thủ công; báo giá chưa phải khoản thu hoặc thanh toán đã hoàn tất.</p>
 </main></body></html>

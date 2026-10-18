@@ -1,6 +1,7 @@
 package com.example.fbservice.controller;
 
 import com.example.fbservice.model.User;
+import com.example.fbservice.customer.CustomerProfileService;
 import com.example.fbservice.repository.UserRepository;
 import java.security.Principal;
 import org.springframework.http.HttpStatus;
@@ -13,9 +14,11 @@ import org.springframework.web.server.ResponseStatusException;
 @Controller
 public class ProfileController {
     private final UserRepository users;
+    private final CustomerProfileService profiles;
 
-    public ProfileController(UserRepository users) {
+    public ProfileController(UserRepository users, CustomerProfileService profiles) {
         this.users = users;
+        this.profiles = profiles;
     }
 
     @GetMapping("/profile")
@@ -23,6 +26,7 @@ public class ProfileController {
         User account = users.findByUsername(principal.getName())
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         model.addAttribute("username", account.getUsername());
+        model.addAttribute("customerProfile", profiles.view(principal.getName()));
         model.addAttribute("email", account.getEmail());
         model.addAttribute("role", account.getRole());
         model.addAttribute("staffAccess", "STAFF".equals(account.getRole()) || "ADMIN".equals(account.getRole()));

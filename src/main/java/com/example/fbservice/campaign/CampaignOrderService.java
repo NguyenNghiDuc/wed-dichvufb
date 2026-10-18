@@ -3,7 +3,13 @@ package com.example.fbservice.campaign;
 import com.example.fbservice.notification.*;
 import jakarta.persistence.criteria.Predicate;
 import java.net.URI;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.YearMonth;
 import java.util.ArrayList;
+import java.util.EnumMap;
+import java.util.Map;
+import java.util.Arrays;
 import java.util.List;
 import org.springframework.data.domain.*;
 import org.springframework.data.jpa.domain.Specification;
@@ -39,6 +45,31 @@ public class CampaignOrderService {
         return order;
     }
 
+    /**
+     * Current server-controlled quotes for enabled packages only. No customer
+     * supplied amount or order ID can affect this read-only comparison.
+     */
+    @Transactional(readOnly = true)
+    public List<CampaignQuote> quotesForCustomer(String username) {
+        if (username == null || username.isBlank())
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+        return catalog.available().stream().map(offering -> {
+            CampaignServiceType type = CampaignServiceType.valueOf(offering.getCode());
+            return new CampaignQuote(type, offering.getTitle(), offering.getPriceVnd(),
+                "VND", true);
+        }).toList();
+    }
+
+    /** Provisional quote from the live enabled service catalog; never accept a client-provided amount. */
+    @Transactional(readOnly = true)
+    public CampaignQuote quoteForCustomer(String username, CampaignServiceType serviceType) {
+        if (username == null || username.isBlank())
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+        if (serviceType == null) throw new IllegalArgumentException("Dịch vụ không hợp lệ.");
+        return new CampaignQuote(serviceType, serviceType.getDisplayName(),
+            catalog.quote(serviceType), "VND", true);
+    }
+
     @Transactional(readOnly = true)
     public CampaignSummary summaryForOwner(String username) {
         if (username == null || username.isBlank())
@@ -58,6 +89,43 @@ public class CampaignOrderService {
             counts[CampaignStatus.CANCELLED.ordinal()]);
     }
 
+    /**
+     * Six complete calendar-month buckets ending with the current month.
+     * The bounds are inclusive start/exclusive end and always include the
+     * principal's owner predicate in the database count.
+     */
+    @Transactional(readOnly = true)
+    public List<CampaignMonthlyCount> monthlyCountsForOwner(String username) {
+        if (username == null || username.isBlank())
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+        YearMonth thisMonth = YearMonth.now();
+        List<CampaignMonthlyCount> result = new ArrayList<>(6);
+        for (int offset = 5; offset >= 0; offset--) {
+            YearMonth month = thisMonth.minusMonths(offset);
+            LocalDateTime start = month.atDay(1).atStartOfDay();
+            LocalDateTime end = month.plusMonths(1).atDay(1).atStartOfDay();
+            long total = orders.countByOwnerUsernameAndCreatedAtGreaterThanEqualAndCreatedAtLessThan(
+                username, start, end);
+            result.add(new CampaignMonthlyCount(month.toString(), total));
+        }
+        return List.copyOf(result);
+    }
+
+    /** Database-grouped per-service breakdown; no other customer's row may contribute. */
+    @Transactional(readOnly = true)
+    public List<CampaignServiceCount> serviceBreakdownForOwner(String username) {
+        if (username == null || username.isBlank())
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+        Map<CampaignServiceType, Long> counts = new EnumMap<>(CampaignServiceType.class);
+        for (CampaignOrderRepository.OwnerServiceCount entry : orders.countServicesForOwner(username)) {
+            counts.put(entry.getServiceType(), entry.getTotal());
+        }
+        return Arrays.stream(CampaignServiceType.values())
+            .filter(type -> counts.getOrDefault(type, 0L) > 0)
+            .map(type -> new CampaignServiceCount(type, type.getDisplayName(), counts.get(type)))
+            .toList();
+    }
+
     @Transactional(readOnly = true)
     public List<CampaignOrder> findMine(String username) {
         return orders.findByOwnerUsernameOrderByCreatedAtDesc(username);
@@ -65,18 +133,47 @@ public class CampaignOrderService {
 
     @Transactional(readOnly = true)
     public Page<CampaignOrder> pageMine(String username, int page, int size) {
-        return pageMine(username, page, size, null, null);
+        return pageMine(username, page, size, null, null, null, null, null);
     }
 
     @Transactional(readOnly = true)
     public Page<CampaignOrder> pageMine(String username, int page, int size,
                                         Long orderId, CampaignStatus status) {
+        return pageMine(username, page, size, orderId, status, null, null, null);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<CampaignOrder> pageMine(String username, int page, int size,
+                                        Long orderId, CampaignStatus status,
+                                        CampaignServiceType serviceType, LocalDate from, LocalDate to) {
+        return pageMine(username, page, size, orderId, status, serviceType, from, to, null);
+    }
+
+    /** Search is always combined with the authenticated customer's owner predicate. */
+    @Transactional(readOnly = true)
+    public Page<CampaignOrder> pageMine(String username, int page, int size,
+                                        Long orderId, CampaignStatus status,
+                                        CampaignServiceType serviceType, LocalDate from, LocalDate to, String q) {
+        return pageMine(username, page, size, orderId, status, serviceType, from, to, q, null);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<CampaignOrder> pageMine(String username, int page, int size,
+                                        Long orderId, CampaignStatus status,
+                                        CampaignServiceType serviceType, LocalDate from, LocalDate to,
+                                        String q, SocialPlatform platform) {
         if (username == null || username.isBlank())
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
         if (page < 0 || page > 10000 || size < 1 || size > 50)
             throw new IllegalArgumentException("Giới hạn phân trang: page 0–10000, size 1–50.");
         if (orderId != null && orderId <= 0)
             throw new IllegalArgumentException("Mã đơn phải là số nguyên dương.");
+        validateDateRange(from, to);
+        String search = q == null ? "" : q.strip().toLowerCase(java.util.Locale.ROOT);
+        if (search.length() > 80 || search.chars().anyMatch(Character::isISOControl))
+            throw new IllegalArgumentException("Từ khóa tìm kiếm không hợp lệ (tối đa 80 ký tự).");
+        LocalDateTime lowerBound = from == null ? null : from.atStartOfDay();
+        LocalDateTime upperBound = to == null ? null : to.plusDays(1).atStartOfDay();
 
         // Ownership is mandatory inside the database query (including the count query).
         // Criteria predicates avoid nullable enum/ID SQL parameters on PostgreSQL.
@@ -85,10 +182,25 @@ public class CampaignOrderService {
             conditions.add(builder.equal(root.get("ownerUsername"), username));
             if (orderId != null) conditions.add(builder.equal(root.get("id"), orderId));
             if (status != null) conditions.add(builder.equal(root.get("status"), status));
+            if (serviceType != null) conditions.add(builder.equal(root.get("serviceType"), serviceType));
+            if (platform != null) conditions.add(builder.equal(root.get("platform"), platform));
+            if (!search.isEmpty()) conditions.add(builder.or(
+                builder.greaterThan(builder.locate(builder.lower(root.<String>get("brief")), search), 0),
+                builder.greaterThan(builder.locate(builder.lower(root.<String>get("targetUrl")), search), 0)));
+            if (lowerBound != null) conditions.add(builder.greaterThanOrEqualTo(root.get("createdAt"), lowerBound));
+            if (upperBound != null) conditions.add(builder.lessThan(root.get("createdAt"), upperBound));
             return builder.and(conditions.toArray(new Predicate[0]));
         };
         return orders.findAll(filters, PageRequest.of(page, size,
                 Sort.by(Sort.Order.desc("createdAt"), Sort.Order.desc("id"))));
+    }
+
+    /** Inclusive dates in the application's timezone with an exclusive next-day upper bound. */
+    private static void validateDateRange(LocalDate from, LocalDate to) {
+        if ((from != null && (from.getYear() < 2000 || from.getYear() > 2100)) ||
+            (to != null && (to.getYear() < 2000 || to.getYear() > 2100)) ||
+            (from != null && to != null && from.isAfter(to)))
+            throw new IllegalArgumentException("Khoảng ngày không hợp lệ (2000–2100).");
     }
 
     @Transactional(readOnly = true)
@@ -152,14 +264,29 @@ public class CampaignOrderService {
 
     @Transactional
     public CampaignOrder cancelForOwner(String username, Long id) {
+        return cancelForOwner(username, id, null);
+    }
+
+    /**
+     * Owner can optionally explain a pending-order cancellation. The description
+     * is recorded in the private status history, not in the price or payment path.
+     */
+    @Transactional
+    public CampaignOrder cancelForOwner(String username, Long id, String reason) {
         CampaignOrder order = orders.lockByIdAndOwner(id, username)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         if (order.getStatus() != CampaignStatus.PENDING_REVIEW) {
             throw new IllegalArgumentException("Chỉ có thể hủy chiến dịch chưa được duyệt.");
         }
+        String explanation = reason == null ? "" : reason.strip();
+        if (explanation.length() > 200 || explanation.chars().anyMatch(Character::isISOControl))
+            throw new IllegalArgumentException("Lý do hủy tối đa 200 ký tự, không có ký tự điều khiển.");
         CampaignStatus previous = order.getStatus();
         order.changeStatus(CampaignStatus.CANCELLED);
-        events.save(new CampaignEvent(id, previous, order.getStatus(), username, "Khách hàng hủy yêu cầu"));
+        String description = explanation.isEmpty()
+            ? "Khách hàng hủy yêu cầu"
+            : "Khách hàng hủy yêu cầu: " + explanation;
+        events.save(new CampaignEvent(id, previous, order.getStatus(), username, description));
         notifications.save(new AccountNotification(username, "Đã hủy chiến dịch #" + id,
                 "Đơn đã hủy trước khi được duyệt; không phát sinh thanh toán."));
         return order;
