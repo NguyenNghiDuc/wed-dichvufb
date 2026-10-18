@@ -2,6 +2,8 @@ package com.example.fbservice.support;
 
 import java.security.Principal;
 import org.springframework.data.domain.Page;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -45,6 +47,13 @@ public class SupportController {
             model.addAttribute("error", exception.getMessage());
             return "support_form";
         }
+    }
+
+    /** Customer mobile/API summary; counts are always scoped to the signed-in owner. */
+    @GetMapping("/stats")
+    public ResponseEntity<SupportTicketCounts> stats(Principal principal) {
+        return ResponseEntity.ok().header(HttpHeaders.CACHE_CONTROL, "no-store")
+            .body(service.countsForOwner(principal.getName()));
     }
 
     @GetMapping("/{id}")
