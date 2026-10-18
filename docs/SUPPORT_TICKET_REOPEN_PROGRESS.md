@@ -19,9 +19,13 @@ This work extends existing Draft PR #35 on `feature/issue27-support-workflow`.
   are persisted in one transaction. A duplicate/concurrent reopen cannot
   append a second set of events. The existing STAFF/ADMIN close action also
   appends a system-authored `CLOSED` entry to the same bounded timeline.
-- A reopened ticket retains its previous assignee; authorized ADMIN may
-  reassign it using the existing audited mechanism. Reopening never
-  revives a previously disabled account or sends a new notification.
+- A reopened ticket **retains** its previous assignee only when that
+  account is still enabled and has STAFF/ADMIN role. If it has been disabled,
+  deleted or demoted, the ticket returns to the unassigned staff queue with
+  an explicit system-authored assignment-audit entry in the existing audit
+  table. An authorized ADMIN can then reassign using the existing workflow.
+  Reopening never revives a previously disabled account or sends a new
+  notification; the reassignment uses the existing W3 model, not W8.
 
 ## Optional staff closing note
 
@@ -59,6 +63,10 @@ This work extends existing Draft PR #35 on `feature/issue27-support-workflow`.
 - `SupportTicketReopenIntegrationTest`: CSRF, closed-only policy, exact
   ticket ownership, validation, XSS escaping, close/reopen lifecycle messages,
   idempotent repeat behavior.
+- `SupportTicketReopenAssignmentIntegrationTest`: reassignment to the
+  unassigned queue when the previous STAFF account is disabled, audited
+  previous-to-null event, and preservation when the staff account remains
+  valid.
 - `PostgresSupportReopenConcurrencyTest`: simultaneous PostgreSQL attempts
   to reopen one CLOSED ticket must produce one success and three timeline
   rows (close event, reopen event, user-provided reason).
