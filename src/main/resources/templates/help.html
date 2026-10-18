@@ -1,12 +1,79 @@
-<!doctype html><html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Trợ giúp · GrowLab</title><link rel="stylesheet" th:href="@{/style.css}"></head>
-<body><header class="topbar"><nav class="nav container"><a class="brand" th:href="@{/}"><span class="brand-icon">↗</span>Grow<strong>Lab</strong></a></nav></header>
-<main class="page container"><div class="page-header"><div><div class="eyebrow">Trung tâm trợ giúp</div><h1>Câu hỏi thường gặp</h1><p class="muted">GrowLab tập trung phát triển người theo dõi thật thông qua nội dung và quảng cáo hợp lệ.</p></div></div>
-<div class="card-grid"><article class="card"><h3>Đặt chiến dịch như thế nào?</h3><p>Đăng ký, đăng nhập và chọn gói tư vấn, nhập đường dẫn tài khoản của nền tảng phù hợp.</p></article>
-<article class="card"><h3>Chiến dịch có chạy tự động không?</h3><p>Chưa. Đơn được nhân viên xem xét trước, trạng thái hiển thị trong dashboard.</p></article>
-<article class="card"><h3>Hủy đơn được không?</h3><p>Có thể hủy khi đơn vẫn ở trạng thái chờ duyệt.</p></article>
-<article class="card"><h3>Có tăng lượt theo dõi ảo không?</h3><p>Không. Dịch vụ là kế hoạch nội dung, tối ưu hồ sơ và tư vấn quảng cáo.</p></article>
-<article class="card"><h3>Chức năng nạp tiền đã hoạt động chưa?</h3><p>Chưa có cổng thanh toán thật. Đừng gửi tiền dựa trên form thử nghiệm.</p></article>
-<article class="card"><h3>Liên hệ hỗ trợ ở đâu?</h3><p>Đăng nhập và vào Trung tâm hỗ trợ để gửi phiếu yêu cầu.</p></article></div>
-<div class="actions"><a class="btn" th:href="@{/login}">Đăng nhập</a><a class="btn btn-outline" th:href="@{/support/new}">Tạo yêu cầu hỗ trợ</a></div></main></body></html>
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Tìm kiếm câu hỏi về tài khoản, chiến dịch, nội dung, thanh toán thử nghiệm và hỗ trợ GrowLab.">
+  <title>Trung tâm trợ giúp · GrowLab</title>
+  <link rel="stylesheet" th:href="@{/style.css}">
+</head>
+<body>
+  <header class="topbar">
+    <nav class="nav container" aria-label="Điều hướng chính">
+      <a class="brand" th:href="@{/}"><span class="brand-icon" aria-hidden="true">↗</span>Grow<strong>Lab</strong></a>
+      <div class="nav-links"><a th:href="@{/}">Trang chủ</a><a th:href="@{/campaigns}">Chiến dịch</a><a th:href="@{/login}">Đăng nhập</a></div>
+    </nav>
+  </header>
+  <main class="page container" id="noi-dung">
+    <div class="page-header">
+      <div>
+        <div class="eyebrow">Trung tâm trợ giúp</div>
+        <h1>Câu hỏi thường gặp</h1>
+        <p class="muted">Tìm câu trả lời về tài khoản, đơn hàng và quy trình sử dụng GrowLab. Các dịch vụ hướng tới tăng trưởng thật, không dùng người theo dõi ảo.</p>
+      </div>
+    </div>
+
+    <form class="form-panel" method="get" th:action="@{/help}" role="search" aria-label="Tìm kiếm câu hỏi thường gặp">
+      <div class="field">
+        <label for="faq-q">Tìm câu hỏi</label>
+        <input id="faq-q" name="q" type="search" maxlength="80"
+               placeholder="Ví dụ: huy don, thanh toan, mat khau"
+               autocomplete="off" th:value="${query}">
+        <small>Hỗ trợ tìm kiếm tiếng Việt có dấu hoặc không dấu (tối đa 80 ký tự).</small>
+      </div>
+      <div class="field">
+        <label for="faq-category">Chủ đề</label>
+        <select id="faq-category" name="category">
+          <option value="all" th:selected="${selectedCategory == 'all'}">Tất cả chủ đề</option>
+          <option value="account" th:selected="${selectedCategory == 'account'}">Tài khoản</option>
+          <option value="campaign" th:selected="${selectedCategory == 'campaign'}">Chiến dịch</option>
+          <option value="content" th:selected="${selectedCategory == 'content'}">Nội dung</option>
+          <option value="payment" th:selected="${selectedCategory == 'payment'}">Thanh toán</option>
+          <option value="support" th:selected="${selectedCategory == 'support'}">Hỗ trợ</option>
+        </select>
+      </div>
+      <div class="actions">
+        <button type="submit" class="btn">Tìm kiếm</button>
+        <a class="btn btn-outline" th:href="@{/help}">Xóa bộ lọc</a>
+      </div>
+    </form>
+
+    <section aria-labelledby="faq-results-heading" class="section">
+      <div class="section-heading">
+        <h2 id="faq-results-heading">Kết quả tìm kiếm</h2>
+        <p class="muted" role="status" th:text="|Tìm thấy ${count} câu hỏi phù hợp|">Danh sách câu hỏi</p>
+      </div>
+      <div class="card-grid" th:if="${count > 0}">
+        <details class="card" th:each="faq : ${faqs}">
+          <summary th:text="${faq.question}">Câu hỏi</summary>
+          <p class="muted" th:text="${faq.answer}">Câu trả lời</p>
+          <span class="tag" th:text="${faq.categoryLabel}">Chủ đề</span>
+        </details>
+      </div>
+      <div class="notice" th:if="${count == 0}" role="status">
+        Không tìm thấy câu hỏi phù hợp. Thử từ khóa khác, chọn tất cả chủ đề hoặc gửi yêu cầu hỗ trợ.
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="contact-heading">
+      <h2 id="contact-heading">Vẫn cần hỗ trợ?</h2>
+      <p class="muted">Đăng nhập để gửi yêu cầu cho nhân viên. Không chia sẻ mật khẩu, mã OTP hoặc thông tin thanh toán nhạy cảm.</p>
+      <div class="actions">
+        <a class="btn" th:href="@{/support/new}">Tạo yêu cầu hỗ trợ</a>
+        <a class="btn btn-outline" th:href="@{/login}">Đăng nhập</a>
+      </div>
+    </section>
+  </main>
+  <footer class="footer"><div class="container">© 2026 GrowLab · Chức năng thanh toán thật chưa được mở.</div></footer>
+</body>
+</html>
