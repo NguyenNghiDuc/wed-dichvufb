@@ -38,6 +38,11 @@
 <div><dt>Thời gian từ lúc tạo</dt><dd th:text="|${progress.ageMinutes} phút|">0 phút</dd></div>
 <div><dt>Không có cập nhật trong</dt><dd th:text="|${progress.idleMinutes} phút|">0 phút</dd></div>
 <div><dt>Phân công xử lý</dt><dd th:text="${progress.assigned ? 'Đã phân công' : 'Chưa phân công'}">Chưa phân công</dd></div>
+<div><dt>Tiếp nhận lần đầu</dt>
+<dd th:text="${progress.firstAssignedAt != null ? #temporals.format(progress.firstAssignedAt,'dd/MM/yyyy HH:mm') : 'Chưa tiếp nhận'}">Chưa tiếp nhận</dd></div>
+<div th:if="${progress.minutesToFirstAssignment != null}">
+<dt>Thời gian tới lúc tiếp nhận</dt>
+<dd th:text="|${progress.minutesToFirstAssignment} phút|">0 phút</dd></div>
 </dl>
 <p class="muted">Các thời gian trên là thời gian nội bộ kể từ lúc tạo và cập nhật;
 không phải thời gian SLA đã cam kết hay thời điểm hoàn tất được xác minh.</p>
