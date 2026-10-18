@@ -63,6 +63,27 @@ class CustomerReviewSearchIntegrationTest {
         mvc.perform(get("/api/v1/customer/reviews").with(user("review-filter-outsider"))
             .param("q","100%"))
             .andExpect(jsonPath("$.totalElements").value(0));
+        mvc.perform(get("/api/v1/customer/reviews/summary"))
+            .andExpect(status().isOk())
+            .andExpect(header().string("Cache-Control", containsString("no-store")))
+            .andExpect(jsonPath("$.total").value(2))
+            .andExpect(jsonPath("$.average").value(3.5))
+            .andExpect(jsonPath("$.twoStars").value(1))
+            .andExpect(jsonPath("$.fiveStars").value(1))
+            .andExpect(jsonPath("$.ownerUsername").doesNotExist());
+        mvc.perform(get("/api/v1/customer/reviews/summary")
+                .with(user("review-filter-foreign")))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.total").value(1))
+            .andExpect(jsonPath("$.average").value(2.0));
+        mvc.perform(get("/api/v1/customer/reviews/summary")
+                .with(user("review-filter-empty")))
+            .andExpect(jsonPath("$.total").value(0))
+            .andExpect(jsonPath("$.average").value(0.0));
+        mvc.perform(get("/campaigns/reviews").param("rating","5"))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString("Điểm trung bình")))
+            .andExpect(content().string(containsString("3.5/5")));
     }
 
     @Test @WithMockUser(username="review-filter-validation")
@@ -81,6 +102,8 @@ class CustomerReviewSearchIntegrationTest {
 
     @Test void anonymousCannotSearchCustomerReviewHistory() throws Exception {
         mvc.perform(get("/api/v1/customer/reviews").param("rating","2"))
+            .andExpect(status().is3xxRedirection());
+        mvc.perform(get("/api/v1/customer/reviews/summary"))
             .andExpect(status().is3xxRedirection());
     }
 }
