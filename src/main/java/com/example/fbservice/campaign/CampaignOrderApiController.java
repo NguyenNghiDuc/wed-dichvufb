@@ -35,6 +35,13 @@ public class CampaignOrderApiController {
             .body(service.quoteForCustomer(principal.getName(), serviceType));
     }
 
+    /** Read-only comparison of enabled server-priced plans. */
+    @GetMapping("/quotes")
+    public ResponseEntity<List<CampaignQuote>> quotes(Principal principal) {
+        return ResponseEntity.ok().cacheControl(CacheControl.noStore())
+            .body(service.quotesForCustomer(principal.getName()));
+    }
+
     /** Counts always belong to the authenticated principal; no owner parameter is accepted. */
     @GetMapping("/summary")
     public ResponseEntity<CampaignSummary> summary(Principal principal) {
