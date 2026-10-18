@@ -23,6 +23,15 @@
     <div class="step"><strong>Dịch vụ</strong><p th:text="${order.serviceType.displayName}"></p></div>
     <div class="step"><strong>Báo giá dự kiến</strong><p th:text="|${order.quotedPriceVnd} đ|"></p></div>
   </div>
+  <form th:if="${order.status.name() == 'PENDING_REVIEW'}"
+        method="post" th:action="@{/campaigns/{id}/cancel(id=${order.id})}"
+        class="customer-cancel-form">
+    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+    <button class="btn btn-outline btn-small" type="submit">
+      Hủy yêu cầu trước khi duyệt
+    </button>
+    <p class="footnote">Chỉ có thể hủy khi đơn chưa được duyệt hoặc bắt đầu xử lý.</p>
+  </form>
   <section class="customer-progress" aria-label="Tiến độ xử lý đơn">
     <div class="customer-progress-header"><h2>Tiến độ thực hiện</h2>
       <strong th:unless="${progress.closedWithoutCompletion()}" th:text="|${progress.percent()}%|">0%</strong>
