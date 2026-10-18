@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+# Restore ONLY to isolated, empty, tmpfs-backed recovery-db. Never touches app db.
+set -Eeuo pipefail
+umask 077
+[[ -f compose.yaml && -f scripts/ops/backup.sh && -f compose.recovery.yaml ]] || {
+  echo 'Run W10 scripts from the reviewed GrowLab repository root' >&2
+  exit 2
+}
+[[ $# == 2 && "$1" == "--sandbox" ]] || {
+  echo "Usage: $0 --sandbox /path/to/growlab_backup.dump" >&2
+  exit 2
+}
+: "${RESTORE_TEST_PASSWORD:?RESTORE_TEST_PASSWORD required for isolated recovery}"
+command -v docker >/dev/null || { echo 'Docker CLI unavailable' >&2; exit 2; }
+command -v sha256sum >/dev/null || { echo 'sha256sum unavailable' >&2; exit 2; }
+archive="$2"
+[[ -f "$archive" && ! -L "$archive" && "$archive" == *.dump ]] || {
+  echo 'Refusing non-regular, symlinked or non-.dump archive' >&2
+  exit 2
+}
+[[ -f "$archive.sha256" && ! -L "$archive.sha256" ]] || {
+  echo 'A regular .sha256 checksum file is required' >&2
+  exit 2
+}
+folder="$(cd "$(dirname "$archive")" && pwd -P)"
+file="$(basename "$archive")"
+[[ "$file" =~ ^growlab_[0-9]{8}T[0-9]{6}Z_[A-Za-z0-9]+[.]dump$ ]] || {
+  echo 'Only W10-format backup names can be restored into sandbox' >&2
+  exit 2
+}
+for item in "$archive" "$archive.sha256"; do
+  mode="$(stat -c '%a' -- "$item")"
+  [[ "$mode" =~ ^[0-7]{3,4}$ ]] || exit 2
+  (( (8#$mode & 077) == 0 )) || {
+    echo 'Backup archive and checksum must not be readable by group/others' >&2
+    exit 2
+  }
+done
+# Require the exact one-entry manifest emitted by backup.sh; no extra entries or
+# alternate file names may be silently accepted.
+[[ "$(stat -c '%s' -- "$archive.sha256")" -le 256 ]] || {
+  echo 'Invalid oversized checksum manifest' >&2
+  exit 2
+}
+expected_line="$(cat -- "$archive.sha256")"
+actual="$(sha256sum "$archive" | cut -d ' ' -f1)"
+[[ "$expected_line" == "$actual  $file" ]] || {
+  echo 'Checksum mismatch or malformed filename/manifest; refusing to restore' >&2
+  exit 1
+}
+compose=(docker compose -f compose.yaml -f compose.recovery.yaml --profile recovery)
+# This is deliberately NOT configurable. Never accept an arbitrary host or target db.
+empty="$("${compose[@]}" exec -T recovery-db \
+  psql -X -At -v ON_ERROR_STOP=1 -U recovery -d growlab_recovery \
+  -c "SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='public' AND c.relkind IN ('r','p','v','m');")"
+[[ "$empty" == "0" ]] || {
+  echo 'Recovery sandbox is not empty or unavailable; refusing to overwrite' >&2
+  exit 1
+}
+"${compose[@]}" exec -T recovery-db pg_restore \
+  --exit-on-error --single-transaction --no-owner --no-acl \
+  -U recovery -d growlab_recovery < "$archive"
+echo 'Restore succeeded in isolated recovery-db only. No production data was changed.'
