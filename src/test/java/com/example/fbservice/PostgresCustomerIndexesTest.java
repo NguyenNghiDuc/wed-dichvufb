@@ -33,6 +33,13 @@ class PostgresCustomerIndexesTest {
             "select count(*) from information_schema.tables where table_schema='public' and table_name='customer_profiles'",
             Integer.class)).isEqualTo(1);
 
+        assertThat(jdbc.queryForObject(
+            "select count(*) from pg_indexes where schemaname='public' and indexname='idx_orders_customer_owner_created'",
+            Integer.class)).isEqualTo(1);
+        assertThat(jdbc.queryForObject(
+            "select count(*) from pg_indexes where schemaname='public' and indexname='idx_orders_customer_owner_service_created'",
+            Integer.class)).isEqualTo(1);
+
         CampaignOrder mine = orders.create("pg-index-owner-26", new CampaignOrderRequest(
             SocialPlatform.YOUTUBE, CampaignServiceType.CONTENT_PLAN,
             "https://youtube.com/@realchannel", "Nội dung hợp pháp cho khách hàng thực"));
