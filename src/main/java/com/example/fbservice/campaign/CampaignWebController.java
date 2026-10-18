@@ -42,6 +42,7 @@ public class CampaignWebController {
         // Aggregate across every page, including orders hidden by the current filter.
         model.addAttribute("summary", service.summaryForOwner(principal.getName()));
         model.addAttribute("serviceBreakdown", service.serviceBreakdownForOwner(principal.getName()));
+        model.addAttribute("monthlyCounts", service.monthlyCountsForOwner(principal.getName()));
         model.addAttribute("orders", records.getContent());
         // Matches are counted inside the same SQL owner scope and filters,
         // not taken from the all-orders customer dashboard summary.
