@@ -30,6 +30,19 @@
 | 24 | GET-only smoke, rollback plan, health monitor | `smoke.sh`, `monitor.sh`, `rollback_plan.sh` | Implemented; HTTPS/rehearsal pending |
 | 25 | Operator runbook, RPO/RTO/approval gates | `docs/DEPLOYMENT.md`, `docs/OPERATIONS_*.md` | Documented; approval pending |
 
+## W10 status snapshot (18 October 2026, Issue #47)
+
+Separate the three measures; these figures are scoped to the **25 W10 requirements in this file**:
+
+- **Code-complete flows: 22/25 (88%)** — full implementation paths exist, although acceptance may be blocked by CI, Docker Engine, staging DNS/TLS or approval.
+- **Implemented at least partially: 25/25 (100%)** — this is not a completion percentage.
+- **Accepted: 0/25 (0%)** — the exact PR HEAD has not passed reviewed Java CI/CodeQL plus required Docker fixture and staging tests.
+- **Partially complete: 3/25** — #10 centralized privacy-reviewed logs/collection, #23 scheduled monitor/alerts, #24 tested operational rollback (currently a print-only plan).
+- **Not started: 0/25**. **Externally blocked: 3/25** — #06 approved DNS/TLS, #21 Docker Engine fixture execution, #25 release approvals; their implemented portions still count among the 22 code-complete items.
+- **Verification pending:** Bash offline tests (source only so far), `test_backup_restore.sh` on Docker, Caddy/Compose validation and HTTPS staging smoke; never mark ✅ until these pass with the actual code SHA.
+
+Current statuses may change when a future CI result or operator validation arrives. **Do not automatically update acceptance from presence-only source checks.**
+
 ## Reproducible checks
 
 Safe to run from the W10 branch in an ordinary Bash terminal:
