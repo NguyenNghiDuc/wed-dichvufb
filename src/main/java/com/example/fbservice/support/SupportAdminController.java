@@ -47,6 +47,17 @@ public class SupportAdminController {
             .body(service.countsForStaff());
     }
 
+    /** Restricted to the existing STAFF/ADMIN route authorization. */
+    @GetMapping("/{id}/messages")
+    public org.springframework.http.ResponseEntity<Page<SupportMessageEntry>> messages(
+            @PathVariable Long id, @RequestParam(defaultValue = "0") int page) {
+        Page<SupportMessageEntry> result = service.pageMessagesForStaff(id, page)
+            .map(SupportMessageEntry::from);
+        return org.springframework.http.ResponseEntity.ok()
+            .header(org.springframework.http.HttpHeaders.CACHE_CONTROL, "no-store")
+            .body(result);
+    }
+
     @GetMapping("/{id}")
     public String details(@PathVariable Long id, @RequestParam(defaultValue = "0") int page,
                           Model model, Principal principal) {
