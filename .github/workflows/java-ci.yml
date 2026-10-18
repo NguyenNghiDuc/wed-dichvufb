@@ -35,6 +35,32 @@ jobs:
           cache: maven
       - name: Run unit and PostgreSQL integration tests
         run: mvn -B --no-transfer-progress clean verify
+      - name: Verify JaCoCo XML and publish measured line coverage
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import os
+          import xml.etree.ElementTree as ET
+
+          coverage = Path("target/site/jacoco/jacoco.xml")
+          if not coverage.is_file() or coverage.stat().st_size == 0:
+              raise SystemExit("JaCoCo XML missing/empty; cannot verify coverage")
+          report = ET.parse(coverage).getroot()
+          counts = [node for node in report.findall("./counter") if node.get("type") == "LINE"]
+          if len(counts) != 1:
+              raise SystemExit("JaCoCo XML must contain one project LINE counter")
+          covered = int(counts[0].get("covered", "0"))
+          missed = int(counts[0].get("missed", "0"))
+          if covered <= 0 or covered + missed <= 0:
+              raise SystemExit("JaCoCo measured no covered application lines")
+          ratio = covered / (covered + missed) * 100
+          message = f"JaCoCo line coverage: {ratio:.2f}% ({covered}/{covered + missed})"
+          print(message)
+          summary = os.getenv("GITHUB_STEP_SUMMARY")
+          if summary:
+              with open(summary, "a", encoding="utf-8") as handle:
+                  handle.write("### W9 measured coverage\n" + message + "\n")
+          PY
       - name: Upload JUnit and integration test reports
         if: always()
         uses: actions/upload-artifact@v5
