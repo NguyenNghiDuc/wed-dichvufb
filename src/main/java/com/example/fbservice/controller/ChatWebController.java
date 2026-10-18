@@ -74,6 +74,11 @@ public class ChatWebController {
     @PostMapping("/{other}/send")
     public String send(@PathVariable String other, @RequestParam String content, Principal principal) {
         validateContact(principal.getName(), other);
+        // Keep existing conversation history readable, but do not deliver new
+        // messages to a disabled contact (same rule as the JSON send API).
+        if (users.findByUsername(other).filter(u -> u.isEnabled()).isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        }
         if (content == null || content.isBlank() || content.length() > 255)
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Nội dung tin nhắn không hợp lệ");
         chats.saveMessage(new ChatMessage(principal.getName(), other, content.strip()));
