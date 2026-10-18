@@ -64,6 +64,8 @@ public class NotificationController {
 
         response.setHeader("Cache-Control", "no-store");
         model.addAttribute("items", result.getContent());
+        // Avoid an extra DB existence query on every nonempty page.
+        model.addAttribute("hasAnyNotifications", result.hasContent() || notifications.existsByOwnerUsername(owner));
         model.addAttribute("unread", notifications.countByOwnerUsernameAndReadAtIsNull(owner));
         model.addAttribute("unreadOnly", unreadOnly);
         model.addAttribute("days", days);
@@ -112,7 +114,8 @@ public class NotificationController {
         if (changed == 0 && !notifications.existsByIdAndOwnerUsername(id, owner)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND);
         }
-        return listRedirect(redirect, page, unreadOnly, days, term);
+        // Reading the last unread item can empty a later page. Keep filters, reset the page.
+        return listRedirect(redirect, unreadOnly ? 0 : page, unreadOnly, days, term);
     }
 
     /** Idempotent; only the logged-in customer's unread rows are changed. */

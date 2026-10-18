@@ -23,6 +23,7 @@ public interface AccountNotificationRepository extends JpaRepository<AccountNoti
     int markOneUnreadAsRead(@Param("id") Long id, @Param("username") String username,
                             @Param("readAt") LocalDateTime readAt);
     long countByOwnerUsernameAndReadAtIsNull(String username);
+    boolean existsByOwnerUsername(String username);
 
     Page<AccountNotification> findByOwnerUsername(String username, Pageable pageable);
     Page<AccountNotification> findByOwnerUsernameAndReadAtIsNull(String username, Pageable pageable);

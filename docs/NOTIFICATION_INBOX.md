@@ -38,3 +38,8 @@ No production deployment or roadmap acceptance without CI and staging UAT.
 ## Kiểm thử đồng thời PostgreSQL 16
 - `PostgresNotificationConcurrencyTest` gửi 3 request thật vào MockMvc/transaction đồng thời: 2 lần đọc cùng ID/chủ, 1 lần cố đọc ID khác chủ. Kỳ vọng hai request owner thành công và giữ timestamp đầu tiên; requester sai chủ nhận 404.
 - Test chạy với profile prod và PostgreSQL 16 service của CI; chỉ sau khi GitHub Actions green mới xác nhận kiểm thử concurrency đạt.
+
+## Tình trạng hộp thư trống / đọc trang cuối
+- Nếu người dùng chưa có thông báo nào, trang hiển thị lời nhắn hộp thư mới.
+- Nếu vẫn có thông báo nhưng bộ lọc hiện không có kết quả, trang hiển thị liên kết xóa bộ lọc. Để tránh truy vấn tồn tại trên mỗi trang, chỉ gọi `existsByOwnerUsername` khi trang không có kết quả.
+- Khi đánh dấu một tin là đã đọc từ bộ lọc `unreadOnly=true`, hệ thống giữ `days`, `unreadOnly` và `q`, nhưng về trang 1 để tránh ở lại một trang không còn nội dung.
