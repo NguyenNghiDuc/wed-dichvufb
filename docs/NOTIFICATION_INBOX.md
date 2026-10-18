@@ -25,3 +25,7 @@ No production deployment or roadmap acceptance without CI and staging UAT.
 - Trang chi tiết dùng Thymeleaf `th:text` cho mọi nội dung không tin cậy; không render HTML người dùng, trang có `Cache-Control: no-store`.
 - Form đánh dấu một thông báo hoặc tất cả đều yêu cầu CSRF, giữ `page`, `days`, `unreadOnly`, `q` qua tham số được validate; unread-only sau read-all về trang đầu để không rơi vào trang rỗng.
 - Đánh dấu đọc là idempotent, giữ nguyên thời gian đọc cũ. Không nhận chủ tài khoản từ client.
+
+## Phân loại thông báo hiển thị
+- Với dữ liệu hiện có chưa có cột loại, giao diện phân loại **tạm theo tiền tố tiêu đề**: hỗ trợ/ticket, chiến dịch/đơn hàng, tài khoản/bảo mật; không khớp ghi “Khác”. Không suy đoán từ nội dung tin nhắn.
+- Không sửa nguồn phát thông báo ở W2/W3/W4 hoặc Flyway W7. Khi W7 cấp migration và các nhóm nguồn cập nhật type rõ ràng, thay cơ chế phân loại legacy này bằng loại đã xác định tại lúc tạo.

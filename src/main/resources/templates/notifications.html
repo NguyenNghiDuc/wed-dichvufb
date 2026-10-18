@@ -58,7 +58,8 @@
 <tr th:each="item : ${items}">
   <td th:text="${#temporals.format(item.createdAt,'dd/MM/yyyy HH:mm')}"></td>
   <td><a class="table-link" th:href="@{/notifications/{id}(id=${item.id},page=${pageNumber},unreadOnly=${unreadOnly},days=${days},q=${q})}"><strong th:text="${item.title}"></strong></a>
-      <p class="muted" th:text="${item.message}"></p></td>
+      <p class="muted" th:text="${item.message}"></p>
+      <span class="status" th:text="${item.categoryLabel}">Loại</span></td>
   <td>
     <form th:if="${item.readAt == null}" method="post"
           th:action="@{/notifications/{id}/read(id=${item.id})}">
