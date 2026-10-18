@@ -99,4 +99,29 @@ class PaymentWebhookCanonicalTimestampTest {
         verifyNoInteractions(manager, deposits, receipts, notifications);
     }
 
+    @Test
+    void emptyBodyIsRejectedWithoutDatabaseInteraction() {
+        assertInvalidBody(new byte[0], HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    void oversizedBodyIsRejectedWithoutDatabaseInteraction() {
+        assertInvalidBody(new byte[4097], HttpStatus.BAD_REQUEST);
+    }
+
+    private void assertInvalidBody(byte[] body, HttpStatus expected) {
+        PlatformTransactionManager manager = mock(PlatformTransactionManager.class);
+        DepositRequestRepository deposits = mock(DepositRequestRepository.class);
+        PaymentReceiptRepository receipts = mock(PaymentReceiptRepository.class);
+        AccountNotificationRepository notifications = mock(AccountNotificationRepository.class);
+        PaymentWebhookService service = new PaymentWebhookService(
+                "sandbox-test-secret-with-at-least-32-bytes",
+                deposits, receipts, notifications, new ObjectMapper(), manager);
+        ResponseStatusException error = assertThrows(ResponseStatusException.class,
+                () -> service.accept(body, "0".repeat(64),
+                        Long.toString(Instant.now().getEpochSecond())));
+        assertEquals(expected, error.getStatusCode());
+        verifyNoInteractions(manager, deposits, receipts, notifications);
+    }
+
 }
