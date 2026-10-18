@@ -140,13 +140,9 @@ class AiContentServiceTest {
 
     @Test
     void scriptAudienceAbAndProofreadHaveBoundedProviderRequests() {
-        java.util.List<String> prompts = new java.util.ArrayList<>();
-        var service = new AiContentService("test-key", "test-model", json, request -> {
-            String payload = request.bodyPublisher().orElseThrow().contentLength() > 0
-                ? request.bodyPublisher().orElseThrow().toString() : "";
-            return new AiContentService.ProviderResponse(200,
-                "{\\"choices\\":[{\\"message\\":{\\"content\\":\\"Safe suggestion\\"}}]}");
-        });
+        var service = new AiContentService("test-key", "test-model", json, request ->
+            new AiContentService.ProviderResponse(200,
+                "{\\"choices\\":[{\\"message\\":{\\"content\\":\\"Safe suggestion\\"}}]}"));
         for (var task : new AiContentTask[]{AiContentTask.VIDEO_SCRIPT,
                 AiContentTask.TARGET_AUDIENCE, AiContentTask.AB_VARIANTS, AiContentTask.PROOFREAD}) {
             var input = new AiContentRequest(SocialPlatform.TIKTOK, "Study habits",
