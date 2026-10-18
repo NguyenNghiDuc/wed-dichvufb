@@ -81,6 +81,12 @@ class AiContentServiceTest {
         var throttled=new AiContentService("fake","test-model",json,
             req->new AiContentService.ProviderResponse(429,"private provider details"));
         expectStatus(HttpStatus.SERVICE_UNAVAILABLE,throttled,legacy());
+        var denied=new AiContentService("fake","test-model",json,
+            req->new AiContentService.ProviderResponse(401,"secret auth details"));
+        expectStatus(HttpStatus.BAD_GATEWAY,denied,legacy());
+        var forbidden=new AiContentService("fake","test-model",json,
+            req->new AiContentService.ProviderResponse(403,"secret auth details"));
+        expectStatus(HttpStatus.BAD_GATEWAY,forbidden,legacy());
         var upstream=new AiContentService("fake","test-model",json,
             req->new AiContentService.ProviderResponse(500,"private provider details"));
         expectStatus(HttpStatus.BAD_GATEWAY,upstream,legacy());
