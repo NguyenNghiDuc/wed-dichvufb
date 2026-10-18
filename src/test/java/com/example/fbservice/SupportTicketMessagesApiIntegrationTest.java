@@ -42,6 +42,23 @@ class SupportTicketMessagesApiIntegrationTest {
         mvc.perform(get(route).param("page","1"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.content",hasSize(5)));
+        mvc.perform(get(route).param("q","alert"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.totalElements").value(1))
+            .andExpect(jsonPath("$.content[0].body").value("<script>alert(1)</script>"));
+        mvc.perform(get(route).param("q","%"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.totalElements").value(0));
+        mvc.perform(get(route).param("q","x".repeat(81)))
+            .andExpect(status().isBadRequest());
+        mvc.perform(get("/support/"+ticket.getId()).param("q","alert"))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString("&lt;script&gt;")))
+            .andExpect(content().string(not(containsString("<script>alert(1)</script>"))));
+        mvc.perform(get("/admin/support/"+ticket.getId()+"/messages")
+                .with(user("api-ticket-staff").roles("STAFF")).param("q","alert"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.totalElements").value(1));
         mvc.perform(get(route).param("page","-1")).andExpect(status().isBadRequest());
         mvc.perform(get(route).param("page","10001")).andExpect(status().isBadRequest());
         mvc.perform(get("/support/"+privateTicket.getId()+"/messages"))
