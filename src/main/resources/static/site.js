@@ -35,37 +35,13 @@
  let pending=null;const confirmed=new WeakSet();
  cancel.addEventListener('click',()=>dialog.close());
  proceed.addEventListener('click',()=>{if(pending){confirmed.add(pending.form);dialog.close();pending.form.requestSubmit(pending.submitter||undefined);}});
- // Authentication stays on the current document until the server responds,
- // so a timeout can reliably unlock the form even when navigation would stall.
- document.querySelectorAll('.auth-page form[method="post"]').forEach(form=>{
-  let submitting=false;
-  form.addEventListener('submit',async event=>{
-   event.preventDefault();if(submitting)return;
-   const button=event.submitter||form.querySelector('button[type=submit]');
-   if(!button)return;
-   submitting=true;const text=button.textContent;
-   form.querySelector('[data-auth-feedback]')?.remove();
-   button.disabled=true;button.textContent='Đang xử lý…';form.setAttribute('aria-busy','true');
-   const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),12000);
-   const feedback=message=>{const note=document.createElement('p');note.dataset.authFeedback='';note.className='form-wait-message';note.setAttribute('role','alert');note.textContent=message;form.prepend(note);};
-   try{
-    const response=await fetch(form.action,{method:'POST',body:new URLSearchParams(new FormData(form)),credentials:'same-origin',signal:controller.signal});
-    if(response.redirected){
-     const target=new URL(response.url);if(target.origin!==location.origin)throw new Error('Unexpected redirect');
-     location.assign(target.href);return;
-    }
-    if(!response.ok){feedback(response.status===403?'Phiên làm việc đã hết hạn. Hãy tải lại trang rồi thử lại.':response.status===429?'Bạn thao tác quá nhanh. Hãy chờ một lúc rồi thử lại.':'Máy chủ chưa xử lý được yêu cầu. Vui lòng thử lại sau.');return;}
-    const page=new DOMParser().parseFromString(await response.text(),'text/html');
-    const error=page.querySelector('.auth-form .error');
-    feedback(error?.textContent?.trim()||'Chưa thể hoàn tất yêu cầu. Hãy kiểm tra thông tin và thử lại.');
-   }catch(error){feedback(error.name==='AbortError'?'Máy chủ phản hồi quá lâu. Bạn có thể thử đăng nhập; nếu vừa đăng ký, tài khoản có thể đã được tạo.':'Không kết nối được máy chủ. Hãy kiểm tra mạng rồi thử lại.');}
-   finally{clearTimeout(timer);submitting=false;button.disabled=false;button.textContent=text;form.removeAttribute('aria-busy');}
-  });
- });
  const busy=new Map();
  document.addEventListener('submit',event=>{
   if(event.defaultPrevented)return;
   const form=event.target;if(form.method.toLowerCase()!=='post')return;
+  // Let the browser own authentication, cookies and redirects, including through
+  // Codespaces proxies. Never leave auth controls disabled during navigation.
+  if(form.closest('.auth-page'))return;
   if(form.dataset.confirm&&!confirmed.has(form)){
    event.preventDefault();message.textContent=form.dataset.confirm;pending={form,submitter:event.submitter};
    if(typeof dialog.showModal==='function')dialog.showModal();
