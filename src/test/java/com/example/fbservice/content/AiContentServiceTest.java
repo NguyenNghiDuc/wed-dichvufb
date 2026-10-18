@@ -61,6 +61,22 @@ class AiContentServiceTest {
     }
 
     @Test
+    void streamResponseIsBoundedBeforeDecodingAnyLargePayload() throws Exception {
+        byte[] small="{\"choices\":[]}".getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        assertThat(AiContentService.readBounded(new java.io.ByteArrayInputStream(small)))
+            .isEqualTo("{\"choices\":[]}");
+        var payload=new java.io.ByteArrayInputStream(new byte[2_000_000]);
+        assertThatThrownBy(()->AiContentService.readBounded(payload))
+            .isInstanceOf(ResponseStatusException.class)
+            .satisfies(error -> assertThat(((ResponseStatusException)error).getStatusCode())
+                .isEqualTo(HttpStatus.BAD_GATEWAY));
+        assertThat(payload.available()).isGreaterThan(1_000_000);
+        var service=new AiContentService("test-key","test-model",json,
+            request->new AiContentService.ProviderResponse(200,"x".repeat(200_001)));
+        expectStatus(HttpStatus.BAD_GATEWAY,service,legacy());
+    }
+
+    @Test
     void providerRateLimitsUpstreamErrorsAndInvalidPayloadsFailClosed() {
         var throttled=new AiContentService("fake","test-model",json,
             req->new AiContentService.ProviderResponse(429,"private provider details"));
