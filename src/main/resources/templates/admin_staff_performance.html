@@ -8,7 +8,16 @@
 <div class="page-header admin-page-header"><div>
 <div class="eyebrow">Theo dõi công việc</div><h1>Hoạt động STAFF trong 30 ngày</h1>
 <p class="muted">Thống kê số lần bắt đầu và hoàn thành đơn dựa trên lịch sử cập nhật của nhân viên; không phản ánh giờ làm việc, chất lượng hay lương thưởng.</p></div>
-<a class="btn btn-outline" th:href="@{/admin/staff/performance.csv}">↓ Tải CSV</a></div>
+<a class="btn btn-outline" th:href="@{/admin/staff/performance.csv(actor=${selectedActor})}">↓ Tải CSV</a></div>
+<form method="get" th:action="@{/admin/staff/performance}" class="admin-filterbar" role="search" aria-label="Lọc hoạt động nhân viên">
+<div class="admin-filter-field">
+<label for="performanceActor">Tên nhân viên</label>
+<input type="search" id="performanceActor" name="actor" maxlength="100" minlength="3"
+ pattern="[a-zA-Z0-9._-]{3,100}" th:value="${selectedActor}"
+ placeholder="Nhập tên tài khoản chính xác"></div>
+<div class="admin-filter-actions"><button class="btn btn-small" type="submit">Lọc</button>
+<a class="btn btn-outline btn-small" th:href="@{/admin/staff/performance}">Xóa lọc</a></div>
+</form>
 <div class="table-panel admin-table-scroll"><table class="data-table admin-table">
 <thead><tr><th>Người thực hiện</th><th>Bắt đầu đơn</th><th>Hoàn thành đơn</th><th>Nhật ký</th></tr></thead>
 <tbody>

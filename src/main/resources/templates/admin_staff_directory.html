@@ -37,7 +37,10 @@
 <td><span class="admin-status" th:classappend="${u.enabled ? ' is-active' : ' is-locked'}"
  th:text="${u.enabled ? 'Hoạt động' : 'Đã khóa'}"></span></td>
 <td th:text="${u.activeOrders}">0</td>
-<td><a class="btn btn-outline btn-small" th:href="@{/admin/users(username=${u.username})}">Xem tài khoản</a></td></tr>
+<td><div class="admin-row-actions">
+<a class="btn btn-outline btn-small" th:href="@{/admin/users(username=${u.username})}">Xem tài khoản</a>
+<a class="btn btn-outline btn-small" th:href="@{/admin/staff/performance(actor=${u.username})}">Hoạt động</a>
+</div></td></tr>
 <tr th:if="${#lists.isEmpty(staff)}"><td colspan="5" class="admin-empty">Không tìm thấy nhân viên.</td></tr></tbody></table></div>
 <nav class="admin-pager" aria-label="Phân trang nhân viên">
 <a th:if="${hasPrevious}" class="btn btn-outline btn-small"

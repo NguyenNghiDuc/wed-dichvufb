@@ -1,6 +1,7 @@
 package com.example.fbservice.admin;
 
 import org.springframework.http.CacheControl;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -15,15 +16,17 @@ public class AdminStaffPerformanceController {
     }
 
     @GetMapping("/admin/staff/performance")
-    public String page(Model model) {
-        model.addAttribute("performance",service.lastThirtyDays());
+    public String page(@RequestParam(required=false) String actor, Model model) {
+        model.addAttribute("performance",service.filtered(actor));
+        model.addAttribute("selectedActor",actor == null ? "" : actor.trim());
         return "admin_staff_performance";
     }
 
     @GetMapping("/api/v1/admin/staff/performance")
     @ResponseBody
-    public ResponseEntity<java.util.List<AdminStaffPerformanceService.StaffPerformance>> api() {
+    public ResponseEntity<java.util.List<AdminStaffPerformanceService.StaffPerformance>> api(
+            @RequestParam(required=false) String actor) {
         return ResponseEntity.ok().cacheControl(CacheControl.noStore())
-            .body(service.lastThirtyDays());
+            .body(service.filtered(actor));
     }
 }

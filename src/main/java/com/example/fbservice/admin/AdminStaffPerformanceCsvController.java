@@ -5,6 +5,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /** CSV for operational records, not employee scoring or payroll. */
@@ -16,9 +17,9 @@ public class AdminStaffPerformanceCsvController {
     }
 
     @GetMapping(value="/admin/staff/performance.csv", produces="text/csv;charset=UTF-8")
-    public ResponseEntity<byte[]> export() {
+    public ResponseEntity<byte[]> export(@RequestParam(required=false) String actor) {
         StringBuilder out=new StringBuilder("\uFEFFactor,started_orders,completed_orders\r\n");
-        for (var row:performance.lastThirtyDays()) {
+        for (var row:performance.filtered(actor)) {
             // Actor usernames derive from historical audit records: still escape formulas.
             out.append(AdminActivityCsvController.cell(row.actor())).append(',')
                 .append(row.started()).append(',').append(row.completed()).append("\r\n");

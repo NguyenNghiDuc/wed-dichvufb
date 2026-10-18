@@ -38,6 +38,15 @@ public class AdminStaffPerformanceService {
             Timestamp.valueOf(since));
     }
 
+    @Transactional(readOnly = true)
+    public List<StaffPerformance> filtered(String actor) {
+        if (actor == null || actor.isBlank()) return lastThirtyDays();
+        String exact = actor.trim();
+        if (!exact.matches("[a-zA-Z0-9._-]{3,100}"))
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid staff actor");
+        return List.of(forActor(exact));
+    }
+
     @Transactional(readOnly=true)
     public StaffPerformance forActor(String username) {
         if (username == null || username.isBlank())
