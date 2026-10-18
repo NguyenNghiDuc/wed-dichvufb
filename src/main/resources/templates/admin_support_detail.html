@@ -52,6 +52,9 @@ không phải thời gian SLA đã cam kết hay thời điểm hoàn tất đư
 <tr th:if="${#lists.isEmpty(assignmentHistory)}"><td colspan="4">Chưa có lần phân công nào.</td></tr>
 </tbody></table></div></section>
 <section class="section"><h2>Lịch sử phản hồi</h2>
+<p class="muted support-empty" role="status" th:if="${#lists.isEmpty(messages)}">
+Chưa có phản hồi phù hợp với bộ lọc hiện tại.
+</p>
 <form method="get" th:action="@{/admin/support/{id}(id=${ticket.id})}"
       class="actions support-filters" role="search" aria-label="Tìm trong phản hồi">
 <label for="ticketMessageSearch">Tìm nội dung trao đổi</label>
