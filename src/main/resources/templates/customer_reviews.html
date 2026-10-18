@@ -10,6 +10,20 @@
 <div class="page-header"><div><div class="eyebrow">Phản hồi đã gửi</div>
 <h1>Đánh giá dịch vụ của tôi</h1>
 <p class="muted">Chỉ những đánh giá của tài khoản này; không hiển thị công khai.</p></div></div>
+<form method="get" th:action="@{/campaigns/reviews}" class="actions customer-filter-form"
+      role="search" aria-label="Lọc đánh giá của tôi">
+  <label for="reviewRating">Số sao</label>
+  <select id="reviewRating" name="rating">
+    <option value="">Tất cả mức đánh giá</option>
+    <option th:each="score : ${#numbers.sequence(1,5)}" th:value="${score}"
+            th:selected="${score == selectedRating}" th:text="|${score} sao|"></option>
+  </select>
+  <label for="reviewQuery">Tìm trong phản hồi</label>
+  <input id="reviewQuery" type="search" name="q" maxlength="80"
+         placeholder="Từ khóa trong đánh giá" th:value="${query}">
+  <button type="submit" class="btn btn-small">Lọc đánh giá</button>
+  <a class="btn btn-outline btn-small" th:href="@{/campaigns/reviews}">Xóa lọc</a>
+</form>
 <div class="table-panel"><table class="data-table">
 <thead><tr><th>Chiến dịch</th><th>Đánh giá</th><th>Phản hồi</th><th>Ngày gửi</th></tr></thead>
 <tbody>
@@ -23,9 +37,9 @@
 </tbody></table></div>
 <nav class="actions" aria-label="Phân trang đánh giá">
 <a th:if="${hasPrevious}" class="btn btn-outline btn-small"
-   th:href="@{/campaigns/reviews(page=${pageNumber - 1})}">← Trang trước</a>
+   th:href="@{/campaigns/reviews(page=${pageNumber - 1},rating=${selectedRating},q=${query})}">← Trang trước</a>
 <span class="muted" th:text="|Trang ${pageNumber+1} / ${totalPages == 0 ? 1 : totalPages}|">Trang 1</span>
 <a th:if="${hasNext}" class="btn btn-outline btn-small"
-   th:href="@{/campaigns/reviews(page=${pageNumber + 1})}">Trang sau →</a>
+   th:href="@{/campaigns/reviews(page=${pageNumber + 1},rating=${selectedRating},q=${query})}">Trang sau →</a>
 </nav>
 </main></body></html>
