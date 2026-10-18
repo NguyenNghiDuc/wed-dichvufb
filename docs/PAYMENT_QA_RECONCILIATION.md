@@ -54,6 +54,29 @@ Anonymous, USER and STAFF requests are rejected. The payment service uses
 `@Transactional(readOnly=true)`, but deployment permissions should still use
 read-only database roles for external monitoring/reporting where feasible.
 
+## ADMIN daily internal receipt trend (no banking claims)
+
+`GET /api/v1/admin/payments/reconciliation/daily?days=7` provides a read-only
+7-day daily sandbox receipt histogram by default (oldest buckets with no events
+are represented by zero). `days` must be an integer between **1 and 31**;
+invalid values return 400. The response contains `daily[]` entries with
+`date`, `internalReceiptCount` and `internalAmountVnd`, plus
+`source=SIGNED_INTERNAL_TEST_EVENTS_ONLY`,
+`notFinancialReconciliation=true` and `timeZone`. Results are newest first.
+`Cache-Control: no-store` applies. This **never** exposes owner usernames,
+bank accounts, event IDs, signatures or wallet balances. Spring Security's
+existing `/api/v1/admin/**` rule restricts access to ADMIN; USER/anonymous
+access is rejected.
+
+Grouping uses the **server-local** calendar because `payment_receipts.created_at`
+is a `TIMESTAMP WITHOUT TIME ZONE` populated by Java server-local time.
+Document the actual JVM timezone in deployment; do not interpret these daily
+buckets as UTC timestamps or real bank income. The SQL bounds the request using
+the `idx_payment_receipts_created_at` index and performs one grouped query
+plus at most 31 in-memory date buckets. H2 and PostgreSQL integration tests
+cover the response shape and the existing PostgreSQL index. A real staging
+load test is still required to assess runtime/latency at scale.
+
 ## Flyway / indexes / deployment
 Clean PostgreSQL schema is managed with versioned `src/main/resources/db/migration/V*.sql` (production `validate`; no production Hibernate auto-DDL). V3 has receipt uniqueness; V10 adds indexes `idx_deposit_owner_created` and `idx_payment_receipts_created_at`; additive V11 replaces the owner/time index with `idx_deposit_owner_created_id` to support deterministic `ORDER BY created_at DESC, id DESC` over bounded 20-row pages. V12 adds PostgreSQL `NOT VALID` CHECK constraints enforcing the amount range on **new writes** to `deposit_request` and `payment_receipts`, without rewriting historical records. Historical rows may still violate the constraints: investigate and reconcile those manually before separately executing `VALIDATE CONSTRAINT` after staging/UAT. NEVER edit checksums of applied Flyway scripts or run Flyway `repair` automatically. Inspect `flyway_schema_history` and review query plans on realistic staging data. For owner listing inspect `EXPLAIN (ANALYZE, BUFFERS)` with sampled but redacted data, not live personally identifying data in tickets.
 
