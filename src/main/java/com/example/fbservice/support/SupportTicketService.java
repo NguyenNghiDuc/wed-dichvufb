@@ -362,6 +362,18 @@ public class SupportTicketService {
             throw new IllegalArgumentException("Chỉ có thể mở lại yêu cầu đã đóng.");
         limiter.check("support:reopen:" + owner, 5, Duration.ofHours(24));
         ticket.reopen();
+        // A previously assigned account may have been disabled or demoted
+        // while the ticket was closed. Return such a ticket to the unassigned
+        // queue and keep an audit event; don't strand it with stale ownership.
+        String previousAssignee = ticket.getAssigneeUsername();
+        if (previousAssignee != null && users.findByUsername(previousAssignee)
+                .filter(u -> u.isEnabled() &&
+                        ("STAFF".equals(u.getRole()) || "ADMIN".equals(u.getRole())))
+                .isEmpty()) {
+            ticket.reassignTo(null);
+            assignments.save(new SupportAssignmentEvent(
+                    id, previousAssignee, null, "HỆ THỐNG"));
+        }
         messages.save(new SupportMessage(id, "HỆ THỐNG",
             "Trạng thái thay đổi: ĐÃ ĐÓNG → ĐANG CHỜ (khách hàng yêu cầu mở lại)."));
         // Reason belongs to this ticket's private, paginated timeline only;
