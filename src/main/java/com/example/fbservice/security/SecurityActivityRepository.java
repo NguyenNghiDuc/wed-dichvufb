@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface SecurityActivityRepository extends JpaRepository<SecurityActivity,Long> {
     List<SecurityActivity> findTop20ByAccountIdOrderByCreatedAtDescIdDesc(Long accountId);
+    List<SecurityActivity> findTop200ByAccountIdOrderByCreatedAtDescIdDesc(Long accountId);
 
     @Query("select e.id from SecurityActivity e where e.createdAt < :cutoff order by e.createdAt asc, e.id asc")
     List<Long> findExpiredIds(@Param("cutoff") LocalDateTime cutoff, Pageable pageable);

@@ -25,6 +25,15 @@ public class SecurityActivityService {
 
     @Transactional(readOnly=true)
     public List<SecurityActivity> recent(AccountPrincipal principal) {
+        return events.findTop20ByAccountIdOrderByCreatedAtDescIdDesc(currentAccountId(principal));
+    }
+
+    @Transactional(readOnly=true)
+    public List<SecurityActivity> exportRecent(AccountPrincipal principal) {
+        return events.findTop200ByAccountIdOrderByCreatedAtDescIdDesc(currentAccountId(principal));
+    }
+
+    private Long currentAccountId(AccountPrincipal principal) {
         if(principal==null || principal.getAccountId()==null)
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
         User account=users.findById(principal.getAccountId())
@@ -33,6 +42,6 @@ public class SecurityActivityService {
                 || !principal.isCredentialCurrent(account.getPassword())) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
         }
-        return events.findTop20ByAccountIdOrderByCreatedAtDescIdDesc(account.getId());
+        return account.getId();
     }
 }

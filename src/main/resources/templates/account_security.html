@@ -6,7 +6,8 @@
 <div class="page-header"><div><div class="eyebrow">Bảo vệ tài khoản</div><h1>Hoạt động bảo mật gần đây</h1>
 <p class="muted">20 sự kiện mới nhất, theo giờ UTC. Không ghi mật khẩu hoặc token đăng nhập.</p></div></div>
 <div class="actions"><a class="btn btn-outline" th:href="@{/account/password}">Đổi mật khẩu</a>
-<a class="btn btn-outline" th:href="@{/account/sessions}">Đăng xuất mọi thiết bị</a></div>
+<a class="btn btn-outline" th:href="@{/account/sessions}">Đăng xuất mọi thiết bị</a>
+<a class="btn btn-outline" th:href="@{/account/security/export}">Xuất CSV (200 mục)</a></div>
 <section class="section"><div class="table-panel"><table class="data-table">
 <thead><tr><th>Hoạt động</th><th>Thời gian UTC</th></tr></thead><tbody>
 <tr th:each="event : ${events}"><td th:text="${event.title}">Hoạt động</td>
