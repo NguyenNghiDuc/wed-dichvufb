@@ -2,6 +2,7 @@ package com.example.fbservice.controller;
 
 import com.example.fbservice.model.User;
 import com.example.fbservice.service.UserService;
+import com.example.fbservice.config.PasswordPolicy;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -30,9 +31,15 @@ public class AuthController {
             model.addAttribute("error","Tên tài khoản cần 3–40 ký tự chữ, số, dấu chấm hoặc gạch.");
             return "register";
         }
-        if(password==null||password.length()<8||
+        if(password==null||password.length()<12||
            password.getBytes(java.nio.charset.StandardCharsets.UTF_8).length>72){
-            model.addAttribute("error","Mật khẩu cần ít nhất 8 ký tự và tối đa 72 byte UTF-8.");
+            model.addAttribute("error","Mật khẩu cần ít nhất 12 ký tự và tối đa 72 byte UTF-8.");
+            return "register";
+        }
+        try {
+            PasswordPolicy.requireStrong(password, name);
+        } catch (IllegalArgumentException weak) {
+            model.addAttribute("error", weak.getMessage());
             return "register";
         }
         String cleanEmail=email==null?null:email.trim();

@@ -2,6 +2,7 @@ package com.example.fbservice.service;
 
 import com.example.fbservice.config.AccountPrincipal;
 import com.example.fbservice.config.TrafficLimiter;
+import com.example.fbservice.config.PasswordPolicy;
 import com.example.fbservice.model.User;
 import com.example.fbservice.repository.UserRepository;
 import java.nio.charset.StandardCharsets;
@@ -77,6 +78,7 @@ public class PasswordChangeService {
         if (!newPassword.equals(confirmation)) {
             throw new IllegalArgumentException("Xác nhận mật khẩu mới không khớp.");
         }
+        PasswordPolicy.requireStrong(newPassword, principal.getUsername());
 
         // Rate-limit per account to make repeated guessing of the existing password expensive.
         limiter.check("password-change:" + principal.getAccountId(), 10, Duration.ofHours(1));
