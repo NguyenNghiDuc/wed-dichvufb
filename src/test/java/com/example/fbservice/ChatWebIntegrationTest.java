@@ -24,6 +24,7 @@ class ChatWebIntegrationTest {
     @Autowired MockMvc mvc;
     @Autowired ChatService chat;
     @Autowired UserRepository users;
+    @Autowired com.example.fbservice.repository.ChatMessageRepository messages;
 
     private User createUser(String username, String role) {
         User user=new User();
@@ -90,6 +91,31 @@ class ChatWebIntegrationTest {
             .andExpect(status().is3xxRedirection());
         mvc.perform(get("/chat/ui/open").param("contact","webchat-target"))
             .andExpect(status().is3xxRedirection());
+    }
+
+    @Test @WithMockUser(username="webchat-read-owner")
+    void singleMessageReadButtonCannotAcknowledgeOtherContactsOrTenants() throws Exception {
+        createUser("webchat-read-contact", "STAFF");
+        createUser("webchat-other-contact", "STAFF");
+        ChatMessage incoming = chat.saveMessage(new ChatMessage(
+                "webchat-read-contact", "webchat-read-owner", "Private incoming"));
+        ChatMessage other = chat.saveMessage(new ChatMessage(
+                "webchat-other-contact", "webchat-read-owner", "Different contact"));
+        String valid = "/chat/ui/webchat-read-contact/messages/" + incoming.getId() + "/read";
+        mvc.perform(get("/chat/ui/webchat-read-contact"))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString("Đánh dấu tin này đã đọc")));
+        mvc.perform(post(valid)).andExpect(status().isForbidden());
+        mvc.perform(post(valid).with(user("webchat-outsider")).with(csrf()))
+            .andExpect(status().is3xxRedirection());
+        assertThat(messages.findById(incoming.getId()).orElseThrow().getReadAt()).isNull();
+        mvc.perform(post("/chat/ui/webchat-read-contact/messages/" + other.getId() + "/read")
+                .with(csrf())).andExpect(status().is3xxRedirection());
+        assertThat(messages.findById(other.getId()).orElseThrow().getReadAt()).isNull();
+        mvc.perform(post(valid).with(csrf())).andExpect(status().is3xxRedirection());
+        assertThat(messages.findById(incoming.getId()).orElseThrow().getReadAt()).isNotNull();
+        mvc.perform(get("/chat/ui/webchat-read-contact"))
+            .andExpect(content().string(not(containsString("Đánh dấu tin này đã đọc"))));
     }
 
     @Test void anonymousMayNotReadOrSendChat() throws Exception {
