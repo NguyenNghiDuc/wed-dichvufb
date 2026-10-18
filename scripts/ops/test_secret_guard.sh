@@ -20,8 +20,10 @@ fi
 ! grep -q 'NOT_A_REAL_SECRET' "$temp/output" "$temp/err"
 git -C "$temp/repo" rm -q --cached .env
 rm -- "$temp/repo/.env"
-printf '%s\n' '-----BEGIN PRIVATE KEY-----' 'SYNTHETIC INVALID MARKER ONLY' \
-    '-----END PRIVATE KEY-----' > "$temp/repo/note.txt"
+# Construct signature dynamically so the TEST SOURCE does not itself trip the scanner.
+marker='PRIVATE'
+printf '%s\n' "-----BEGIN $marker KEY-----" 'SYNTHETIC INVALID MARKER ONLY' \
+    "-----END $marker KEY-----" > "$temp/repo/note.txt"
 git -C "$temp/repo" add note.txt
 if (cd "$temp/repo" && bash "$guard") > "$temp/output" 2>"$temp/err"; then
   echo 'FAIL: tracked private-key marker passed secret guard' >&2; exit 1
