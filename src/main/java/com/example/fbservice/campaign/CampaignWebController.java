@@ -43,6 +43,9 @@ public class CampaignWebController {
         model.addAttribute("summary", service.summaryForOwner(principal.getName()));
         model.addAttribute("serviceBreakdown", service.serviceBreakdownForOwner(principal.getName()));
         model.addAttribute("orders", records.getContent());
+        // Matches are counted inside the same SQL owner scope and filters,
+        // not taken from the all-orders customer dashboard summary.
+        model.addAttribute("matchedOrders", records.getTotalElements());
         // Only current owner's 20 visible records; no additional database queries.
         model.addAttribute("attentionById", records.getContent().stream()
             .collect(java.util.stream.Collectors.toMap(CampaignOrder::getId, attention::inspect)));
