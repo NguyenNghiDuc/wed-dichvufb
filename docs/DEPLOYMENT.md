@@ -37,3 +37,11 @@
 - Verify all POSTs require CSRF other than signed internal webhook
 - Verify production profile fails startup with missing DB credentials
 - Verify no third-party call happens when provider secrets are absent
+
+## W10 staging/operational rehearsal — draft PR #49 (no production deployment)
+
+- Read [Staging HTTPS, preflight, health and rollback](OPERATIONS_STAGING.md) and [isolated PostgreSQL backup/restore runbook](OPERATIONS_BACKUP_RESTORE.md) before any release. These are test procedures, **not proof staging has been deployed**.
+- The default `compose.yaml` remains local-only and binds app HTTP to `127.0.0.1:8080`. Opt in to `compose.staging.yaml` **only** with approved staging DNS, environment secrets and an operator-controlled HTTPS reverse proxy.
+- Run offline syntax/fail-closed verification: `bash scripts/ops/test_guardrails.sh`. If an isolated Docker Engine is available and authorized, run `bash scripts/ops/test_backup_restore.sh` using synthetic data only. Never replace real database contents to test scripts.
+- `bash scripts/ops/preflight_staging.sh` validates staging config without starting containers; `bash scripts/ops/smoke.sh --local` and `--tls` perform GET-only health/login checks; `bash scripts/ops/rollback_plan.sh --plan CURRENT_SHA PREVIOUS_SHA` prints instructions without executing deployment or restore.
+- **Not accepted for production:** W9 CI/CodeQL must be reviewed for latest HEAD; W7 migrations and W6 payments need their own approvals; no actual RPO/RTO, offsite encryption, alerts, secrets manager or disaster-recovery rehearsal has been verified.
