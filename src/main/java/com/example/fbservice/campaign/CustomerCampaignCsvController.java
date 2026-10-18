@@ -27,6 +27,7 @@ public class CustomerCampaignCsvController {
     public ResponseEntity<String> download(@RequestParam(required = false) Long orderId,
                                            @RequestParam(required = false) CampaignStatus status,
                                            @RequestParam(required = false) CampaignServiceType serviceType,
+                                           @RequestParam(required = false) String q,
                                            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
                                            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
                                            Principal principal) {
@@ -35,7 +36,7 @@ public class CustomerCampaignCsvController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"my-campaigns.csv\"")
                 .header(HttpHeaders.CACHE_CONTROL, "no-store")
                 .contentType(MediaType.parseMediaType("text/csv;charset=UTF-8"))
-                .body(exporter.exportMine(principal.getName(), orderId, status, serviceType, from, to));
+                .body(exporter.exportMine(principal.getName(), orderId, status, serviceType, from, to, q));
         } catch (IllegalArgumentException exception) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid campaign export filters");
         }
