@@ -97,6 +97,20 @@ class AdminAttentionQueueIntegrationTest {
             .andExpect(status().isBadRequest());
     }
 
+
+    @Test
+    @WithMockUser(roles="ADMIN")
+    void unavailableAssigneeQueueFindsMissingStaff() throws Exception {
+        CampaignOrder order = create("w4-missing-owner", CampaignStatus.APPROVED,
+            LocalDateTime.now().minusDays(2), LocalDateTime.now().minusDays(1));
+        order.assignTo("w4-missing-employee");
+        orders.save(order);
+        assertThat(queue.find(AdminAttentionQueueService.Queue.UNAVAILABLE_ASSIGNEE, 0).rows())
+            .extracting(CampaignOrder::getId).containsExactly(order.getId());
+        mvc.perform(get("/admin/attention").param("queue", "UNAVAILABLE_ASSIGNEE"))
+            .andExpect(status().isOk()).andExpect(model().attribute("orders", hasSize(1)));
+    }
+
     @Test
     void onlyAdminCanViewPriorityQueue() throws Exception {
         mvc.perform(get("/admin/attention")).andExpect(status().is3xxRedirection());

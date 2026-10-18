@@ -18,7 +18,8 @@ public class AdminAttentionQueueService {
         OVERDUE_PENDING("Chờ duyệt trên 48 giờ"),
         OVERDUE_IN_PROGRESS("Đang xử lý quá 7 ngày"),
         READY_TO_ASSIGN("Đã duyệt, chưa phân công"),
-        REJECTED("Đã từ chối");
+        REJECTED("Đã từ chối"),
+        UNAVAILABLE_ASSIGNEE("Phân công cho nhân viên không khả dụng");
         private final String label;
         Queue(String label) { this.label = label; }
         public String getLabel() { return label; }
@@ -41,6 +42,7 @@ public class AdminAttentionQueueService {
             case OVERDUE_IN_PROGRESS -> "c.status = :status and c.updatedAt < :cutoff";
             case READY_TO_ASSIGN -> "c.status = :status and c.assigneeUsername is null";
             case REJECTED -> "c.status = :status";
+            case UNAVAILABLE_ASSIGNEE -> "c.status in :active and c.assigneeUsername is not null and not exists (select u.id from User u where u.username = c.assigneeUsername and u.enabled = true and u.role in :eligibleRoles)";
         };
         TypedQuery<CampaignOrder> query = em.createQuery(
             "select c from CampaignOrder c where " + criteria +
@@ -50,8 +52,14 @@ public class AdminAttentionQueueService {
             case OVERDUE_IN_PROGRESS -> CampaignStatus.IN_PROGRESS;
             case READY_TO_ASSIGN -> CampaignStatus.APPROVED;
             case REJECTED -> CampaignStatus.REJECTED;
+            case UNAVAILABLE_ASSIGNEE -> null;
         };
-        query.setParameter("status", status);
+        if (status == null) {
+            query.setParameter("active", List.of(CampaignStatus.APPROVED, CampaignStatus.IN_PROGRESS));
+            query.setParameter("eligibleRoles", List.of("STAFF", "ADMIN"));
+        } else {
+            query.setParameter("status", status);
+        }
         if (queue == Queue.OVERDUE_PENDING)
             query.setParameter("cutoff", LocalDateTime.now().minusHours(48));
         if (queue == Queue.OVERDUE_IN_PROGRESS)
