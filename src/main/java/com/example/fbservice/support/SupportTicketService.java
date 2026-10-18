@@ -195,6 +195,7 @@ public class SupportTicketService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         SupportTicket ticket = tickets.lockForAdmin(id)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        ticket.ensureOpen();
         if (staff.equals(ticket.getAssigneeUsername())) return;
         String previous = ticket.getAssigneeUsername();
         ticket.claim(staff);
