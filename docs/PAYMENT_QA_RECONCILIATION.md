@@ -9,7 +9,7 @@ This is **not** a VNPay IPN/return callback, bank transfer confirmation, custome
 
 Example body **shape only** (no valid signature): `{"eventId":"sandbox-settlement-0001","depositRequestId":1,"amountVnd":50000,"status":"SETTLED"}`. All fields are mandatory; eventId is 8–100 ASCII letters/digits/underscore/hyphen. Only one JSON object is accepted: duplicate field names, trailing JSON documents and amountVnd outside 1,000–1,000,000,000 VND are rejected. Unknown JSON fields are rejected, even when the callback has a valid HMAC; a provider-specific bank transaction identifier is **not** accepted by this internal test protocol. Generate a new signature and fresh timestamp for each retry after five minutes; **reuse the original eventId** so a retry cannot duplicate the effect. Keep producer and receiver clocks synchronized using NTP. Do not reserialize JSON between signing and sending.
 
-The service checks the signature before parsing, locks the deposit with `PESSIMISTIC_WRITE`, compares the exact VND amount, enforces the allowed status transition PENDING → APPROVED and commits a single receipt row. The database additionally enforces UNIQUE(event_id) and UNIQUE(deposit_request_id). One accepted event generates one account notification. Duplicate retry with same eventId, amount and deposit returns `{"accepted":true,"duplicate":true}` without another receipt/notification. A different event claiming a processed deposit returns HTTP 409. Invalid/missing signature, stale timestamp: 401; malformed event: 400; oversized body: 413; mismatched reference/amount: 409; no deposit: 404; no secret: 503. **APPROVED means only an authorized internal test event was recorded, not that money arrived.** It must not be treated as payment confirmation by any future wallet logic.
+The service checks the signature and parses/validates the event **before starting a database transaction**, reducing connection pressure from forged or malformed traffic; local tests assert those requests never ask the transaction manager for a transaction. After validation it locks the deposit with `PESSIMISTIC_WRITE`, compares the exact VND amount, enforces the allowed status transition PENDING → APPROVED and commits a single receipt row. The database additionally enforces UNIQUE(event_id) and UNIQUE(deposit_request_id). One accepted event generates one account notification. Duplicate retry with same eventId, amount and deposit returns `{"accepted":true,"duplicate":true}` without another receipt/notification. A different event claiming a processed deposit returns HTTP 409. Invalid/missing signature, stale timestamp: 401; malformed event: 400; oversized body: 413; mismatched reference/amount: 409; no deposit: 404; no secret: 503. **APPROVED means only an authorized internal test event was recorded, not that money arrived.** It must not be treated as payment confirmation by any future wallet logic.
 
 ## Read-only daily reconciliation (PostgreSQL, authorized staff only)
 Run in a read-only connection on staging/approved replica, review anomalies without automatically crediting or adjusting balances:
@@ -66,7 +66,7 @@ pg_dump --format=custom --no-owner --file=/secure/backups/growlab-before-upgrade
 pg_restore --list /secure/backups/growlab-before-upgrade.dump > /secure/backups/manifest.txt
 ```
 
-Copy encrypted backup to controlled storage, verify retention and checksum, and rehearse restore to an **empty isolated staging database only**. Example after configuring `PGDATABASE=growlab_restore` on a nonproduction cluster:
+The CI-only restore smoke compares row counts for users, deposit requests, receipts, campaigns and Flyway history, checks aggregate internal receipt amount and asserts indexes survived restore. It is not evidence that disaster recovery on real production data has been rehearsed. Copy encrypted backup to controlled storage, verify retention and checksum, and rehearse restore to an **empty isolated staging database only**. Example after configuring `PGDATABASE=growlab_restore` on a nonproduction cluster:
 
 ```sh
 createdb growlab_restore
@@ -76,6 +76,10 @@ psql --dbname=growlab_restore -c 'SELECT COUNT(*) FROM payment_receipts'
 ```
 
 `pg_restore` against an existing production database is not an approved rollback. Document the actual tested recovery point objective, recovery time, roles, restore checksums and encryption key availability after a staging exercise. On failed deployment, stop the new app and route traffic back to previous compatible JAR/container **only if schema remains backward-compatible**; for destructive migrations, restore the isolated validated backup via a separate human-approved incident procedure. Never use `flyway clean` in production.
+
+## Additive database constraints and rollout review
+
+Flyway V12 adds `NOT VALID` PostgreSQL amount-range CHECK constraints. PostgreSQL enforces them on **new** writes while allowing preexisting out-of-range legacy rows to remain until the operator reviews, reconciles, and separately validates them. Run an approved query for violating historical rows before applying `VALIDATE CONSTRAINT`; do not auto-correct payment records. The CI test verifies a direct invalid deposit/receipt write is refused. No real wallet ledger or bank mapping exists.
 
 ## Acceptance evidence remaining
 - [ ] Latest Java 17 Maven test run with PostgreSQL 16 + Flyway V1–V12, the 4096-byte controller limit, strict JSON validation, reconciliation role tests and Docker Compose config validation.
