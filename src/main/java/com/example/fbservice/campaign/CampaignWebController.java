@@ -29,12 +29,13 @@ public class CampaignWebController {
                        @RequestParam(required = false) Long orderId,
                        @RequestParam(required = false) CampaignStatus status,
                        @RequestParam(required = false) CampaignServiceType serviceType,
+                       @RequestParam(required = false) String q,
                        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
                        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
                        Model model, Principal principal) {
         Page<CampaignOrder> records;
         try {
-            records = service.pageMine(principal.getName(), page, 20, orderId, status, serviceType, from, to);
+            records = service.pageMine(principal.getName(), page, 20, orderId, status, serviceType, from, to, q);
         } catch (IllegalArgumentException exception) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid filters or pagination");
         }
@@ -50,6 +51,7 @@ public class CampaignWebController {
         model.addAttribute("hasNext", records.hasNext());
         model.addAttribute("totalPages", records.getTotalPages());
         model.addAttribute("orderId", orderId);
+        model.addAttribute("query", q);
         model.addAttribute("selectedStatus", status);
         model.addAttribute("selectedServiceType", serviceType);
         model.addAttribute("serviceTypes", CampaignServiceType.values());
