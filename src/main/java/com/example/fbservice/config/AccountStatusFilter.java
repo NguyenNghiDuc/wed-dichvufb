@@ -1,19 +1,49 @@
 package com.example.fbservice.config;
 
 import com.example.fbservice.repository.UserRepository;
-import jakarta.servlet.*;
-import jakarta.servlet.http.*;
+import jakarta.servlet.DispatcherType;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
+import java.util.Set;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-/** Revalidate persisted status and role for each authenticated session request. */
+/**
+ * Revokes sessions after account removal, suspension, or role changes.
+ * Public login and error pages must remain accessible even with an old session.
+ */
 public final class AccountStatusFilter extends OncePerRequestFilter {
+    private static final Set<String> PUBLIC_GET_PATHS = Set.of(
+        "/", "/login", "/register", "/help", "/error",
+        "/favicon.ico", "/favicon.svg", "/style.css",
+        "/actuator/health", "/actuator/health/liveness", "/actuator/health/readiness"
+    );
     private final UserRepository users;
 
     public AccountStatusFilter(UserRepository users) {
         this.users = users;
+    }
+
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        if (request.getDispatcherType() == DispatcherType.ERROR) return true;
+        String method = request.getMethod();
+        // Servlet path can be empty under servlet forwarding/MockMvc; use the actual request URI.
+        String uri = request.getRequestURI();
+        String contextPath = request.getContextPath();
+        String path = uri.startsWith(contextPath) ? uri.substring(contextPath.length()) : uri;
+        // A revoked cookie must not prevent re-authentication in the same browser.
+        // This filter runs AFTER CsrfFilter: both POST endpoints still require CSRF tokens.
+        // Other POST/PUT/PATCH/DELETE endpoints are ALWAYS subject to revocation checks.
+        if ("POST".equalsIgnoreCase(method) &&
+                ("/login".equals(path) || "/register".equals(path))) return true;
+        return ("GET".equalsIgnoreCase(method) || "HEAD".equalsIgnoreCase(method))
+            && PUBLIC_GET_PATHS.contains(path);
     }
 
     @Override
@@ -24,14 +54,29 @@ public final class AccountStatusFilter extends OncePerRequestFilter {
             boolean valid = users.findById(principal.getAccountId()).map(account ->
                 account.isEnabled()
                 && account.getUsername().equals(principal.getUsername())
+                // Authentication providers erase UserDetails credentials after login.
+                // A separate digest allows password rotation to revoke existing sessions.
+                && principal.isCredentialCurrent(account.getPassword())
+                // A database account has exactly one role. Do not accept a session
+                // with extra authorities that might accidentally preserve privileges.
+                && authentication.getAuthorities().size() == 1
                 && authentication.getAuthorities().stream()
-                    .anyMatch(authority -> authority.getAuthority().equals("ROLE_" + account.getRole()))
+                    .allMatch(authority -> authority.getAuthority().equals("ROLE_" + account.getRole()))
             ).orElse(false);
             if (!valid) {
                 SecurityContextHolder.clearContext();
                 HttpSession session = request.getSession(false);
                 if (session != null) session.invalidate();
-                response.sendError(HttpServletResponse.SC_FORBIDDEN, "Account unavailable");
+                response.setHeader("Cache-Control", "no-store");
+                if ("GET".equalsIgnoreCase(request.getMethod())
+                        || "HEAD".equalsIgnoreCase(request.getMethod())) {
+                    // An anonymous filter has already run earlier in the security chain.
+                    // Explicitly redirect to avoid an authorization fallback 403.
+                    response.setStatus(HttpServletResponse.SC_FOUND);
+                    response.setHeader("Location", request.getContextPath() + "/login?sessionExpired");
+                } else {
+                    response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+                }
                 return;
             }
         }

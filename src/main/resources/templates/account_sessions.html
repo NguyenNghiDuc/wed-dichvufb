@@ -1,0 +1,31 @@
+<!doctype html><html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Đăng xuất thiết bị · GrowLab</title><link rel="stylesheet" th:href="@{/style.css}"></head>
+<body><header class="topbar"><nav class="nav container"><a class="brand" th:href="@{/}"><span class="brand-icon">↗</span>Grow<strong>Lab</strong></a></nav></header>
+<main class="page container"><a class="table-link" th:href="@{/account/password}">← Cài đặt bảo mật</a>
+<section class="form-panel narrow">
+<div class="eyebrow">Bảo vệ tài khoản</div><h1>Đăng xuất tất cả thiết bị</h1>
+<p class="muted">Giữ nguyên mật khẩu hiện tại nhưng buộc các phiên đăng nhập cũ xác thực lại khi truy cập trang riêng tiếp theo.</p>
+<p class="error" th:if="${error}" th:text="${error}"></p>
+<section class="section" aria-labelledby="current-session-heading">
+<h2 id="current-session-heading">Phiên đăng nhập hiện tại</h2>
+<p class="muted">Chỉ thông tin của trình duyệt đang dùng. Không phải danh sách tất cả thiết bị đã đăng nhập.</p>
+<div class="table-panel"><table class="data-table"><tbody>
+<tr><th scope="row">Địa chỉ kết nối máy chủ nhận được</th><td th:text="${connectionAddress}">Không xác định</td></tr>
+<tr><th scope="row">Trình duyệt / thiết bị (User-Agent)</th><td th:text="${browserDescription}">Không xác định</td></tr>
+<tr th:if="${sessionCreatedUtc}"><th scope="row">Bắt đầu phiên (UTC)</th>
+<td th:text="${#temporals.format(sessionCreatedUtc,'dd/MM/yyyy HH:mm:ss')}"></td></tr>
+<tr th:if="${sessionLastAccessUtc}"><th scope="row">Lần truy cập gần nhất (UTC)</th>
+<td th:text="${#temporals.format(sessionLastAccessUtc,'dd/MM/yyyy HH:mm:ss')}"></td></tr>
+<tr th:if="${sessionTimeoutMinutes}"><th scope="row">Thời gian chờ phiên</th>
+<td th:text="|${sessionTimeoutMinutes} phút không hoạt động|"></td></tr>
+</tbody></table></div>
+<p class="footnote">Địa chỉ kết nối có thể là IP của reverse proxy; User-Agent do trình duyệt cung cấp, có thể giả mạo. GrowLab không lưu IP hoặc tên thiết bị vào lịch sử từ bảng này.</p>
+</section>
+<form method="post" th:action="@{/account/sessions/revoke}">
+<input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+<div class="field"><label for="currentPassword">Xác nhận mật khẩu hiện tại</label>
+<input id="currentPassword" type="password" name="currentPassword" autocomplete="current-password" required></div>
+<button class="btn full" type="submit">Đăng xuất các thiết bị</button>
+</form><p class="footnote">Đây không phải thao tác xóa tài khoản hoặc đổi mật khẩu.</p>
+</section></main></body></html>

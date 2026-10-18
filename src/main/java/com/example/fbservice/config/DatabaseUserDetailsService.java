@@ -17,11 +17,12 @@ public class DatabaseUserDetailsService implements UserDetailsService {
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         User user = users.findByUsername(username)
             .orElseThrow(() -> new UsernameNotFoundException("Account not found"));
-        String role = switch (user.getRole()) {
-            case "ADMIN" -> "ADMIN";
-            case "STAFF" -> "STAFF";
-            default -> "USER";
-        };
+        // Never silently reinterpret a corrupt or unrecognized database role as USER.
+        // Authentication must fail closed until the role is corrected by an operator.
+        String role = user.getRole();
+        if (!("ADMIN".equals(role) || "STAFF".equals(role) || "USER".equals(role))) {
+            throw new UsernameNotFoundException("Account unavailable");
+        }
         return new AccountPrincipal(user, role);
     }
 }

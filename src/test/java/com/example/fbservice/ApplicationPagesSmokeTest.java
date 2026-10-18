@@ -25,7 +25,8 @@ class ApplicationPagesSmokeTest {
     void publicPagesRender() throws Exception {
         mvc.perform(get("/")).andExpect(status().isOk())
             .andExpect(content().string(org.hamcrest.Matchers.containsString("GrowLab")));
-        mvc.perform(get("/login")).andExpect(status().isOk());
+        mvc.perform(get("/login")).andExpect(status().isOk())
+            .andExpect(header().string("X-GrowLab-Auth-Revision", "session-recovery-v2"));
         mvc.perform(get("/register")).andExpect(status().isOk());
         mvc.perform(get("/style.css")).andExpect(status().isOk());
     }

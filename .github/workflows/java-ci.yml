@@ -62,5 +62,22 @@ jobs:
           grep -q 'UP' /tmp/health.json || { cat /tmp/growlab-startup.log; exit 1; }
           curl -fsS http://127.0.0.1:8080/ | grep -q GrowLab
           curl -fsS http://127.0.0.1:8080/register | grep -q csrf
+          # Exercise the real embedded servlet server; MockMvc alone misses proxy/session bugs.
+          curl -fsS -D /tmp/login.headers http://127.0.0.1:8080/login -o /tmp/login.html
+          grep -qi '^X-GrowLab-Auth-Revision: session-recovery-v2' /tmp/login.headers
+          grep -q 'Đăng nhập' /tmp/login.html
+          curl -fsS -D /tmp/login-forwarded.headers \
+            -H 'X-Forwarded-Proto: https' \
+            -H 'X-Forwarded-Host: example-8000.app.github.dev' \
+            http://127.0.0.1:8080/login -o /tmp/login-forwarded.html
+          grep -qi '^X-GrowLab-Auth-Revision: session-recovery-v2' /tmp/login-forwarded.headers
+          # Exercise the same diagnostic script used in Codespaces against the packaged JAR.
+          PORT=8080 bash scripts/codespaces-login.sh check
+          # A stale browser session cookie must not block the public login page.
+          curl -fsS -D /tmp/login-stale.headers \
+            -H 'Cookie: JSESSIONID=stale-session-from-old-codespace' \
+            http://127.0.0.1:8080/login -o /tmp/login-stale.html
+          grep -qi '^X-GrowLab-Auth-Revision: session-recovery-v2' /tmp/login-stale.headers
+          bash scripts/diagnose-codespaces-login.sh 8080
       - name: Validate Docker image
         run: docker build -t growlab-ci:latest .

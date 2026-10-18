@@ -2,6 +2,7 @@ package com.example.fbservice.controller;
 
 import com.example.fbservice.model.User;
 import com.example.fbservice.service.UserService;
+import com.example.fbservice.config.PasswordPolicy;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -13,7 +14,12 @@ public class AuthController {
     public AuthController(UserService users){this.users=users;}
 
     @GetMapping("/login")
-    public String loginPage(){return "login";}
+    public String loginPage(jakarta.servlet.http.HttpServletResponse response) {
+        // A fixed, nonsensitive marker helps identify the currently running binary in Codespaces.
+        response.setHeader("X-GrowLab-Auth-Revision", "session-recovery-v2");
+        response.setHeader("Cache-Control", "no-store");
+        return "login";
+    }
     @GetMapping("/register")
     public String registerPage(){return "register";}
 
@@ -25,8 +31,15 @@ public class AuthController {
             model.addAttribute("error","Tên tài khoản cần 3–40 ký tự chữ, số, dấu chấm hoặc gạch.");
             return "register";
         }
-        if(password==null||password.length()<8||password.length()>72){
-            model.addAttribute("error","Mật khẩu cần từ 8 đến 72 ký tự.");
+        if(password==null||password.length()<12||
+           password.getBytes(java.nio.charset.StandardCharsets.UTF_8).length>72){
+            model.addAttribute("error","Mật khẩu cần ít nhất 12 ký tự và tối đa 72 byte UTF-8.");
+            return "register";
+        }
+        try {
+            PasswordPolicy.requireStrong(password, name);
+        } catch (IllegalArgumentException weak) {
+            model.addAttribute("error", weak.getMessage());
             return "register";
         }
         String cleanEmail=email==null?null:email.trim();
