@@ -7,7 +7,7 @@
 <button class="btn btn-small" type="submit">Tra cứu</button>
 <a class="btn btn-outline btn-small" th:href="@{/order/list}">Xóa lọc</a>
 </form>
-<div class="table-panel"><table class="data-table"><thead><tr><th>Mã</th><th>Dịch vụ</th><th>Link</th><th>Số lượng</th><th>Tổng tiền</th></tr></thead><tbody><tr th:each="o : ${orders}"><td th:text="${o.id}"></td><td th:text="${o.serverName}"></td><td th:text="${o.linkOrder}"></td><td th:text="${o.quantity}"></td><td th:text="${o.totalPrice}"></td></tr><tr th:if="${#lists.isEmpty(orders)}"><td colspan="5">Chưa có đơn nào.</td></tr></tbody></table></div>
+<div class="table-panel"><table class="data-table"><thead><tr><th>Mã</th><th>Dịch vụ</th><th>Link</th><th>Ghi chú</th><th>Số lượng</th><th>Tổng tiền</th></tr></thead><tbody><tr th:each="o : ${orders}"><td th:text="${o.id}"></td><td th:text="${o.serverName}"></td><td th:text="${o.linkOrder}"></td><td th:text="${o.note}"></td><td th:text="${o.quantity}"></td><td th:text="${o.totalPrice}"></td></tr><tr th:if="${#lists.isEmpty(orders)}"><td colspan="6">Chưa có đơn nào.</td></tr></tbody></table></div>
 <nav class="actions" aria-label="Phân trang đơn cũ">
 <a th:if="${hasPrevious}" class="btn btn-outline btn-small" th:href="@{/order/list(page=${pageNumber - 1},orderId=${orderId})}">← Trang trước</a>
 <span class="muted" th:text="|Trang ${pageNumber + 1} / ${totalPages == 0 ? 1 : totalPages}|">Trang 1</span>
