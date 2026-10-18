@@ -24,11 +24,30 @@ case "$1" in
   *) usage ;;
 esac
 command -v docker >/dev/null || { echo 'Docker CLI unavailable' >&2; exit 2; }
-directory="${BACKUP_DIR:-./backups}"
-[[ ! -L "$directory" ]] || { echo 'Refusing symbolic-link backup directory' >&2; exit 2; }
+[[ -n "${BACKUP_DIR:-}" && "$BACKUP_DIR" == /* ]] || {
+  echo 'BACKUP_DIR must be an explicit absolute directory outside the repository' >&2
+  exit 2
+}
+directory="$BACKUP_DIR"
+[[ ! -L "$directory" && "$directory" != "/" ]] || {
+  echo 'Refusing symbolic-link/root backup directory' >&2
+  exit 2
+}
 mkdir -p -- "$directory"
-chmod 700 -- "$directory"
 directory="$(cd -- "$directory" && pwd -P)"
+repo_root="$(pwd -P)"
+case "$directory/" in
+  "$repo_root/"*) echo 'Refusing to store database archive inside repository/Docker build context' >&2; exit 2 ;;
+esac
+[[ "$(stat -c '%u' -- "$directory")" == "$(id -u)" ]] || {
+  echo 'Backup directory is not owned by current operator' >&2; exit 2
+}
+mode="$(stat -c '%a' -- "$directory")"
+[[ "$mode" =~ ^[0-7]{3,4}$ ]] || { echo 'Invalid directory mode' >&2; exit 2; }
+(( (8#$mode & 077) == 0 )) || {
+  echo 'Backup directory must have no group/other permissions (choose a restricted location)' >&2
+  exit 2
+}
 temporary="$(mktemp "$directory/.growlab-XXXXXXXX.part")"
 cleanup() {
   [[ -z "$temporary" || ! -e "$temporary" ]] || rm -f -- "$temporary"
