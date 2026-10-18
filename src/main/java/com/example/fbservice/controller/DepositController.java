@@ -6,6 +6,7 @@ import java.security.Principal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 @RequestMapping("/deposit")
@@ -23,9 +24,10 @@ public class DepositController {
     }
 
     @PostMapping("/create")
-    public String create(@ModelAttribute("deposit") DepositRequest input, Principal principal, Model model) {
+    public String create(@ModelAttribute("deposit") DepositRequest input, Principal principal, Model model, RedirectAttributes redirect) {
         try {
             deposits.save(input, principal.getName());
+            redirect.addFlashAttribute("success", "Đã gửi yêu cầu nạp tiền. Yêu cầu đang chờ xử lý, chưa ghi có số dư.");
             return "redirect:/deposit/list";
         } catch (IllegalArgumentException ex) {
             model.addAttribute("error", ex.getMessage());

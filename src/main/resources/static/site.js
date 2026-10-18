@@ -54,3 +54,11 @@
  });
  window.addEventListener('pageshow',()=>{busy.forEach((state,button)=>{button.disabled=state.disabled;button.textContent=state.text;});busy.clear();});
 })();
+
+(() => {
+ const amount=document.getElementById('deposit-amount');if(!amount)return;
+ const buttons=[...document.querySelectorAll('[data-deposit-amount]')],preview=document.getElementById('deposit-preview');
+ const money=new Intl.NumberFormat('vi-VN',{style:'currency',currency:'VND',maximumFractionDigits:0});
+ const update=()=>{const value=Number(amount.value);preview.textContent=amount.value&&amount.validity.valid?money.format(value):'— đ';buttons.forEach(b=>b.setAttribute('aria-pressed',String(Number(b.dataset.depositAmount)===value)));};
+ buttons.forEach(b=>b.addEventListener('click',()=>{amount.value=b.dataset.depositAmount;amount.dispatchEvent(new Event('input',{bubbles:true}));}));amount.addEventListener('input',update);window.addEventListener('pageshow',update);update();
+})();
