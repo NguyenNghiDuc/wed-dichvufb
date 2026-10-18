@@ -22,6 +22,10 @@ updates fix that gap. Tested by `SupportTicketActivityIntegrationTest`.
 - `GET /support/{id}/messages?page=0` — ticket owner only.
 - `GET /admin/support/{id}/messages?page=0` — STAFF/ADMIN only.
 - Exactly 20 replies per database page, ordered `createdAt ASC, id ASC`.
+- Optional `q` is a literal, case-insensitive substring inside that ticket's
+  message body. No wildcard expansion; maximum 80 characters.
+- The same search form works in customer `/support/{id}` and staff
+  `/admin/support/{id}` pages; paging preserves `q`.
 - `page` must be 0..10000; bad values return HTTP 400.
 - Foreign/unknown customer ticket returns HTTP 404, without disclosing counts.
 - Response is a Spring Page of `SupportMessageEntry`:
