@@ -50,3 +50,59 @@
 .broadcast-message{white-space:pre-wrap;overflow-wrap:anywhere}.account-page #recipient-count{font-weight:700;color:#4fdfda}
 
 .broadcast-preview-title{overflow-wrap:anywhere}.notification-message{white-space:pre-wrap;overflow-wrap:anywhere}
+
+/* Customer-service discovery and order receipt; scope rules to avoid cross-team CSS regression. */
+.gl-catalog-breadcrumb{display:flex;align-items:center;gap:11px;font-size:13px;color:var(--muted);padding-bottom:23px}
+.gl-catalog-breadcrumb a:hover{color:var(--accent)}
+.gl-catalog-filters{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:14px;padding:22px;margin-bottom:24px}
+.gl-catalog-field{grid-column:span 2;min-width:0}
+.gl-catalog-search{grid-column:span 4}
+.gl-catalog-field label{display:block;font-size:12px;font-weight:800;margin-bottom:7px}
+.gl-catalog-field :is(input,select){background:#231c32;border:1px solid #ffffff26;color:#f4eefa;font:inherit;font-size:13px;border-radius:10px;padding:11px 12px;width:100%;min-width:0}
+.gl-catalog-field :is(input,select):focus-visible{outline:2px solid #16c7c5;outline-offset:2px}
+.gl-catalog-actions{grid-column:span 6;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.gl-catalog-results-head{display:flex;gap:16px;justify-content:space-between;align-items:center;margin:26px 0 17px}
+.gl-catalog-results-head h2{font-size:22px;margin:0}
+.gl-catalog-results-head p{margin:0;font-size:12px;color:var(--muted)}
+.gl-catalog-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.gl-catalog-item{min-width:0;display:flex;flex-direction:column;gap:10px;padding:19px}
+.gl-catalog-item-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.gl-catalog-platform{font-weight:800;color:#fba7c9;font-size:12px}
+.gl-catalog-available{font-size:10px;border-radius:30px;padding:5px 9px;background:#123b33;color:#8beac2}
+.gl-catalog-item h3{font-size:17px;line-height:1.4;min-height:46px;margin:0}
+.gl-catalog-item p{font-size:12px;line-height:1.75;flex:1;margin:0}
+.gl-catalog-bottom{display:flex;align-items:end;justify-content:space-between;gap:9px;border-top:1px solid #ffffff16;padding-top:15px;margin-top:6px}
+.gl-catalog-bottom span{display:block;font-size:10px;color:var(--muted)}
+.gl-catalog-bottom strong{font-size:20px;color:#40d8d3}
+.gl-catalog-bottom .btn{font-size:11px;white-space:nowrap}
+.gl-catalog-empty{padding:28px;text-align:center}
+.gl-related{margin-top:25px}
+.gl-related h2{font-size:19px}
+.gl-related-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.gl-related-link{display:flex;justify-content:space-between;align-items:center;gap:13px;padding:14px;border:1px solid #ffffff26;border-radius:12px;background:#ffffff09}
+.gl-related-link strong{display:block;font-size:13px}
+.gl-related-link small{display:block;color:#40d8d3;font-size:12px;margin-top:5px}
+.gl-receipt-shell{max-width:750px;margin:0 auto 65px}
+.gl-receipt-head{text-align:center;padding:28px 15px}
+.gl-receipt-mark{width:60px;height:60px;margin:0 auto 15px;border-radius:50%;display:grid;place-items:center;color:#72edbf;background:#184736;font-size:31px}
+.gl-receipt-head h1{font-size:31px;margin:0 0 10px}
+.gl-receipt-head p{color:var(--muted)}
+.gl-receipt-card{padding:25px}
+.gl-receipt-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;margin:18px 0}
+.gl-receipt-grid>div{border:1px solid #ffffff1b;background:#ffffff08;border-radius:12px;padding:15px}
+.gl-receipt-grid dt{font-size:12px;color:var(--muted)}
+.gl-receipt-grid dd{font-weight:750;margin:6px 0 0;overflow-wrap:anywhere}
+.gl-receipt-price{font-size:23px;color:#40d8d3}
+.gl-receipt-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:23px}
+.gl-receipt-note{font-size:12px;line-height:1.7}
+@media(max-width:1100px){.gl-catalog-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:690px){.gl-catalog-filters{grid-template-columns:repeat(2,minmax(0,1fr));padding:16px}
+.gl-catalog-field,.gl-catalog-search{grid-column:span 2}
+.gl-catalog-actions{grid-column:span 2}
+.gl-catalog-grid,.gl-related-grid{grid-template-columns:1fr}
+.gl-catalog-results-head{align-items:start;flex-direction:column;gap:4px}
+.gl-catalog-bottom{align-items:center}
+.gl-receipt-grid{grid-template-columns:1fr}
+.gl-receipt-head h1{font-size:25px}
+}
+

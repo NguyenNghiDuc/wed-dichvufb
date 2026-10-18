@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Đã nhận yêu cầu tư vấn · GrowLab</title>
+<link rel="stylesheet" th:href="@{/style.css}">
+<script defer th:src="@{/site.js}"></script>
+</head>
+<body class="account-page">
+<header th:replace="~{fragments/site_layout :: header}"></header>
+<main class="page container" id="page-content" tabindex="-1">
+ <div class="gl-receipt-shell">
+  <header class="gl-receipt-head"><span class="gl-receipt-mark" aria-hidden="true">✓</span>
+   <div class="eyebrow">GROWLAB · YÊU CẦU TƯ VẤN</div>
+   <h1>Đã nhận yêu cầu của bạn</h1>
+   <p th:text="|Mã yêu cầu #${order.id} đã được ghi nhận. Xem trạng thái mới nhất và tiếp tục theo dõi.|">Yêu cầu đã được ghi nhận.</p>
+  </header>
+  <section class="gl-receipt-card card" aria-labelledby="receipt-title">
+   <h2 id="receipt-title">Thông tin yêu cầu</h2>
+   <dl class="gl-receipt-grid">
+    <div><dt>Mã yêu cầu</dt><dd th:text="|#${order.id}|">#1</dd></div>
+    <div><dt>Trạng thái hiện tại</dt><dd><span class="status" th:attr="data-status=${order.status.name()}"
+      th:text="${order.status.displayName}">Chờ duyệt</span></dd></div>
+    <div><dt>Nền tảng</dt><dd th:text="${order.platform.displayName}">TikTok</dd></div>
+    <div><dt>Gói tư vấn</dt><dd th:text="${order.serviceType.displayName}">Kế hoạch nội dung</dd></div>
+    <div><dt>Báo giá đã ghi nhận</dt><dd class="gl-receipt-price" th:text="|${#numbers.formatInteger(order.quotedPriceVnd,0,'POINT')} đ|">149.000 đ</dd></div>
+    <div><dt>Ngày gửi</dt><dd th:text="${#temporals.format(order.createdAt,'dd/MM/yyyy HH:mm')}">18/10/2026</dd></div>
+   </dl>
+   <div class="notice gl-receipt-note">Gửi yêu cầu không có nghĩa đã thanh toán hoặc được đảm bảo kết quả tăng trưởng. Đội ngũ sẽ xử lý theo quy trình xét duyệt.</div>
+   <div class="gl-receipt-actions">
+    <a class="btn" th:href="@{/campaigns/{id}(id=${order.id})}">Xem chi tiết và tiến độ →</a>
+    <a class="btn btn-outline" th:href="@{/campaigns}">Tất cả chiến dịch</a>
+    <a class="btn btn-outline" th:href="@{/dich-vu}">Khám phá dịch vụ khác</a>
+   </div>
+  </section>
+ </div>
+</main>
+</body></html>

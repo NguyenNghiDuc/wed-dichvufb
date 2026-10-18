@@ -65,16 +65,27 @@ public class CampaignWebController {
     @PostMapping
     public String create(@RequestParam SocialPlatform platform, @RequestParam CampaignServiceType serviceType,
                          @RequestParam String targetUrl, @RequestParam String brief,
+                         @RequestParam(name = "receipt", defaultValue = "false") boolean receipt,
                          Principal principal, Model model, RedirectAttributes redirect) {
         try {
             CampaignOrder created = service.create(principal.getName(), new CampaignOrderRequest(platform, serviceType, targetUrl, brief));
             redirect.addFlashAttribute("success", "Đã nhận yêu cầu #" + created.getId() + ". Chiến dịch đang chờ duyệt.");
             redirect.addFlashAttribute("createdOrderId", created.getId());
-            return "redirect:/campaigns";
+            return receipt ? "redirect:/campaigns/" + created.getId() + "/created" : "redirect:/campaigns";
         } catch (IllegalArgumentException exception) {
             model.addAttribute("error", exception.getMessage());
             return selectedForm(platform, serviceType, targetUrl, brief, model);
         }
+    }
+
+    /**
+     * Ownership-checked confirmation for newly created consultation requests.
+     * Price and status always come from the stored order, never URL parameters.
+     */
+    @GetMapping("/{id}/created")
+    public String confirmation(@PathVariable Long id, Principal principal, Model model) {
+        model.addAttribute("order", service.findMineById(principal.getName(), id));
+        return "campaign_created";
     }
 
     @PostMapping("/{id}/cancel")

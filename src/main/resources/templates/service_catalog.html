@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Tìm kiếm và so sánh giá gói tư vấn TikTok, Facebook, Instagram và YouTube của GrowLab.">
+<title>Khám phá dịch vụ · GrowLab</title>
+<link rel="stylesheet" th:href="@{/style.css}">
+<script defer th:src="@{/site.js}"></script>
+</head>
+<body class="account-page gl-catalog-page">
+<header th:replace="~{fragments/site_layout :: header}"></header>
+<main class="page container" id="page-content" tabindex="-1">
+ <nav class="gl-catalog-breadcrumb" aria-label="Đường dẫn"><a th:href="@{/}">Trang chủ</a><span aria-hidden="true">›</span><span>Khám phá dịch vụ</span></nav>
+ <div class="page-header"><div><div class="eyebrow">GROWLAB SERVICE EXPLORER</div>
+  <h1>Khám phá gói tư vấn phù hợp</h1>
+  <p class="muted">Tìm theo tên hoặc nền tảng, lọc giá và so sánh dịch vụ đang nhận yêu cầu.</p></div></div>
+ <form class="gl-catalog-filters card" method="get" th:action="@{/dich-vu}" role="search" aria-label="Tìm và lọc dịch vụ">
+  <div class="gl-catalog-field gl-catalog-search"><label for="catalog-q">Tìm dịch vụ</label>
+   <input id="catalog-q" name="q" type="search" maxlength="100" th:value="${query}" placeholder="Ví dụ: ke hoach, TikTok, tu van..."></div>
+  <div class="gl-catalog-field"><label for="catalog-platform">Nền tảng</label>
+   <select id="catalog-platform" name="platform"><option value="">Tất cả nền tảng</option>
+    <option th:each="p : ${platforms}" th:value="${p.name()}" th:text="${p.displayName}"
+     th:selected="${p == selectedPlatform}"></option></select></div>
+  <div class="gl-catalog-field"><label for="catalog-min">Giá từ (VND)</label>
+   <input id="catalog-min" name="minPrice" type="number" min="0" max="50000000" step="1000" th:value="${minPrice}" placeholder="0"></div>
+  <div class="gl-catalog-field"><label for="catalog-max">Giá đến (VND)</label>
+   <input id="catalog-max" name="maxPrice" type="number" min="0" max="50000000" step="1000" th:value="${maxPrice}" placeholder="50.000.000"></div>
+  <div class="gl-catalog-field"><label for="catalog-sort">Sắp xếp</label>
+   <select id="catalog-sort" name="sort">
+    <option value="price_asc" th:selected="${sort == 'price_asc'}">Giá tăng dần</option>
+    <option value="price_desc" th:selected="${sort == 'price_desc'}">Giá giảm dần</option>
+    <option value="name" th:selected="${sort == 'name'}">Theo tên A–Z</option>
+   </select></div>
+  <div class="gl-catalog-actions"><button class="btn" type="submit">Tìm dịch vụ</button>
+   <a class="btn btn-outline" th:href="@{/dich-vu}">Xóa bộ lọc</a></div>
+ </form>
+ <section class="gl-catalog-results" aria-labelledby="catalog-result-title">
+  <div class="gl-catalog-results-head"><h2 id="catalog-result-title">Gói tư vấn đang hoạt động</h2>
+   <p role="status" th:text="|Tìm thấy ${count} lựa chọn|">Tìm thấy 12 lựa chọn</p></div>
+  <div class="gl-catalog-grid" th:unless="${#lists.isEmpty(cards)}">
+   <article class="gl-catalog-item card" th:each="card : ${cards}">
+    <div class="gl-catalog-item-top"><span class="gl-catalog-platform" th:text="${card.platformName()}">TikTok</span>
+     <span class="gl-catalog-available">Đang nhận yêu cầu</span></div>
+    <h3 th:text="${card.title()}">Gói tư vấn TikTok</h3>
+    <p class="muted" th:text="${card.shortDescription()}"></p>
+    <div class="gl-catalog-bottom"><div><span>Báo giá hiện tại</span>
+     <strong th:text="|${#numbers.formatInteger(card.priceVnd(),0,'POINT')} đ|">79.000 đ</strong></div>
+     <a class="btn btn-small" th:href="@{/dich-vu/{platform}/{plan}(platform=${card.platformSlug()},plan=${card.planSlug()})}">Xem chi tiết →</a>
+    </div>
+   </article>
+  </div>
+  <div th:if="${#lists.isEmpty(cards)}" class="gl-catalog-empty card">
+   <h3>Chưa tìm thấy gói dịch vụ phù hợp</h3>
+   <p class="muted">Thử bỏ điều kiện giá, chọn nền tảng khác hoặc tìm bằng tên dịch vụ.</p>
+   <a class="btn btn-outline" th:href="@{/dich-vu}">Xem tất cả dịch vụ</a></div>
+ </section>
+ <p class="notice">Đây là dịch vụ tư vấn, không bán lượt theo dõi hoặc tương tác giả. Giá xác nhận khi tạo đơn và chưa phải khoản đã thanh toán.</p>
+</main>
+</body></html>
