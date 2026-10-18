@@ -184,14 +184,20 @@ public class SupportTicketService {
     /** Progress is always loaded through the existing ticket access checks. */
     @Transactional(readOnly = true)
     public SupportTicketProgress progressForOwner(String owner, Long id) {
-        return SupportTicketProgress.from(detailForOwner(owner, id),
-                java.time.LocalDateTime.now());
+        SupportTicket ticket = detailForOwner(owner, id);
+        // Check ownership BEFORE querying the assignment audit; a foreign
+        // identifier must produce exactly the same 404 as ticket detail.
+        return progressForTicket(ticket);
     }
 
     @Transactional(readOnly = true)
     public SupportTicketProgress progressForStaff(Long id) {
-        return SupportTicketProgress.from(detailForAdmin(id),
-                java.time.LocalDateTime.now());
+        return progressForTicket(detailForAdmin(id));
+    }
+
+    private SupportTicketProgress progressForTicket(SupportTicket ticket) {
+        return SupportTicketProgress.from(ticket, java.time.LocalDateTime.now(),
+                assignments.findFirstAssignedAt(ticket.getId()).orElse(null));
     }
 
     @Transactional(readOnly = true)
