@@ -69,6 +69,14 @@ public class SupportController {
             .body(result);
     }
 
+    /** Owner-only progress data; does not enumerate other customers' tickets. */
+    @GetMapping("/{id}/progress")
+    public ResponseEntity<SupportTicketProgress> progress(@PathVariable Long id,
+                                                          Principal principal) {
+        return ResponseEntity.ok().header(HttpHeaders.CACHE_CONTROL, "no-store")
+                .body(service.progressForOwner(principal.getName(), id));
+    }
+
     @GetMapping("/{id}")
     public String details(@PathVariable Long id, @RequestParam(defaultValue = "0") int page,
                           @RequestParam(required = false) String q,
@@ -76,6 +84,7 @@ public class SupportController {
         var ticket = service.detailForOwner(principal.getName(), id);
         var messages = service.searchMessagesForOwner(principal.getName(), id, page, q);
         model.addAttribute("ticket", ticket);
+        model.addAttribute("progress", service.progressForOwner(principal.getName(), id));
         model.addAttribute("messages", messages.getContent());
         model.addAttribute("query", q);
         model.addAttribute("messagePage", page);
