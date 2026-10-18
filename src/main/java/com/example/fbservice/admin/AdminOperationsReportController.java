@@ -28,7 +28,13 @@ public class AdminOperationsReportController {
             .append("pending_campaigns,").append(metrics.pendingCampaigns()).append("\r\n")
             .append("open_tickets,").append(metrics.openTickets()).append("\r\n")
             .append("active_pipeline_quotes_vnd,").append(operations.pipelineQuotedValueVnd()).append("\r\n")
-            .append("\r\nstatus,order_count,quoted_value_vnd\r\n");
+            .append("\r\nrole,total_users,enabled_users,locked_users\r\n");
+        for (AdminUserRoleCount row : dashboard.userRoleBreakdown()) {
+            // Source is account roles set by privileged mutation validation.
+            out.append(row.role()).append(',').append(row.total()).append(',')
+               .append(row.enabled()).append(',').append(row.locked()).append("\r\n");
+        }
+        out.append("\r\nstatus,order_count,quoted_value_vnd\r\n");
         // Enum constant values, never external text: no spreadsheet formulas/PII.
         for (AdminStatusBreakdown row : operations.statuses()) {
             out.append(row.status().name()).append(',')

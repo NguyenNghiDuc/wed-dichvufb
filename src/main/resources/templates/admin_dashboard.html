@@ -43,6 +43,22 @@
 <strong class="metric" th:text="${metrics.progressingNeedsReview}">0</strong>
 <a th:href="@{/admin/campaign-orders(status='IN_PROGRESS')}">Rà soát →</a></article>
 </div></section>
+<section class="admin-operations-section" aria-labelledby="user-role-heading">
+<div class="admin-section-heading"><div><div class="eyebrow">Tài khoản</div>
+<h2 id="user-role-heading">Phân bổ vai trò</h2></div>
+<a class="btn btn-outline btn-small" th:href="@{/admin/users}">Quản lý tài khoản →</a></div>
+<div class="table-panel admin-table-scroll"><table class="data-table admin-table">
+<thead><tr><th>Vai trò</th><th>Tổng tài khoản</th><th>Đang hoạt động</th><th>Bị khóa</th></tr></thead>
+<tbody>
+<tr th:each="r : ${userRoles}">
+<td><span class="admin-role" th:text="${r.role()}">USER</span></td>
+<td th:text="${r.total()}">0</td><td th:text="${r.enabled()}">0</td>
+<td th:text="${r.locked()}">0</td>
+</tr>
+<tr th:if="${#lists.isEmpty(userRoles)}"><td class="admin-empty" colspan="4">Chưa có tài khoản.</td></tr>
+</tbody></table></div>
+<p class="admin-caption">Số tài khoản đang hoạt động hoặc bị khóa; không phải số phiên đăng nhập hiện tại.</p>
+</section>
 <section class="admin-operations-section" aria-labelledby="pipeline-heading">
 <div class="admin-section-heading"><div><div class="eyebrow">Vận hành</div>
 <h2 id="pipeline-heading">Đơn theo trạng thái</h2></div></div>

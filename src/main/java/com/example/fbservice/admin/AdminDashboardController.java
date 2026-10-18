@@ -14,6 +14,7 @@ public class AdminDashboardController {
         model.addAttribute("metrics",dashboard.metrics());
         model.addAttribute("latest",dashboard.latestCampaigns());
         model.addAttribute("operations",dashboard.operations());
+        model.addAttribute("userRoles",dashboard.userRoleBreakdown());
         return "admin_dashboard";
     }
 }
