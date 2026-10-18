@@ -196,6 +196,31 @@ class PaymentWebhookIntegrationTest {
     }
 
     @Test
+    void rejectsRepeatedAuthenticationHeadersEvenWithValidSignature() throws Exception {
+        DepositRequest deposit = newDeposit("webhook-owner-ambiguous-headers", 68000);
+        String body = event("repeatHeaderEvt123", deposit.getId(), 68000, "SETTLED");
+        String timestamp = now();
+        String signature = sign(timestamp, body);
+        long before = receipts.count();
+
+        mvc.perform(post("/api/v1/payments/webhooks/internal")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("X-GrowLab-Timestamp", timestamp, timestamp)
+                        .header("X-GrowLab-Signature", signature)
+                        .content(body))
+                .andExpect(status().isUnauthorized());
+        mvc.perform(post("/api/v1/payments/webhooks/internal")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("X-GrowLab-Timestamp", timestamp)
+                        .header("X-GrowLab-Signature", signature, signature)
+                        .content(body))
+                .andExpect(status().isUnauthorized());
+        assertThat(receipts.count()).isEqualTo(before);
+        assertThat(deposits.findById(deposit.getId()).orElseThrow().getStatus())
+                .isEqualTo("PENDING");
+    }
+
+    @Test
     void rejectsMalformedOversizedAndUnauthenticatedBody() throws Exception {
         String timestamp = now();
         mvc.perform(request("not-json", timestamp)).andExpect(status().isBadRequest());
