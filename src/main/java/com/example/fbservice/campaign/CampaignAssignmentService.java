@@ -115,6 +115,23 @@ public class CampaignAssignmentService {
         return order;
     }
 
+    /** Admin-authorized, bounded history lookup for the management UI. */
+    @Transactional(readOnly = true)
+    public Page<CampaignAssignmentEvent> pageAssignmentHistory(String adminUsername,
+                                                                Long campaignId, int page) {
+        if (page < 0 || page > 10000 || campaignId == null || campaignId <= 0)
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid history pagination");
+        User admin = users.findByUsername(adminUsername)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN));
+        if (!admin.isEnabled() || !"ADMIN".equals(admin.getRole()))
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        if (!orders.existsById(campaignId))
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        return assignmentEvents.findByCampaignId(campaignId,
+            PageRequest.of(page, 20,
+                Sort.by(Sort.Order.desc("createdAt"), Sort.Order.desc("id"))));
+    }
+
     @Transactional(readOnly = true)
     public List<CampaignAssignmentEvent> assignmentHistory(String adminUsername, Long campaignId) {
         User admin = users.findByUsername(adminUsername)
