@@ -1,6 +1,7 @@
 package com.example.fbservice.campaign;
 
 import java.util.Optional;
+import org.springframework.data.domain.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +20,17 @@ public class CampaignReviewService {
     public Optional<CampaignReviewView> findForOwner(String username, Long campaignId) {
         verifyOwner(username, campaignId);
         return reviews.findByCampaignIdAndOwnerUsername(campaignId, username).map(CampaignReviewView::from);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<CampaignReviewView> pageForOwner(String username, int page, int size) {
+        if (username == null || username.isBlank())
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+        if (page < 0 || page > 10000 || size < 1 || size > 50)
+            throw new IllegalArgumentException("Phân trang đánh giá không hợp lệ.");
+        return reviews.findByOwnerUsername(username, PageRequest.of(page, size,
+            Sort.by(Sort.Order.desc("createdAt"), Sort.Order.desc("id"))))
+            .map(CampaignReviewView::from);
     }
 
     @Transactional
