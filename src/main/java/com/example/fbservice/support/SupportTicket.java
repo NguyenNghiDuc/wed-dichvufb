@@ -41,13 +41,25 @@ public class SupportTicket {
     @PreUpdate
     public void touch() { updatedAt = LocalDateTime.now(); }
 
+    /**
+     * A new reply must make the ticket visible in the recently-active queue,
+     * even when its lifecycle status was already OPEN/ANSWERED.
+     * This explicit dirty field avoids relying on @PreUpdate for a no-op status.
+     */
+    private void recordReplyActivity() {
+        LocalDateTime now = LocalDateTime.now();
+        updatedAt = now.isAfter(updatedAt) ? now : updatedAt.plusNanos(1_000);
+    }
+
     public void customerReplied() {
         ensureOpen();
         status = TicketStatus.OPEN;
+        recordReplyActivity();
     }
     public void staffReplied() {
         ensureOpen();
         status = TicketStatus.ANSWERED;
+        recordReplyActivity();
     }
     public void close() {
         ensureOpen();
