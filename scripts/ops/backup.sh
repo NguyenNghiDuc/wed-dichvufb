@@ -2,6 +2,10 @@
 # W10. Explicit opt-in for app DB. Fixture mode touches only ephemeral test containers.
 set -Eeuo pipefail
 umask 077
+[[ -f compose.yaml && -f scripts/ops/backup.sh && -f compose.recovery.yaml ]] || {
+  echo 'Run W10 scripts from the reviewed GrowLab repository root' >&2
+  exit 2
+}
 usage() {
   printf 'Usage: BACKUP_DIR=/secure/path %s --fixture | --db\n' "$0" >&2
   exit 2
