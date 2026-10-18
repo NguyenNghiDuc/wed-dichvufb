@@ -43,6 +43,27 @@
 <strong class="metric" th:text="${metrics.progressingNeedsReview}">0</strong>
 <a th:href="@{/admin/campaign-orders(status='IN_PROGRESS')}">Rà soát →</a></article>
 </div></section>
+<section class="admin-operations-section" aria-labelledby="trend-heading">
+<div class="admin-section-heading"><div>
+<div class="eyebrow">Xu hướng hoạt động</div><h2 id="trend-heading">Đơn hàng theo thời gian</h2></div>
+<nav class="admin-trend-options" aria-label="Chọn khoảng thời gian">
+<a th:href="@{/admin/dashboard(period='DAY')}" th:classappend="${period.name() == 'DAY' ? 'is-selected' : ''}">14 ngày</a>
+<a th:href="@{/admin/dashboard(period='WEEK')}" th:classappend="${period.name() == 'WEEK' ? 'is-selected' : ''}">12 tuần</a>
+<a th:href="@{/admin/dashboard(period='MONTH')}" th:classappend="${period.name() == 'MONTH' ? 'is-selected' : ''}">12 tháng</a>
+</nav></div>
+<div class="card admin-trend-panel">
+<p class="admin-caption">Thanh biểu đồ: số đơn được tạo trong kỳ. Cột hoàn thành là số đơn tạo trong kỳ hiện có trạng thái hoàn thành, không phải doanh thu đã thu.</p>
+<div class="admin-trend-rows" role="list" aria-label="Thống kê đơn theo kỳ">
+<div class="admin-trend-row" role="listitem" th:each="p : ${trend.buckets()}">
+<span class="admin-trend-label" th:text="${p.label()}">Kỳ</span>
+<progress th:value="${p.created()}" th:max="${trend.maximum()}"
+          th:aria-label="|${p.label()}: ${p.created()} đơn|">0</progress>
+<span class="admin-trend-value" th:text="|${p.created()} đơn|">0 đơn</span>
+<span class="admin-trend-completed" th:text="|${p.completed()} hoàn thành|">0 hoàn thành</span>
+</div></div>
+<div class="admin-trend-foot"><strong th:text="|${trend.totalCreated()} đơn được tạo trong kỳ|">0 đơn</strong>
+<a th:href="@{/api/v1/admin/analytics/campaign-trend(period=${period.name()})}" class="table-link">Dữ liệu JSON →</a></div>
+</div></section>
 <section class="admin-operations-section" aria-labelledby="user-role-heading">
 <div class="admin-section-heading"><div><div class="eyebrow">Tài khoản</div>
 <h2 id="user-role-heading">Phân bổ vai trò</h2></div>
