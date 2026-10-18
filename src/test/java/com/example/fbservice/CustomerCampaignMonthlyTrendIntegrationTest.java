@@ -67,11 +67,28 @@ class CustomerCampaignMonthlyTrendIntegrationTest {
             .andExpect(status().isOk())
             .andExpect(model().attribute("monthlyCounts", trend))
             .andExpect(content().string(containsString("Xu hướng chiến dịch 6 tháng")));
+        var csv = mvc.perform(get("/campaigns/summary/monthly.csv"))
+            .andExpect(status().isOk())
+            .andExpect(header().string("Cache-Control", containsString("no-store")))
+            .andExpect(header().string("Content-Disposition",
+                "attachment; filename=\"my-campaign-monthly.csv\""))
+            .andReturn().getResponse().getContentAsString(java.nio.charset.StandardCharsets.UTF_8);
+        assertThat(csv).startsWith("\uFEFFmonth,orders\r\n")
+            .contains("\"" + twoMonthsAgo + "\",\"1\"")
+            .contains("\"" + YearMonth.now() + "\",\"1\"");
+        assertThat(csv.split("\r\n")).hasSize(7); // header and exactly six calendar months
+        var unrelatedCsv = mvc.perform(get("/campaigns/summary/monthly.csv")
+                .with(user("monthly-outsider")))
+            .andExpect(status().isOk()).andReturn()
+            .getResponse().getContentAsString(java.nio.charset.StandardCharsets.UTF_8);
+        assertThat(unrelatedCsv).doesNotContain(",\"1\"");
         assertThat(recent.getId()).isNotEqualTo(foreign.getId());
     }
 
     @Test void anonymousCannotReadMonthlyCounts() throws Exception {
         mvc.perform(get("/api/v1/campaign-orders/summary/monthly"))
+            .andExpect(status().is3xxRedirection());
+        mvc.perform(get("/campaigns/summary/monthly.csv"))
             .andExpect(status().is3xxRedirection());
     }
 }
