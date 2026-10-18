@@ -1,0 +1,61 @@
+/* GrowLab support/chat scoped styles; leave main global theme unchanged. */
+.support-filters{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:#fff;
+ border:1px solid var(--line);border-radius:18px;padding:16px;margin:16px 0 22px}
+.support-filters label{font-weight:700;font-size:13px;color:var(--ink)}
+.support-filters input,.support-filters select{font:inherit;background:#fff;color:var(--ink);
+ border:1px solid #e9d9ca;border-radius:10px;padding:10px 12px;min-height:42px;min-width:130px;max-width:270px}
+.support-filters input:focus-visible,.support-filters select:focus-visible{
+ outline:3px solid #f2692250;outline-offset:1px;border-color:var(--accent)}
+.support-filters .btn{white-space:normal;text-align:center}
+.chat-bubble{line-height:1.6}
+.chat-bubble .chat-meta{margin-bottom:5px}
+.chat-bubble small{color:#767d87}
+.chat-composer textarea{min-height:100px}
+@media(max-width:700px){
+ .support-filters{flex-direction:column;align-items:stretch}
+ .support-filters input,.support-filters select{width:100%;max-width:none}
+ .support-filters .btn{width:100%}
+ .chat-bubble{width:100%}
+}
+
+/* Compact, keyboard-accessible, SQL-backed ticket state counters. */
+.support-status-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:18px 0}
+.support-status-summary a{padding:14px 18px;display:flex;flex-direction:column;gap:4px;border:1px solid #f1d6be;border-radius:14px;background:#fff;min-width:0}
+.support-status-summary strong{font-size:1.6rem;color:#bf4b0d;font-variant-numeric:tabular-nums}
+.support-status-summary span{color:#575757;font-size:.91rem}
+.support-status-summary a:focus-visible{outline:3px solid #f26922;outline-offset:2px}
+@media(max-width:540px){.support-status-summary{gap:6px}.support-status-summary a{padding:12px 9px}.support-status-summary strong{font-size:1.3rem}.support-status-summary span{font-size:.78rem}}
+
+/* Private unread badge and per-message controls; accessible on small screens. */
+.chat-unread-summary{display:inline-flex;align-items:center;padding:7px 12px;border-radius:999px;
+ background:#fff0e3;border:1px solid #e7b58d;color:#85350b;font-weight:750;
+ font-variant-numeric:tabular-nums;margin:14px 0}
+.chat-inline-read{display:flex;align-items:center;justify-content:flex-end;margin:8px 0 0}
+.chat-inline-read button{max-width:100%;white-space:normal}
+.chat-inline-read button:focus-visible{outline:3px solid #f26922;outline-offset:2px}
+@media(max-width:540px){.chat-unread-summary{display:flex;justify-content:center}
+ .chat-inline-read{justify-content:stretch}.chat-inline-read button{width:100%}}
+
+/* Ticket progression based on stored timestamps (not a promised SLA). */
+.ticket-progress{margin:16px 0 22px}
+.ticket-progress h2{margin:0 0 14px}
+.ticket-progress-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
+ gap:12px;margin:0 0 12px}
+.ticket-progress-grid>div{min-width:0;background:#fffaf5;border:1px solid #f1d6be;
+ border-radius:12px;padding:12px 14px}
+.ticket-progress-grid dt{font-size:.82rem;color:#67564a;font-weight:650}
+.ticket-progress-grid dd{margin:6px 0 0;color:#8f3908;font-weight:750;
+ font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+@media(max-width:700px){.ticket-progress-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:430px){.ticket-progress-grid{grid-template-columns:1fr}}
+
+/* Scoped chat load failure state. No executable client script needed. */
+.chat-load-error{max-width:720px;margin:8vh auto 3rem;padding:clamp(20px,5vw,40px);
+ background:#fff;border:1px solid #f1d6be;border-radius:20px;
+ box-shadow:0 12px 32px rgba(99,52,16,.08)}
+.chat-load-error h1{font-size:clamp(1.45rem,4vw,2rem);line-height:1.25}
+.chat-load-error p{line-height:1.65}
+.chat-load-error a:focus-visible{outline:3px solid #f26922;outline-offset:3px}
+@media(max-width:540px){.chat-load-error{margin:24px 0;padding:18px}
+ .chat-load-error .actions{display:flex;flex-direction:column;align-items:stretch}
+ .chat-load-error .btn{text-align:center}}

@@ -1,6 +1,18 @@
 <!doctype html><html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Yêu cầu hỗ trợ · GrowLab</title><link rel="stylesheet" th:href="@{/style.css}"></head>
-<body><main class="page container"><a th:href="@{/campaigns}" class="table-link">← Dashboard</a><div class="page-header"><div><div class="eyebrow">Trung tâm hỗ trợ</div><h1>Yêu cầu hỗ trợ của tôi</h1></div><a class="btn" th:href="@{/support/new}">+ Tạo yêu cầu</a></div>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Yêu cầu hỗ trợ · GrowLab</title><link rel="stylesheet" th:href="@{/style.css}"><link rel="stylesheet" th:href="@{/support-chat.css}"></head>
+<body><main class="page container"><a th:href="@{/campaigns}" class="table-link">← Dashboard</a><div class="page-header"><div><div class="eyebrow">Trung tâm hỗ trợ</div><h1>Yêu cầu hỗ trợ của tôi</h1></div><div class="actions"><a class="btn btn-outline" th:href="@{/chat/ui}">Nhắn tin hỗ trợ</a><a class="btn" th:href="@{/support/new}">+ Tạo yêu cầu</a></div></div>
+<nav class="support-status-summary" aria-label="Thống kê trạng thái hỗ trợ">
+  <a th:href="@{/support(status=OPEN)}"><strong th:text="${ticketCounts.open}">0</strong><span>Đang chờ</span></a>
+  <a th:href="@{/support(status=ANSWERED)}"><strong th:text="${ticketCounts.answered}">0</strong><span>Đã phản hồi</span></a>
+  <a th:href="@{/support(status=CLOSED)}"><strong th:text="${ticketCounts.closed}">0</strong><span>Đã đóng</span></a>
+</nav>
+<form method="get" th:action="@{/support}" class="actions support-filters" role="search" aria-label="Tìm yêu cầu hỗ trợ">
+<label for="customerSupportSearch">Tiêu đề</label>
+<input id="customerSupportSearch" name="subject" maxlength="80" th:value="${subject}" placeholder="Tìm theo tiêu đề">
+<label for="customerSupportStatus">Trạng thái</label>
+<select id="customerSupportStatus" name="status"><option value="">Tất cả</option>
+<option th:each="s : ${statuses}" th:value="${s.name()}" th:selected="${s == selectedStatus}" th:text="${s.title}"></option></select>
+<button class="btn btn-small" type="submit">Tìm kiếm</button><a class="btn btn-outline btn-small" th:href="@{/support}">Xóa lọc</a></form>
 <div class="table-panel"><table class="data-table"><thead><tr><th>Mã</th><th>Tiêu đề</th><th>Trạng thái</th><th>Ngày cập nhật</th></tr></thead>
 <tbody><tr th:each="t : ${tickets}"><td th:text="${t.id}"></td><td><a th:href="@{/support/{id}(id=${t.id})}" class="table-link" th:text="${t.subject}"></a></td><td><span class="status" th:text="${t.status.title}"></span></td><td th:text="${#temporals.format(t.updatedAt,'dd/MM/yyyy HH:mm')}"></td></tr><tr th:if="${#lists.isEmpty(tickets)}"><td colspan="4">Chưa có yêu cầu hỗ trợ nào.</td></tr></tbody></table></div>
-<nav class="actions" aria-label="Phân trang"><a th:if="${hasPrevious}" class="btn btn-outline btn-small" th:href="@{/support(page=${pageNumber - 1})}">← Trước</a><span class="muted" th:text="|Trang ${pageNumber + 1}|"></span><a th:if="${hasNext}" class="btn btn-outline btn-small" th:href="@{/support(page=${pageNumber + 1})}">Sau →</a></nav></main></body></html>
+<nav class="actions" aria-label="Phân trang"><a th:if="${hasPrevious}" class="btn btn-outline btn-small" th:href="@{/support(page=${pageNumber - 1},subject=${subject},status=${selectedStatus})}">← Trước</a><span class="muted" th:text="|Trang ${pageNumber + 1}|"></span><a th:if="${hasNext}" class="btn btn-outline btn-small" th:href="@{/support(page=${pageNumber + 1},subject=${subject},status=${selectedStatus})}">Sau →</a></nav></main></body></html>

@@ -4,7 +4,10 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "support_messages", indexes = @Index(name = "idx_support_message_ticket", columnList = "ticket_id"))
+@Table(name = "support_messages", indexes = {
+    @Index(name = "idx_support_message_ticket", columnList = "ticket_id"),
+    @Index(name = "idx_support_msg_timeline", columnList = "ticket_id,created_at,id")
+})
 public class SupportMessage {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

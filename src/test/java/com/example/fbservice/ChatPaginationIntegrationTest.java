@@ -2,6 +2,8 @@ package com.example.fbservice;
 
 import com.example.fbservice.model.ChatMessage;
 import com.example.fbservice.service.ChatService;
+import com.example.fbservice.repository.UserRepository;
+import com.example.fbservice.model.User;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -23,6 +25,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class ChatPaginationIntegrationTest {
     @Autowired MockMvc mvc;
     @Autowired ChatService chat;
+    @Autowired UserRepository users;
 
     @Test
     @WithMockUser(username = "chat-alice")
@@ -86,6 +89,12 @@ class ChatPaginationIntegrationTest {
     @Test
     @WithMockUser(username = "chat-verified-sender")
     void chatSendRejectsCsrfBypassAndIgnoresSpoofedSender() throws Exception {
+        User recipient = new User();
+        recipient.setUsername("chat-receiver");
+        recipient.setRole("USER");
+        recipient.setEnabled(true);
+        recipient.setPassword("$2a$10$testOnlyReceiverPasswordHash");
+        users.save(recipient);
         String body = """
             {"sender":"chat-spoof","receiver":"chat-receiver","content":"real message"}
             """;

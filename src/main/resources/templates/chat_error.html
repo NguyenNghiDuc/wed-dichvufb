@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Hội thoại tạm thời không khả dụng · GrowLab</title>
+<link rel="stylesheet" th:href="@{/style.css}">
+<link rel="stylesheet" th:href="@{/support-chat.css}">
+</head>
+<body><main class="page container">
+<section class="chat-load-error" role="alert" aria-labelledby="chat-load-error-title">
+<div class="eyebrow">GrowLab chat</div>
+<h1 id="chat-load-error-title">Không thể tải hội thoại lúc này</h1>
+<p>Hệ thống hỗ trợ đang tạm thời không phản hồi. Không cần gửi lại tin nhắn nhiều lần.</p>
+<p class="muted">Bạn có thể thử tải lại trang hoặc trở về Trung tâm hỗ trợ.</p>
+<div class="actions">
+<a class="btn" th:href="@{/chat/ui}" href="/chat/ui">Thử lại</a>
+<a class="btn btn-outline" th:href="@{/support}" href="/support">Trung tâm hỗ trợ</a>
+</div>
+</section></main></body></html>

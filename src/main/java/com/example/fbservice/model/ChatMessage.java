@@ -20,6 +20,9 @@ public class ChatMessage {
 
     private LocalDateTime timestamp = LocalDateTime.now();
 
+    @Column(name = "read_at")
+    private LocalDateTime readAt;
+
     public ChatMessage() {}
 
     public ChatMessage(String sender, String receiver, String content) {
@@ -44,6 +47,12 @@ public class ChatMessage {
     public String getContent() { return content; }
 
     public void setContent(String content) { this.content = content; }
+
+    public LocalDateTime getReadAt() { return readAt; }
+
+    public void markRead() {
+        if (readAt == null) readAt = LocalDateTime.now();
+    }
 
     public LocalDateTime getTimestamp() { return timestamp; }
 
