@@ -31,6 +31,16 @@
 <p th:if="${#lists.isEmpty(serviceBreakdown)}" class="muted">Bạn chưa có đơn dịch vụ nào.</p>
 </section>
 
+<section class="customer-monthly-trend" aria-label="Số chiến dịch theo tháng">
+  <h2>Xu hướng chiến dịch 6 tháng gần nhất</h2>
+  <p class="footnote">Thống kê theo tháng tạo yêu cầu, chỉ tính chiến dịch của tài khoản này.</p>
+  <ol>
+    <li th:each="item : ${monthlyCounts}">
+      <span th:text="${item.month()}">2026-10</span>
+      <strong th:text="${item.orders()}">0</strong>
+    </li>
+  </ol>
+</section>
 <form method="get" th:action="@{/campaigns}" class="actions customer-filter-form" role="search" aria-label="Lọc chiến dịch">
 <label for="campaignKeyword">Từ khóa</label>
 <input id="campaignKeyword" type="search" name="q" maxlength="80" placeholder="Mục tiêu hoặc link kênh" th:value="${query}">
