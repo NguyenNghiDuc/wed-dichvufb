@@ -13,6 +13,7 @@ public class AdminUserController {
  public String list(@RequestParam(defaultValue="0") int page,@RequestParam(required=false) String q,
    @RequestParam(required=false) String role,@RequestParam(required=false) Boolean enabled,Model model,Principal principal){
   var records=service.page(page,q,role,enabled);
+  model.addAttribute("securityNow",java.time.LocalDateTime.now(java.time.ZoneOffset.UTC));
   model.addAttribute("users",records.getContent());model.addAttribute("page",page);
   model.addAttribute("hasNext",records.hasNext());model.addAttribute("hasPrevious",records.hasPrevious());
   model.addAttribute("totalPages",records.getTotalPages());model.addAttribute("totalElements",records.getTotalElements());

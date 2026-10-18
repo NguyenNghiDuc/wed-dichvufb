@@ -22,6 +22,10 @@ class AccountSettingsIntegrationTest {
  @Autowired UserRepository users; @Autowired AccountSettingsService settings;
  @Autowired PasswordEncoder encoder; @Autowired MockMvc mvc;
  User account(String name){User u=new User();u.setUsername(name);u.setPassword(encoder.encode("OldPass123!"));return users.saveAndFlush(u);}
+ org.springframework.mock.web.MockHttpSession login(String username,String password) throws Exception {
+  return (org.springframework.mock.web.MockHttpSession)mvc.perform(post("/login").with(csrf()).param("username",username).param("password",password))
+   .andExpect(redirectedUrl("/campaigns")).andReturn().getRequest().getSession(false);
+ }
  @Test void updateNameIsOwnerScopedAndDoesNotChangeIdentity() throws Exception {
   var alice=account("settings_alice");var bob=account("settings_bob");
   mvc.perform(post("/profile/display-name").with(user(alice.getUsername())).with(csrf()).param("displayName","Tên mới"))
@@ -45,20 +49,19 @@ class AccountSettingsIntegrationTest {
  @Test void passwordChangeHashesNewPasswordAndRejectsEveryOldPrincipal() throws Exception {
   var a=account("settings_change");var principal=new AccountPrincipal(a,"USER");
   var auth=new UsernamePasswordAuthenticationToken(principal,null,principal.getAuthorities());
-  mvc.perform(post("/profile/password").with(authentication(auth)).with(csrf())
+  mvc.perform(post("/profile/password").session(login(a.getUsername(),"OldPass123!")).with(csrf())
    .param("currentPassword","OldPass123!").param("newPassword","NewPass123!").param("confirmation","NewPass123!"))
    .andExpect(redirectedUrl("/login?passwordChanged"));
   assertThat(encoder.matches("NewPass123!",a.getPassword())).isTrue();assertThat(a.getAuthVersion()).isEqualTo(1);
   mvc.perform(get("/profile").with(authentication(auth))).andExpect(status().isForbidden());
-  var fresh=new AccountPrincipal(a,"USER");
-  mvc.perform(get("/profile").with(authentication(new UsernamePasswordAuthenticationToken(fresh,null,fresh.getAuthorities()))))
+  mvc.perform(get("/profile").session(login(a.getUsername(),"NewPass123!")))
    .andExpect(status().isOk());
  }
  @Test void revokeRequiresCurrentPasswordAndInvalidatesPriorSessions() throws Exception {
   var a=account("settings_revoke");var principal=new AccountPrincipal(a,"USER");
   var auth=new UsernamePasswordAuthenticationToken(principal,null,principal.getAuthorities());
   assertThatThrownBy(()->settings.revokeSessions(a.getUsername(),"wrong")).isInstanceOf(IllegalArgumentException.class);
-  mvc.perform(post("/profile/sessions/revoke").with(authentication(auth)).with(csrf()).param("currentPassword","OldPass123!"))
+  mvc.perform(post("/profile/sessions/revoke").session(login(a.getUsername(),"OldPass123!")).with(csrf()).param("currentPassword","OldPass123!"))
    .andExpect(redirectedUrl("/login?sessionsClosed"));
   mvc.perform(get("/profile").with(authentication(auth))).andExpect(status().isForbidden());
   assertThat(encoder.matches("OldPass123!",a.getPassword())).isTrue();

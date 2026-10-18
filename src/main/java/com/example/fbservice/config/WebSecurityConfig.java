@@ -1,6 +1,8 @@
 package com.example.fbservice.config;
 
 import com.example.fbservice.repository.UserRepository;
+import com.example.fbservice.security.*;
+import java.time.Clock;
 import jakarta.servlet.DispatcherType;
 import org.springframework.context.annotation.*;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -13,8 +15,10 @@ import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 @Configuration
 public class WebSecurityConfig {
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http, UserRepository users) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, UserRepository users, AccountSessionService sessions,
+            GuardedAuthenticationProvider provider, TrackedLoginSuccessHandler loginSuccess) throws Exception {
         return http
+            .authenticationProvider(provider)
             .csrf(csrf -> csrf.ignoringRequestMatchers(
                 // The signed machine-to-machine callback is the ONLY CSRF exception.
                 // Restrict it to POST; all other state-changing methods remain protected.
@@ -31,11 +35,18 @@ public class WebSecurityConfig {
             .headers(headers -> headers.contentSecurityPolicy(csp -> csp.policyDirectives(
                 "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; " +
                 "form-action 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:")))
-            .addFilterBefore(new AccountStatusFilter(users), AuthorizationFilter.class)
-            .formLogin(form -> form.loginPage("/login").defaultSuccessUrl("/campaigns", false).permitAll())
-            .logout(logout -> logout.logoutSuccessUrl("/").permitAll())
+            .addFilterBefore(new AccountStatusFilter(users,sessions), AuthorizationFilter.class)
+            .formLogin(form -> form.loginPage("/login").authenticationDetailsSource(LoginRequestDetails::new)
+                .successHandler(loginSuccess).permitAll())
+            .logout(logout -> logout.addLogoutHandler((request,response,authentication)->{
+                if(authentication!=null&&authentication.getPrincipal() instanceof AccountPrincipal principal)
+                    sessions.logout(principal,request);
+            }).logoutSuccessUrl("/").permitAll())
             .build();
     }
+
+    @Bean
+    public Clock securityClock(){return Clock.systemUTC();}
 
     @Bean
     public PasswordEncoder passwordEncoder() {

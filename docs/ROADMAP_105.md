@@ -146,3 +146,49 @@
 - Chưa có nghiệm thu ngoài production hay pentest độc lập.
 
 Xem `docs/DEPLOYMENT.md` để biết những điều kiện còn thiếu trước khi vận hành chính thức.
+
+## Đối chiếu với yêu cầu mới (2026-10-18)
+
+Các checkbox trên là trạng thái nghiệm thu production/review, không phải khẳng định toàn bộ chưa có code. Không đánh dấu hoàn thành 105 mục chỉ vì một lần build thành công.
+
+| Nhóm | Phần đã có trong code | Phần cần phát triển/cấu hình tiếp |
+|---|---|---|
+| 001–015 | BCrypt, đổi mật khẩu, role USER/STAFF/ADMIN, audit Admin. Đợt hiện tại thêm phiên đăng nhập, lịch sử IP, thu hồi từng phiên/toàn bộ, cảnh báo trình duyệt/mạng mới trên website, khóa tạm theo tài khoản và migration giữ nguyên BCrypt. | Xác minh email, email OTP, 2FA, Google/Facebook OAuth, role đại lý, mã hóa token nền tảng, nhập dữ liệu H2 cũ có đối soát. |
+| 016–027 | Dashboard chiến dịch, hồ sơ, lịch sử/tìm kiếm/hủy đơn chờ, hỗ trợ, chat phân trang, thông báo website và trang hướng dẫn. | Đánh giá hoàn tất, thông báo email, tìm kiếm FAQ và cập nhật trạng thái chủ động. |
+| 028–039 | Danh mục/gói tư vấn nhiều nền tảng, bảng giá admin, tính giá server, duyệt, giao việc, tiến độ/trạng thái, timeline và cảnh báo đơn chậm. Server/đơn TikTok thủ công. | Giá theo cấp, hoàn tiền/điều chỉnh có sổ cái, quản trị danh mục xóa an toàn đầy đủ. |
+| 040–054 | Gợi ý AI dạng cơ bản khi có cấu hình và lịch nội dung bản nháp. | Các workflow AI riêng, quota/chi phí, phân tích từ dữ liệu đã cấp quyền, đăng theo lịch và A/B cần triển khai/kiểm thử riêng. |
+| 055–064 | YouTube dữ liệu công khai có giới hạn timeout/retry và test. | OAuth chính thức, refresh token mã hóa, queue/worker, dashboard quota/sync; cần app và quyền nền tảng. |
+| 065–076 | Yêu cầu nạp thủ công; webhook nội bộ có chữ ký/chống trùng và receipt. | VNPay/QR thật, ví có ledger, hoàn tiền, khuyến mãi, referral, cấp thành viên, hóa đơn và đối soát. Webhook nội bộ không phải tích hợp VNPay. |
+| 077–090 | Dashboard vận hành, quản trị tài khoản/quyền/khóa, đơn/phân công/danh mục/hỗ trợ, CSV, audit; đợt này thêm xem lịch sử/phiên tài khoản. | Doanh thu đối soát từ thanh toán thật, broadcast, khuyến mãi, xử lý hoàn tiền và báo cáo Excel. |
+| 091–105 | Test integration/security, H2/PostgreSQL/Flyway, viewport trình duyệt, CSRF/ownership, webhook và resilience YouTube. | Cần nghiệm thu production riêng cho rate limit phân tán, backup/restore tự động, load test, monitoring/alert, HTTPS và rollback. |
+
+### Trình tự triển khai tiếp
+
+1. Nền bảo mật phiên và log (đợt này); chi tiết và bằng chứng trong `ACCOUNT_SESSIONS_AND_LOGIN_SECURITY.md`.
+2. Email đã cấu hình → xác minh đăng ký, quên mật khẩu OTP, sau đó 2FA và OAuth. Không ghi OTP/secret ra log hoặc yêu cầu gửi secret trong chat.
+3. Luồng kinh doanh: ledger, hoàn tiền có duyệt, ưu đãi và cấp khách hàng; tích hợp sandbox trước thanh toán thật.
+4. AI có hạn mức/chi phí, OAuth mạng xã hội và queue theo quyền chính thức. Không yêu cầu mật khẩu mạng xã hội.
+5. Hoàn thiện UX còn thiếu, kiểm thử tải/backup/restore, staging HTTPS và nghiệm thu production.
+
+### IX. 20 đề xuất UX/kinh doanh bổ sung (chưa triển khai)
+
+106. Ghim dịch vụ thường dùng vào dashboard.
+107. So sánh các gói dịch vụ theo giá, phạm vi và thời gian dự kiến.
+108. Lưu đơn nháp và tiếp tục sau khi đăng nhập.
+109. Đặt lại từ đơn cũ, báo giá và xác thực lại ở server.
+110. Xem trước dữ liệu nhập CSV theo từng dòng trước khi tạo đơn hàng loạt.
+111. Lưu phiên bản báo giá tại thời điểm xác nhận đơn.
+112. Hiển thị thời gian dự kiến và điều kiện xử lý của từng gói.
+113. Checklist bàn giao kết quả và xác nhận của khách hàng.
+114. Nhắc khách bổ sung thông tin còn thiếu trên đơn.
+115. Tệp đính kèm hỗ trợ có kiểm tra loại/kích thước và quyền tải.
+116. Gắn nhãn, mức ưu tiên và SLA cho phiếu hỗ trợ.
+117. Trung tâm thông báo có tùy chọn loại thông báo.
+118. Chọn múi giờ hiển thị và định dạng ngày/tiền tệ.
+119. Tùy chỉnh cột và lưu bộ lọc báo cáo.
+120. Hướng dẫn từng bước khi sử dụng lần đầu.
+121. Thông báo bảo trì và trang trạng thái dịch vụ.
+122. Khảo sát mức hài lòng sau khi đóng hỗ trợ.
+123. Luồng yêu cầu xuất dữ liệu cá nhân và đóng tài khoản có xác minh.
+124. Chế độ trợ năng: tăng cỡ chữ, tương phản và reduced motion.
+125. Theo dõi nguồn giới thiệu/chiến dịch từ dữ liệu first-party có sự đồng ý.

@@ -1,6 +1,8 @@
 package com.example.fbservice.admin;
 
 import com.example.fbservice.model.User;
+import com.example.fbservice.security.*;
+import java.time.*;
 import com.example.fbservice.repository.UserRepository;
 import java.util.List;
 import java.util.ArrayList;
@@ -18,9 +20,14 @@ public class AdminUserService {
     private final UserRepository users;
     private final AdminAccountAuditRepository audit;
 
-    public AdminUserService(UserRepository users, AdminAccountAuditRepository audit) {
+    private final AccountSessionRepository sessions;
+    private final AccountSecurityEventRepository securityEvents;
+    private final Clock clock;
+
+    public AdminUserService(UserRepository users, AdminAccountAuditRepository audit,
+            AccountSessionRepository sessions,AccountSecurityEventRepository securityEvents,Clock clock) {
         this.users=users;
-        this.audit=audit;
+        this.audit=audit;this.sessions=sessions;this.securityEvents=securityEvents;this.clock=clock;
     }
 
     @Transactional(readOnly=true)
@@ -62,6 +69,7 @@ public class AdminUserService {
             throw new IllegalArgumentException("Tài khoản đang ở trạng thái này.");
         String before=Boolean.toString(target.isEnabled());
         target.setEnabled(enabled);
+        revokeAccess(target,SecurityEventType.ACCOUNT_STATE_CHANGED);
         audit.save(new AdminAccountAudit(actor,target.getId(),"ACCOUNT_ENABLED",before,Boolean.toString(enabled)));
     }
 
@@ -74,7 +82,15 @@ public class AdminUserService {
             throw new IllegalArgumentException("Tài khoản đã có vai trò này.");
         String before=target.getRole();
         target.setRole(role);
+        revokeAccess(target,SecurityEventType.ACCOUNT_ROLE_CHANGED);
         audit.save(new AdminAccountAudit(actor,target.getId(),"ACCOUNT_ROLE",before,role));
+    }
+
+    private void revokeAccess(User target,SecurityEventType type){
+        target.setAuthVersion(Math.addExact(target.getAuthVersion(),1));
+        var now=LocalDateTime.now(clock);
+        sessions.revokeAll(target.getId(),now);
+        securityEvents.save(new AccountSecurityEvent(target.getId(),type,"","",now));
     }
 
     private User lockAndAuthorize(String actor,Long targetId) {

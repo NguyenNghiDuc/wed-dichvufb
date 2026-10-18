@@ -27,6 +27,15 @@ public class User {
     @Column(name = "auth_version", nullable = false, columnDefinition = "bigint default 0")
     private long authVersion;
 
+    @Column(name = "failed_login_count", nullable = false, columnDefinition = "integer default 0")
+    private int failedLoginCount;
+
+    @Column(name = "failed_login_window")
+    private java.time.LocalDateTime failedLoginWindow;
+
+    @Column(name = "login_locked_until")
+    private java.time.LocalDateTime loginLockedUntil;
+
     @Column(nullable = false, length = 16)
     private String role = "USER";
 
