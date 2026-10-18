@@ -72,6 +72,17 @@ public class ChatService {
         return messages.markOneRead(viewer, messageId, LocalDateTime.now());
     }
 
+    /** Form action for one visible incoming chat message, scoped by contact. */
+    @Transactional
+    public int markMessageReadFrom(String viewer, String contact, Long messageId) {
+        if (viewer == null || viewer.isBlank() || contact == null
+                || !contact.matches("[a-zA-Z0-9._-]{3,40}")
+                || messageId == null || messageId <= 0) {
+            throw new IllegalArgumentException("Invalid message or contact");
+        }
+        return messages.markOneReadFrom(viewer, contact, messageId, LocalDateTime.now());
+    }
+
     /** Both directions, always scoped to the logged-in user by the controller. */
     @Transactional(readOnly = true)
     public Page<ChatMessage> threadFor(String viewer, String other, int page, int size) {
