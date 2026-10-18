@@ -53,4 +53,19 @@ class PaymentReconciliationServiceTest {
         assertEquals(0L, result.get("internalVndLast24Hours"));
     }
 
+    @Test
+    void mismatchWithoutMissingReceiptStillNeedsReview() {
+        JdbcTemplate jdbc = mock(JdbcTemplate.class);
+        Map<String, Object> row = new HashMap<>();
+        row.put("approved_without_receipt", 0L);
+        row.put("inconsistent_receipts", 3L);
+        row.put("internal_receipts", 3L);
+        row.put("receipts_last_24h", 3L);
+        row.put("internal_vnd_last_24h", 3000L);
+        when(jdbc.queryForMap(anyString())).thenReturn(row);
+        Map<String, Object> result = new PaymentReconciliationService(jdbc).summary();
+        assertEquals(true, result.get("requiresManualReview"));
+        assertEquals(3L, result.get("inconsistentReceipts"));
+    }
+
 }
