@@ -16,7 +16,10 @@ th:text="${t.displayName}" th:selected="${t == type}"></option></select></div>
 pattern="[A-Za-z0-9._-]{3,100}" placeholder="Tên chính xác"></div>
 <div class="admin-filter-actions"><button type="submit" class="btn btn-small">Lọc</button>
 <a class="btn btn-outline btn-small" th:href="@{/admin/catalog/history}">Xóa lọc</a></div></form>
-<div class="admin-table-heading"><strong>Sự kiện điều chỉnh</strong><span>20 mục mỗi trang</span></div>
+<div class="admin-table-heading"><strong>Sự kiện điều chỉnh</strong>
+<div class="admin-row-actions"><span>20 mục mỗi trang</span>
+<a class="btn btn-outline btn-small"
+th:href="@{/admin/catalog/history/export.csv(page=${page},type=${type},actor=${actor})}">Xuất CSV trang này ↗</a></div></div>
 <div class="table-panel admin-table-scroll"><table class="data-table admin-table">
 <thead><tr><th>Thời gian</th><th>Admin</th><th>Dịch vụ</th><th>Giá cũ</th><th>Giá mới</th><th>Mở bán trước</th><th>Mở bán sau</th></tr></thead>
 <tbody><tr th:each="e : ${events}">
