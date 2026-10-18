@@ -5,6 +5,7 @@ import jakarta.persistence.criteria.Predicate;
 import java.net.URI;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.Map;
@@ -86,6 +87,28 @@ public class CampaignOrderService {
             counts[CampaignStatus.COMPLETED.ordinal()],
             counts[CampaignStatus.REJECTED.ordinal()],
             counts[CampaignStatus.CANCELLED.ordinal()]);
+    }
+
+    /**
+     * Six complete calendar-month buckets ending with the current month.
+     * The bounds are inclusive start/exclusive end and always include the
+     * principal's owner predicate in the database count.
+     */
+    @Transactional(readOnly = true)
+    public List<CampaignMonthlyCount> monthlyCountsForOwner(String username) {
+        if (username == null || username.isBlank())
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+        YearMonth thisMonth = YearMonth.now();
+        List<CampaignMonthlyCount> result = new ArrayList<>(6);
+        for (int offset = 5; offset >= 0; offset--) {
+            YearMonth month = thisMonth.minusMonths(offset);
+            LocalDateTime start = month.atDay(1).atStartOfDay();
+            LocalDateTime end = month.plusMonths(1).atDay(1).atStartOfDay();
+            long total = orders.countByOwnerUsernameAndCreatedAtGreaterThanEqualAndCreatedAtLessThan(
+                username, start, end);
+            result.add(new CampaignMonthlyCount(month.toString(), total));
+        }
+        return List.copyOf(result);
     }
 
     /** Database-grouped per-service breakdown; no other customer's row may contribute. */
