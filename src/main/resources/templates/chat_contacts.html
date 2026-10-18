@@ -5,7 +5,9 @@
 <body><main class="page container">
 <a class="table-link" th:href="@{/support}">← Trung tâm hỗ trợ</a>
 <div class="page-header"><div><div class="eyebrow">GrowLab chat</div><h1>Nhắn tin hỗ trợ</h1>
-<p class="muted">Trao đổi với nhân viên hoặc mở một hội thoại với tài khoản liên hệ.</p></div></div>
+<p class="muted">Trao đổi với nhân viên hoặc mở một hội thoại với tài khoản liên hệ.</p>
+<p class="chat-unread-summary" th:if="${unreadTotal > 0}" role="status"
+   th:text="|Bạn có ${unreadTotal} tin nhắn chưa đọc|">Có tin nhắn chưa đọc</p></div></div>
 <div class="form-panel"><form method="get" th:action="@{/chat/ui/open}" role="search">
 <div class="field"><label for="chatContact">Tài khoản liên hệ</label>
 <input id="chatContact" name="contact" maxlength="40" minlength="3" required autocomplete="off"
