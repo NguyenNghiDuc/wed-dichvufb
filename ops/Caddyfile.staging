@@ -1,0 +1,20 @@
+# Manual staging deployment only. STAGING_HOST must point to this approved server.
+# Caddy manages Let's Encrypt TLS; port 80 is for ACME/HTTPS redirect only.
+{$STAGING_HOST} {
+  encode zstd gzip
+  header {
+    Strict-Transport-Security "max-age=31536000; includeSubDomains"
+    X-Content-Type-Options "nosniff"
+    Referrer-Policy "strict-origin-when-cross-origin"
+    -Server
+  }
+  reverse_proxy app:8080 {
+    health_uri /actuator/health
+    health_interval 30s
+    health_timeout 5s
+  }
+  log {
+    output stdout
+    format json
+  }
+}
