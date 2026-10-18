@@ -394,9 +394,12 @@ public class SupportTicketService {
         SupportTicket ticket = tickets.lockForAdmin(id)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         ticket.ensureAssignedStaff(admin);
+        // Preserve the actual prior state: an unassigned OPEN ticket may be
+        // closed without ever reaching ANSWERED.
+        String previousStatus = ticket.getStatus().getTitle();
         ticket.close();
         messages.save(new SupportMessage(id, "HỆ THỐNG",
-            "Trạng thái thay đổi: ĐANG XỬ LÝ → ĐÃ ĐÓNG (bởi nhân viên hỗ trợ)."));
+            "Trạng thái thay đổi: " + previousStatus + " → Đã đóng (bởi nhân viên hỗ trợ)."));
         if (resolutionNote != null && !resolutionNote.isBlank())
             messages.save(new SupportMessage(id, admin, resolutionNote.strip()));
         notices.save(new AccountNotification(ticket.getOwnerUsername(),
