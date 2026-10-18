@@ -47,12 +47,19 @@ ln -s "$sandbox/wrong.dump" "$sandbox/link.dump"
 expect_refused 'symlinked archive' bash scripts/ops/restore_sandbox.sh --sandbox "$sandbox/link.dump"
 # Read-only inventory detects healthy checksum, then a tampered archive.
 mkdir -p "$sandbox/backups"
-printf 'fake-but-syntactically-checksummed-fixture' > "$sandbox/backups/growlab_synthetic.dump"
-(cd "$sandbox/backups" && sha256sum growlab_synthetic.dump > growlab_synthetic.dump.sha256)
+filename="growlab_$(date -u +%Y%m%dT%H%M%SZ)_synthetic.dump"
+printf 'fake-but-syntactically-checksummed-fixture' > "$sandbox/backups/$filename"
+(cd "$sandbox/backups" && sha256sum "$filename" > "$filename.sha256")
 bash scripts/ops/backup_inventory.sh --check "$sandbox/backups" 24 > "$sandbox/inventory"
 grep -q 'PASS:' "$sandbox/inventory"
-printf 'tampered' >> "$sandbox/backups/growlab_synthetic.dump"
+printf 'tampered' >> "$sandbox/backups/$filename"
 expect_refused 'tampered backup inventory' bash scripts/ops/backup_inventory.sh --check "$sandbox/backups" 24
+# Old backup copied today must still be classified stale by the archived UTC timestamp.
+rm -f -- "$sandbox/backups/$filename" "$sandbox/backups/$filename.sha256"
+old="growlab_20200101T000000Z_synthetic.dump"
+printf 'old verified fixture archive' > "$sandbox/backups/$old"
+(cd "$sandbox/backups" && sha256sum "$old" > "$old.sha256")
+expect_refused 'stale copied backup inventory' bash scripts/ops/backup_inventory.sh --check "$sandbox/backups" 24
 # A printable rollback plan must not touch Git, Compose or SQL.
 bash scripts/ops/rollback_plan.sh --plan aaaaaaa bbbbbbb > "$sandbox/rollback-plan"
 grep -q 'NO COMMANDS EXECUTED' "$sandbox/rollback-plan"
