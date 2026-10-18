@@ -16,12 +16,25 @@
 <div class="field"><label for="body">Nội dung</label><textarea id="body" name="body" maxlength="3000" required aria-describedby="body-count" th:text="${draft.body}"></textarea><small id="body-count" aria-live="polite"></small><small id="body-stats" aria-live="polite"></small></div>
 <div class="field"><label for="schedule">Giờ dự kiến (UTC)</label><input id="schedule" type="datetime-local" name="scheduledAtUtc" th:value="${scheduleValue}">
 <small>Để trống để chuyển về bản nháp. Chỉ cho phép thời gian 1 phút–1 năm trong tương lai.</small></div>
+<div class="form-panel" aria-label="Xem trước nội dung"><h2>Xem trước bài viết</h2><p class="muted">Bản xem trước chỉ hiển thị trên thiết bị, không đăng bài.</p><h3 id="preview-title"></h3><p id="preview-body" style="white-space:pre-wrap;overflow-wrap:anywhere"></p></div>
 <div class="actions"><button class="btn btn-outline" type="button" id="copy-content">Sao chép nội dung</button><button class="btn" type="submit">Lưu thay đổi</button><a class="btn btn-outline" th:href="@{/content-calendar}">Quay lại</a></div>
 </form>
 <p id="copy-status" class="muted" role="status" aria-live="polite"></p>
 </div></main>
 <script>
   const contentField = document.getElementById('body');
+  const titleField = document.getElementById('title');
+  const previewTitle = document.getElementById('preview-title');
+  const previewBody = document.getElementById('preview-body');
+  if (contentField && titleField && previewTitle && previewBody) {
+    const refreshPreview = () => {
+      previewTitle.textContent = titleField.value || 'Chưa có tiêu đề';
+      previewBody.textContent = contentField.value || 'Chưa có nội dung';
+    };
+    titleField.addEventListener('input', refreshPreview);
+    contentField.addEventListener('input', refreshPreview);
+    refreshPreview();
+  }
   const stats = document.getElementById('body-stats');
   const copyButton = document.getElementById('copy-content');
   const copyStatus = document.getElementById('copy-status');
