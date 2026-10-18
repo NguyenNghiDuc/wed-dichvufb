@@ -12,10 +12,22 @@
 <div class="field"><label for="platform">Nền tảng</label><select id="platform" name="platform" required>
 <option th:each="p : ${platforms}" th:value="${p.name()}" th:text="${p.displayName}" th:selected="${p == draft.platform}"></option>
 </select></div>
-<div class="field"><label for="title">Tiêu đề</label><input id="title" name="title" maxlength="120" required th:value="${draft.title}"></div>
-<div class="field"><label for="body">Nội dung</label><textarea id="body" name="body" maxlength="3000" required th:text="${draft.body}"></textarea></div>
+<div class="field"><label for="title">Tiêu đề</label><input id="title" name="title" maxlength="120" required aria-describedby="title-count" th:value="${draft.title}"><small id="title-count" aria-live="polite"></small></div>
+<div class="field"><label for="body">Nội dung</label><textarea id="body" name="body" maxlength="3000" required aria-describedby="body-count" th:text="${draft.body}"></textarea><small id="body-count" aria-live="polite"></small></div>
 <div class="field"><label for="schedule">Giờ dự kiến (UTC)</label><input id="schedule" type="datetime-local" name="scheduledAtUtc" th:value="${scheduleValue}">
 <small>Để trống để chuyển về bản nháp. Chỉ cho phép thời gian 1 phút–1 năm trong tương lai.</small></div>
 <div class="actions"><button class="btn" type="submit">Lưu thay đổi</button><a class="btn btn-outline" th:href="@{/content-calendar}">Quay lại</a></div>
 </form>
-</div></main></body></html>
+</div></main>
+<script>
+  for (const [fieldId, countId, limit] of [['title', 'title-count', 120], ['body', 'body-count', 3000]]) {
+    const field = document.getElementById(fieldId);
+    const count = document.getElementById(countId);
+    if (field && count) {
+      const update = () => { count.textContent = field.value.length + ' / ' + limit + ' ký tự'; };
+      field.addEventListener('input', update);
+      update();
+    }
+  }
+</script>
+</body></html>
