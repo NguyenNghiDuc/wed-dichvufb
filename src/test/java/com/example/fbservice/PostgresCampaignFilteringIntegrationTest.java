@@ -45,5 +45,27 @@ class PostgresCampaignFilteringIntegrationTest {
                 null, CampaignStatus.PENDING_REVIEW).getContent())
                 .extracting(CampaignOrder::getId).contains(other.getId())
                 .doesNotContain(mine.getId());
+        // PostgreSQL LOCATE/STRPOS semantics: search must treat percent and
+        // underscores as literal characters and never return another owner.
+        CampaignOrder literal = campaigns.create("pg-filter-a",
+            new CampaignOrderRequest(SocialPlatform.YOUTUBE,
+                CampaignServiceType.PROFILE_AUDIT,
+                "https://youtube.com/@literal_pg_filter",
+                "Kế hoạch phát triển kênh 100% bền vững."));
+        CampaignOrder forbidden = campaigns.create("pg-filter-b",
+            new CampaignOrderRequest(SocialPlatform.YOUTUBE,
+                CampaignServiceType.PROFILE_AUDIT,
+                "https://youtube.com/@different_foreign",
+                "Nội dung 100% riêng tư của người dùng khác."));
+        var matches = campaigns.pageMine("pg-filter-a", 0, 20, null, null,
+            null, null, null, "100%");
+        assertThat(matches.getContent()).extracting(CampaignOrder::getId)
+            .contains(literal.getId()).doesNotContain(forbidden.getId());
+        var exactUnderscore = campaigns.pageMine("pg-filter-a", 0, 20, null, null,
+            null, null, null, "_pg_filter");
+        assertThat(exactUnderscore.getContent()).extracting(CampaignOrder::getId)
+            .contains(literal.getId()).doesNotContain(other.getId());
+        assertThat(campaigns.pageMine("pg-filter-a", 0, 20, null, null,
+            null, null, null, "nonexistent-search-token").getTotalElements()).isZero();
     }
 }
