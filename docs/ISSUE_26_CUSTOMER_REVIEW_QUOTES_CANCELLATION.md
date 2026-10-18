@@ -44,12 +44,26 @@ Omitting the reason preserves prior behavior. No client-provided price,
 status, or actor can be set by this feature. State changes require CSRF.
 Foreign/nonexistent campaign IDs produce the same HTTP 404.
 
+## Private CSV export of customer reviews
+
+`GET /campaigns/reviews/export.csv?rating=2&q=keyword` serves only reviews
+of the authenticated account with the **same** filtering semantics as the
+review HTML/API, ordered by `createdAt DESC, id DESC`. It pages within SQL in
+batches of 50 and caps the total export at 5,000 rows. The UTF-8 CSV contains
+`campaign_id,rating,feedback,created_at`, without usernames or staff IDs.
+The existing CSV quoting and spreadsheet-formula escaping helper protects
+dangerous leading =, +, -, @ cells. Headers include `Cache-Control: no-store`
+and a safe attachment filename; anonymous users cannot download anything.
+Test: `CustomerReviewCsvIntegrationTest` including owner isolation and formula
+payload.
+
 ## Verification / release gates
 
 H2 integration tests:
 `CustomerReviewSearchIntegrationTest`,
 `CustomerQuoteComparisonIntegrationTest`,
-`CustomerCancellationReasonIntegrationTest`, plus the existing
+`CustomerCancellationReasonIntegrationTest`,
+`CustomerReviewCsvIntegrationTest`, plus the existing
 `CustomerReviewListIntegrationTest`, `CampaignReviewsIntegrationTest`,
 `CampaignOrderIntegrationTest`, and campaign history/CSV tests.
 
