@@ -37,6 +37,7 @@ public class ChatWebController {
         model.addAttribute("staff", users.findTop100ByEnabledTrueAndRoleInOrderByUsernameAsc(
                 List.of("STAFF")));
         model.addAttribute("conversations", conversations.getContent());
+        model.addAttribute("unreadTotal", chats.unreadTotalFor(principal.getName()));
         model.addAttribute("unreadCounts",
             chats.unreadCountsForContacts(principal.getName(), conversations.getContent()));
         model.addAttribute("query", q);
