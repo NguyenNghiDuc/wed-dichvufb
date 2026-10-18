@@ -32,11 +32,19 @@ public class OrderService {
 
     /** Customer-scoped, bounded replacement for the legacy unlimited web list. */
     public Page<Order> pageMine(String username, int page, int size) {
+        return pageMine(username, page, size, null);
+    }
+
+    public Page<Order> pageMine(String username, int page, int size, Long orderId) {
         if (username == null || username.isBlank())
             throw new IllegalArgumentException("Tài khoản không hợp lệ.");
         if (page < 0 || page > 10000 || size < 1 || size > 50)
             throw new IllegalArgumentException("Giới hạn phân trang không hợp lệ.");
-        return orders.findByOwnerUsername(username, PageRequest.of(page, size,
-            Sort.by(Sort.Order.desc("createdAt"), Sort.Order.desc("id"))));
+        if (orderId != null && orderId <= 0)
+            throw new IllegalArgumentException("Mã đơn phải là số nguyên dương.");
+        Pageable bounds = PageRequest.of(page, size,
+            Sort.by(Sort.Order.desc("createdAt"), Sort.Order.desc("id")));
+        return orderId == null ? orders.findByOwnerUsername(username, bounds) :
+            orders.findByOwnerUsernameAndId(username, orderId, bounds);
     }
 }

@@ -23,3 +23,8 @@
 .customer-progress-steps li.is-active .customer-step-dot{background:#fff0e4;border-color:#f26922;box-shadow:0 0 0 4px #f2692217}
 .customer-progress-steps li.is-active{color:#d84d0d}
 @media(max-width:560px){.customer-progress{padding:16px}.customer-progress-steps{grid-template-columns:repeat(2,minmax(0,1fr))}.customer-progress-header h2{font-size:18px}}
+
+/* Legacy owner-only order ID lookup */
+.customer-legacy-search{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:14px 0 22px}
+.customer-legacy-search input{min-height:42px;min-width:0;max-width:240px;padding:8px 12px;border:1px solid #ead8c9;border-radius:10px;background:white}
+@media(max-width:500px){.customer-legacy-search input{max-width:100%;flex:1 1 100%}.customer-legacy-search .btn{flex:1 1 auto}}

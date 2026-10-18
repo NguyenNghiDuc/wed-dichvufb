@@ -20,12 +20,17 @@ public class LegacyOrderCsvExportService {
 
     @Transactional(readOnly=true)
     public String exportMine(String owner) {
+        return exportMine(owner, null);
+    }
+
+    @Transactional(readOnly=true)
+    public String exportMine(String owner, Long orderId) {
         StringBuilder csv = new StringBuilder("\uFEFF");
         csv.append("id,service,link,quantity,unit_price_vnd,total_price_vnd,note,created_at\r\n");
         int exported = 0;
         int page = 0;
         while (exported < MAX_ROWS) {
-            Page<Order> result = orders.pageMine(owner, page, PAGE_SIZE);
+            Page<Order> result = orders.pageMine(owner, page, PAGE_SIZE, orderId);
             List<Order> records = result.getContent();
             if (records.isEmpty()) break;
             for (Order o : records) {

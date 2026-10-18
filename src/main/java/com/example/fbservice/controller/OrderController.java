@@ -37,14 +37,17 @@ public class OrderController {
     }
 
     @GetMapping("/list")
-    public String list(@RequestParam(defaultValue = "0") int page, Model model, Principal principal) {
+    public String list(@RequestParam(defaultValue = "0") int page,
+                       @RequestParam(required = false) Long orderId,
+                       Model model, Principal principal) {
         Page<Order> records;
         try {
-            records = orders.pageMine(principal.getName(), page, 20);
+            records = orders.pageMine(principal.getName(), page, 20, orderId);
         } catch (IllegalArgumentException exception) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid page");
         }
         model.addAttribute("orders", records.getContent());
+        model.addAttribute("orderId", orderId);
         model.addAttribute("pageNumber", page);
         model.addAttribute("hasPrevious", records.hasPrevious());
         model.addAttribute("hasNext", records.hasNext());

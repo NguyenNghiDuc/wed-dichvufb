@@ -1,8 +1,16 @@
-<!doctype html><html lang="vi" xmlns:th="http://www.thymeleaf.org"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Đơn hàng cũ · GrowLab</title><link rel="stylesheet" th:href="@{/style.css}"></head><body><main class="page container"><div class="page-header"><h1>Đơn hàng cũ của tôi</h1><div class="actions"><a class="btn" th:href="@{/order/new}">+ Tạo đơn</a>
-<a class="btn btn-outline" th:href="@{/order/export.csv}">↓ Xuất CSV</a></div></div><div class="table-panel"><table class="data-table"><thead><tr><th>Mã</th><th>Dịch vụ</th><th>Link</th><th>Số lượng</th><th>Tổng tiền</th></tr></thead><tbody><tr th:each="o : ${orders}"><td th:text="${o.id}"></td><td th:text="${o.serverName}"></td><td th:text="${o.linkOrder}"></td><td th:text="${o.quantity}"></td><td th:text="${o.totalPrice}"></td></tr><tr th:if="${#lists.isEmpty(orders)}"><td colspan="5">Chưa có đơn nào.</td></tr></tbody></table></div>
+<!doctype html><html lang="vi" xmlns:th="http://www.thymeleaf.org"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Đơn hàng cũ · GrowLab</title><link rel="stylesheet" th:href="@{/style.css}"><link rel="stylesheet" th:href="@{/customer.css}"></head><body><main class="page container"><div class="page-header"><h1>Đơn hàng cũ của tôi</h1><div class="actions"><a class="btn" th:href="@{/order/new}">+ Tạo đơn</a>
+<a class="btn btn-outline" th:href="@{/order/export.csv(orderId=${orderId})}">↓ Xuất CSV</a></div></div>
+<form method="get" th:action="@{/order/list}" role="search" class="actions customer-legacy-search" aria-label="Tra cứu mã đơn">
+<label for="legacyOrderId">Mã đơn hàng</label>
+<input type="number" id="legacyOrderId" name="orderId" min="1" placeholder="Nhập mã đơn"
+       th:value="${orderId}">
+<button class="btn btn-small" type="submit">Tra cứu</button>
+<a class="btn btn-outline btn-small" th:href="@{/order/list}">Xóa lọc</a>
+</form>
+<div class="table-panel"><table class="data-table"><thead><tr><th>Mã</th><th>Dịch vụ</th><th>Link</th><th>Số lượng</th><th>Tổng tiền</th></tr></thead><tbody><tr th:each="o : ${orders}"><td th:text="${o.id}"></td><td th:text="${o.serverName}"></td><td th:text="${o.linkOrder}"></td><td th:text="${o.quantity}"></td><td th:text="${o.totalPrice}"></td></tr><tr th:if="${#lists.isEmpty(orders)}"><td colspan="5">Chưa có đơn nào.</td></tr></tbody></table></div>
 <nav class="actions" aria-label="Phân trang đơn cũ">
-<a th:if="${hasPrevious}" class="btn btn-outline btn-small" th:href="@{/order/list(page=${pageNumber - 1})}">← Trang trước</a>
+<a th:if="${hasPrevious}" class="btn btn-outline btn-small" th:href="@{/order/list(page=${pageNumber - 1},orderId=${orderId})}">← Trang trước</a>
 <span class="muted" th:text="|Trang ${pageNumber + 1} / ${totalPages == 0 ? 1 : totalPages}|">Trang 1</span>
-<a th:if="${hasNext}" class="btn btn-outline btn-small" th:href="@{/order/list(page=${pageNumber + 1})}">Trang sau →</a>
+<a th:if="${hasNext}" class="btn btn-outline btn-small" th:href="@{/order/list(page=${pageNumber + 1},orderId=${orderId})}">Trang sau →</a>
 </nav>
 <p class="footnote"><a class="table-link" th:href="@{/campaigns}">Quay về dashboard</a></p></main></body></html>
