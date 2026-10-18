@@ -13,13 +13,46 @@
 <option th:each="p : ${platforms}" th:value="${p.name()}" th:text="${p.displayName}" th:selected="${p == draft.platform}"></option>
 </select></div>
 <div class="field"><label for="title">Tiêu đề</label><input id="title" name="title" maxlength="120" required aria-describedby="title-count" th:value="${draft.title}"><small id="title-count" aria-live="polite"></small></div>
-<div class="field"><label for="body">Nội dung</label><textarea id="body" name="body" maxlength="3000" required aria-describedby="body-count" th:text="${draft.body}"></textarea><small id="body-count" aria-live="polite"></small></div>
+<div class="field"><label for="body">Nội dung</label><textarea id="body" name="body" maxlength="3000" required aria-describedby="body-count" th:text="${draft.body}"></textarea><small id="body-count" aria-live="polite"></small><small id="body-stats" aria-live="polite"></small></div>
 <div class="field"><label for="schedule">Giờ dự kiến (UTC)</label><input id="schedule" type="datetime-local" name="scheduledAtUtc" th:value="${scheduleValue}">
 <small>Để trống để chuyển về bản nháp. Chỉ cho phép thời gian 1 phút–1 năm trong tương lai.</small></div>
-<div class="actions"><button class="btn" type="submit">Lưu thay đổi</button><a class="btn btn-outline" th:href="@{/content-calendar}">Quay lại</a></div>
+<div class="actions"><button class="btn btn-outline" type="button" id="copy-content">Sao chép nội dung</button><button class="btn" type="submit">Lưu thay đổi</button><a class="btn btn-outline" th:href="@{/content-calendar}">Quay lại</a></div>
 </form>
+<p id="copy-status" class="muted" role="status" aria-live="polite"></p>
 </div></main>
 <script>
+  const contentField = document.getElementById('body');
+  const stats = document.getElementById('body-stats');
+  const copyButton = document.getElementById('copy-content');
+  const copyStatus = document.getElementById('copy-status');
+  if (contentField && stats) {
+    const updateStats = () => {
+      const content = contentField.value.trim();
+      const words = content ? content.split(/\\s+/u).length : 0;
+      const hashtags = (content.match(/#[\\p{L}\\p{N}_]+/gu) || []).length;
+      stats.textContent = words + ' từ · ' + hashtags + ' hashtag';
+    };
+    contentField.addEventListener('input', updateStats);
+    updateStats();
+  }
+  if (copyButton && contentField && copyStatus) {
+    copyButton.addEventListener('click', async () => {
+      try {
+        if (!navigator.clipboard || !window.isSecureContext) {
+          copyStatus.textContent = 'Trình duyệt yêu cầu HTTPS để sao chép tự động. Hãy chọn nội dung và sao chép thủ công.';
+          contentField.focus();
+          contentField.select();
+          return;
+        }
+        await navigator.clipboard.writeText(contentField.value);
+        copyStatus.textContent = 'Đã sao chép nội dung vào bộ nhớ tạm.';
+      } catch (error) {
+        copyStatus.textContent = 'Không thể sao chép tự động. Hãy chọn nội dung và sao chép thủ công.';
+        contentField.focus();
+        contentField.select();
+      }
+    });
+  }
   for (const item of [{fieldId:'title', countId:'title-count', limit:120}, {fieldId:'body', countId:'body-count', limit:3000}]) {
     const {fieldId, countId, limit} = item;
     const field = document.getElementById(fieldId);
