@@ -13,6 +13,9 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
     Page<ChatMessage> findBySenderAndReceiver(String sender, String receiver, Pageable pageable);
     Page<ChatMessage> findByReceiver(String receiver, Pageable pageable);
 
+    /** Fast private unread badge; PostgreSQL uses existing receiver/read-at index. */
+    long countByReceiverAndReadAtIsNull(String receiver);
+
     /** Two-way conversation, filtered by the server-side authenticated principal. */
     @Query("""
         select m from ChatMessage m
