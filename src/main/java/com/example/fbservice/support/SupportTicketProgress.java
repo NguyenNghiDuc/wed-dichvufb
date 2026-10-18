@@ -11,13 +11,17 @@ import java.time.LocalDateTime;
 public record SupportTicketProgress(
         TicketStatus status, TicketPriority priority, boolean assigned,
         LocalDateTime createdAt, LocalDateTime lastActivityAt,
-        long ageMinutes, long idleMinutes) {
+        long ageMinutes, long idleMinutes,
+        LocalDateTime firstAssignedAt, Long minutesToFirstAssignment) {
 
-    public static SupportTicketProgress from(SupportTicket ticket, LocalDateTime now) {
+    public static SupportTicketProgress from(SupportTicket ticket, LocalDateTime now,
+                                             LocalDateTime firstAssignedAt) {
         long age = Math.max(0, Duration.between(ticket.getCreatedAt(), now).toMinutes());
         long idle = Math.max(0, Duration.between(ticket.getUpdatedAt(), now).toMinutes());
+        Long wait = firstAssignedAt == null ? null :
+                Math.max(0, Duration.between(ticket.getCreatedAt(), firstAssignedAt).toMinutes());
         return new SupportTicketProgress(ticket.getStatus(), ticket.getPriority(),
                 ticket.getAssigneeUsername() != null, ticket.getCreatedAt(),
-                ticket.getUpdatedAt(), age, idle);
+                ticket.getUpdatedAt(), age, idle, firstAssignedAt, wait);
     }
 }
