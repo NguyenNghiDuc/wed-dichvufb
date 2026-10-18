@@ -16,12 +16,24 @@ command -v stat >/dev/null || exit 2
 shopt -s nullglob
 archives=("$directory"/growlab_*.dump)
 [[ "${#archives[@]}" -gt 0 ]] || { echo 'CRITICAL: no GrowLab archives' >&2; exit 1; }
+directory_mode="$(stat -c '%a' -- "$directory")"
+[[ "$directory_mode" =~ ^[0-7]{3,4}$ ]] || exit 2
+(( (8#$directory_mode & 077) == 0 )) || {
+  echo 'CRITICAL: backup directory is readable by group/others' >&2; exit 1;
+}
 now="$(date +%s)"
 newest=0
 for archive in "${archives[@]}"; do
   [[ -f "$archive" && ! -L "$archive" && -f "$archive.sha256" && ! -L "$archive.sha256" ]] || {
     echo 'CRITICAL: unsafe archive or checksum file' >&2; exit 1;
   }
+  for item in "$archive" "$archive.sha256"; do
+    mode="$(stat -c '%a' -- "$item")"
+    [[ "$mode" =~ ^[0-7]{3,4}$ ]] || exit 2
+    (( (8#$mode & 077) == 0 )) || {
+      echo 'CRITICAL: backup file is readable by group/others' >&2; exit 1;
+    }
+  done
   expected="$(cut -d ' ' -f1 < "$archive.sha256")"
   [[ "$expected" =~ ^[0-9a-fA-F]{64}$ ]] || {
     echo 'CRITICAL: invalid checksum manifest' >&2; exit 1;
