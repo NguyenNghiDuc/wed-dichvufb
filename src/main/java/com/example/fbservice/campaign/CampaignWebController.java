@@ -102,10 +102,10 @@ public class CampaignWebController {
     }
 
     @PostMapping("/{id}/cancel")
-    public String cancel(@PathVariable Long id, Principal principal,
-            org.springframework.web.servlet.mvc.support.RedirectAttributes flash) {
+    public String cancel(@PathVariable Long id, @RequestParam(required = false) String reason,
+            Principal principal, org.springframework.web.servlet.mvc.support.RedirectAttributes flash) {
         try {
-            service.cancelForOwner(principal.getName(), id);
+            service.cancelForOwner(principal.getName(), id, reason);
             flash.addFlashAttribute("notice", "Đã hủy đơn chưa xử lý.");
         } catch (IllegalArgumentException exception) {
             flash.addFlashAttribute("error", exception.getMessage());
