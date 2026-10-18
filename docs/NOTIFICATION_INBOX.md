@@ -34,3 +34,7 @@ No production deployment or roadmap acceptance without CI and staging UAT.
 - POST `/{id}/read` giờ dùng một UPDATE nguyên tử `WHERE id = ? AND owner = ? AND read_at IS NULL`; tránh việc request trùng ghi đè thời gian đọc.
 - Nếu update 0 bản ghi, kiểm tra `existsByIdAndOwnerUsername` để phân biệt lần đọc lại hợp lệ (idempotent) với ID của người khác (404). Không tiết lộ owner.
 - Xác minh trên PostgreSQL 16 trước merge; H2 test không thay thế kiểm thử concurrency nhiều kết nối.
+
+## Kiểm thử đồng thời PostgreSQL 16
+- `PostgresNotificationConcurrencyTest` gửi 3 request thật vào MockMvc/transaction đồng thời: 2 lần đọc cùng ID/chủ, 1 lần cố đọc ID khác chủ. Kỳ vọng hai request owner thành công và giữ timestamp đầu tiên; requester sai chủ nhận 404.
+- Test chạy với profile prod và PostgreSQL 16 service của CI; chỉ sau khi GitHub Actions green mới xác nhận kiểm thử concurrency đạt.
