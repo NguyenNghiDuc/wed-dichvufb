@@ -61,6 +61,28 @@ class ContentDraftValidationTest {
     }
 
     @Test
+    void duplicateRequiresOwnershipAndValidId() {
+        assertThrows(ResponseStatusException.class, () -> service.duplicateMine(" ", 1L));
+        assertThrows(ResponseStatusException.class, () -> service.duplicateMine("owner", -1L));
+        when(repository.findByIdAndOwnerUsername(8L, "owner")).thenReturn(java.util.Optional.empty());
+        assertThrows(ResponseStatusException.class, () -> service.duplicateMine("owner", 8L));
+        verify(repository, never()).save(any(ContentDraft.class));
+    }
+
+    @Test
+    void duplicateCreatesUnscheduledCopyForSameOwner() {
+        ContentDraft original = new ContentDraft("owner", platform, "Original", "Body", LocalDateTime.now(ZoneOffset.UTC).plusDays(2));
+        when(repository.findByIdAndOwnerUsername(9L, "owner")).thenReturn(java.util.Optional.of(original));
+        when(repository.save(any(ContentDraft.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        ContentDraft duplicate = service.duplicateMine("owner", 9L);
+        assertNotSame(original, duplicate);
+        assertEquals("Original", duplicate.getTitle());
+        assertEquals("Body", duplicate.getBody());
+        assertNull(duplicate.getScheduledAtUtc());
+        verify(repository).save(any(ContentDraft.class));
+    }
+
+    @Test
     void missingOwnedDraftCannotBeDeleted() {
         when(repository.lockByIdAndOwner(42L, "owner")).thenReturn(java.util.Optional.empty());
         assertThrows(ResponseStatusException.class, () -> service.deleteMine("owner", 42L));
