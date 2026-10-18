@@ -11,4 +11,9 @@ public interface AdminStaffQueueRepository extends Repository<CampaignOrder, Lon
     Page<CampaignOrder> findByAssigneeUsernameAndStatus(String username,
                                                         CampaignStatus status,
                                                         Pageable pageable);
+    Page<CampaignOrder> findByAssigneeUsernameAndId(String username, Long id,
+                                                     Pageable pageable);
+    Page<CampaignOrder> findByAssigneeUsernameAndIdAndStatus(String username, Long id,
+                                                             CampaignStatus status,
+                                                             Pageable pageable);
 }

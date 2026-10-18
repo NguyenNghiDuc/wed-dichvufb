@@ -86,11 +86,25 @@ public class CampaignAssignmentService {
     /** Always scope to the authenticated employee before applying an optional status filter. */
     @Transactional(readOnly = true)
     public Page<CampaignOrder> assignedTo(String staffUsername, int page, CampaignStatus status) {
+        return assignedTo(staffUsername, page, status, null);
+    }
+
+    /** Both assigned employee and order ID must match in SQL before paging. */
+    @Transactional(readOnly = true)
+    public Page<CampaignOrder> assignedTo(String staffUsername, int page,
+                                          CampaignStatus status, Long orderId) {
         ensureStaff(staffUsername);
         if (page < 0 || page > 10000)
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        if (orderId != null && orderId <= 0)
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid campaign ID");
         PageRequest request = PageRequest.of(page, 20,
             Sort.by(Sort.Order.desc("updatedAt"), Sort.Order.desc("id")));
+        if (orderId != null) {
+            return status == null
+                ? staffQueue.findByAssigneeUsernameAndId(staffUsername, orderId, request)
+                : staffQueue.findByAssigneeUsernameAndIdAndStatus(staffUsername, orderId, status, request);
+        }
         return status == null
             ? orders.findByAssigneeUsername(staffUsername, request)
             : staffQueue.findByAssigneeUsernameAndStatus(staffUsername, status, request);
