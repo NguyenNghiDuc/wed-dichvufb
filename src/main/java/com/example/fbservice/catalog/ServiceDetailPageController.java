@@ -18,6 +18,7 @@ import org.springframework.web.server.ResponseStatusException;
 public class ServiceDetailPageController {
     public record NavOption(String label, String slug, boolean selected) {}
     public record Faq(String question, String answer) {}
+    public record PriceRow(String title, String slug, long priceVnd) {}
     private final ServiceCatalogService catalog;
 
     public ServiceDetailPageController(ServiceCatalogService catalog) {
@@ -33,7 +34,8 @@ public class ServiceDetailPageController {
         CampaignServiceType type = Arrays.stream(CampaignServiceType.values())
                 .filter(p -> slug(p.name()).equals(planSlug))
                 .findFirst().orElseThrow(ServiceDetailPageController::notFound);
-        ServiceOffering selected = catalog.available().stream()
+        List<ServiceOffering> available = catalog.available();
+        ServiceOffering selected = available.stream()
                 .filter(item -> item.getCode().equals(type.name()))
                 .findFirst().orElseThrow(ServiceDetailPageController::notFound);
 
@@ -44,7 +46,10 @@ public class ServiceDetailPageController {
         model.addAttribute("platformName", platform.getDisplayName());
         model.addAttribute("offering", selected);
         model.addAttribute("serviceTitle", selected.getTitle() + " " + platform.getDisplayName());
-        model.addAttribute("planOptions", catalog.available().stream()
+        model.addAttribute("priceRows", available.stream()
+                .map(item -> new PriceRow(item.getTitle(), slug(item.getCode()), item.getPriceVnd()))
+                .toList());
+        model.addAttribute("planOptions", available.stream()
                 .map(item -> new NavOption(item.getTitle(), slug(item.getCode()),
                         item.getCode().equals(type.name()))).toList());
         model.addAttribute("platformOptions", Arrays.stream(SocialPlatform.values())

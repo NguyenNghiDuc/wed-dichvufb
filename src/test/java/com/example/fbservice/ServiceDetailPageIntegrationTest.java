@@ -85,6 +85,25 @@ class ServiceDetailPageIntegrationTest {
         assertThat(campaigns.pageMine("unrelated-owner", 0, 20, null, null).getTotalElements()).isZero();
     }
 
+    @Test
+    void detailedMarketingLayoutShowsOnlyRealPlansAndValidHelpLinks() throws Exception {
+        mvc.perform(get("/dich-vu/tiktok/profile-audit"))
+            .andExpect(status().isOk())
+            .andExpect(model().attribute("priceRows", org.hamcrest.Matchers.hasSize(3)))
+            .andExpect(content().string(containsString("Danh mục nền tảng")))
+            .andExpect(content().string(containsString("GROWLAB SOCIAL STUDIO")))
+            .andExpect(content().string(containsString("Quy trình 4 bước")))
+            .andExpect(content().string(containsString("So sánh các gói tư vấn")))
+            .andExpect(content().string(containsString("Câu hỏi thường gặp")))
+            .andExpect(content().string(containsString("Đánh giá dịch vụ")))
+            .andExpect(content().string(not(containsString("50,000+"))))
+            .andExpect(content().string(not(containsString("Boost Credit"))));
+        mvc.perform(get("/style.css"))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString(".grow-first-screen")))
+            .andExpect(content().string(containsString("@media(max-width:550px)")));
+    }
+
     private String slug(String code) {
         return code.toLowerCase(Locale.ROOT).replace('_', '-');
     }
