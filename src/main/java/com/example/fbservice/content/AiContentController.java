@@ -26,6 +26,7 @@ public class AiContentController {
             "supportedLanguages",Arrays.stream(AiContentLanguage.values()).map(Enum::name).toList(),
             "perUserPerMinute",5,
             "perUserPer24Hours",25,
+            "unconfiguredRequestsPerMinute",30,
             "quotaScope","PER_INSTANCE_ONLY",
             "publishingEnabled",false
         );
@@ -33,6 +34,12 @@ public class AiContentController {
 
     @PostMapping({"/caption","/generate"})
     public Map<String,String> generate(@Valid @RequestBody AiContentRequest input,Principal principal){
+        // Missing provider credentials must not consume the paid-AI request budget.
+        // Keep a separate conservative anti-spam limit even while generation is unavailable.
+        if (!service.isConfigured()) {
+            limiter.check("ai:unconfigured:"+principal.getName(),30,Duration.ofMinutes(1));
+            return service.generate(input); // Returns 503; never calls the provider.
+        }
         // Defense-in-depth per-instance budget (production needs a shared atomic quota store).
         limiter.check("ai:daily:"+principal.getName(),25,Duration.ofDays(1));
         limiter.check("ai:"+principal.getName(),5,Duration.ofMinutes(1));
