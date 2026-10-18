@@ -57,13 +57,42 @@ and a safe attachment filename; anonymous users cannot download anything.
 Test: `CustomerReviewCsvIntegrationTest` including owner isolation and formula
 payload.
 
+## Full customer campaign keyword search (no migration)
+
+`GET /campaigns?q=keyword`, `GET /api/v1/campaign-orders/page?q=keyword` and
+`GET /campaigns/export.csv?q=keyword` now use the same owner-scoped SQL
+predicate, combined with exact campaign ID, status, service type and inclusive
+date bounds. Query is a literal, case-insensitive substring in `brief` or
+`targetUrl` (max 80 characters; control characters rejected); `%` and
+`_` cannot widen a match. The HTML form and pagination/export links preserve
+the same `q`. Legacy endpoints are backward compatible when `q` is absent.
+
+The database enforces the `ownerUsername` predicate even in the count query.
+With no text-specific index on `brief`, a very large account may encounter
+linear text scanning. Consult W7 before introducing any migration or text index.
+Positive/negative tests: `CustomerCampaignKeywordSearchIntegrationTest` and
+the PostgreSQL dialect checks in `PostgresCampaignFilteringIntegrationTest`.
+
+## Customer price/status tampering regression
+
+`CustomerCampaignPriceTamperIntegrationTest` sends intentionally forged
+`quotedPriceVnd`, `priceVnd`, `status=COMPLETED`,
+`ownerUsername` and `assigneeUsername` with a new campaign request.
+The API's `CampaignOrderRequest` contains none of these mutable fields;
+the authenticated principal and enabled catalog quote determine ownership
+and price. The new order must remain PENDING_REVIEW.
+Ordinary users cannot access admin status changes or cancel foreign orders.
+This test does not simulate real payments, which W6 owns.
+
 ## Verification / release gates
 
 H2 integration tests:
 `CustomerReviewSearchIntegrationTest`,
 `CustomerQuoteComparisonIntegrationTest`,
 `CustomerCancellationReasonIntegrationTest`,
-`CustomerReviewCsvIntegrationTest`, plus the existing
+`CustomerReviewCsvIntegrationTest`,
+`CustomerCampaignKeywordSearchIntegrationTest`,
+`CustomerCampaignPriceTamperIntegrationTest`, plus the existing
 `CustomerReviewListIntegrationTest`, `CampaignReviewsIntegrationTest`,
 `CampaignOrderIntegrationTest`, and campaign history/CSV tests.
 
