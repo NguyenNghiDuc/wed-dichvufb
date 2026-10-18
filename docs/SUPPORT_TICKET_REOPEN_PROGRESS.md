@@ -89,3 +89,7 @@ accent-insensitive AND-term search and native accessible help toggles.
 Keep #42 unmerged as a competing draft and do not copy either FAQ
 implementation into the W3 chat/support branch. Any future integration
 requires conflict checks, a fresh merged-tree CI run and review.
+
+## Actual first-assignment milestone (W3)
+
+`SupportAssignmentEventRepository.findFirstAssignedAt` derives the minimum timestamp of an existing ticket's successful assignment audit event (`newAssignee IS NOT NULL`), using an aggregate on previously migrated audit data. After checking that the requester owns the ticket (or that the route is STAFF/ADMIN), the progress API returns nullable `firstAssignedAt` and `minutesToFirstAssignment`, calculated from creation time with a nonnegative bound. Customer/staff detail views display **Tiếp nhận lần đầu**; unassigned tickets say **Chưa tiếp nhận**. `SupportFirstAssignmentProgressIntegrationTest` tests pre-claim/post-claim response, HTML, no-store and tenant isolation. This is a real initial **assignment** milestone, not a verified first human reply, closure timestamp, complete resolution duration or contractual SLA. No W7 migration was edited.
