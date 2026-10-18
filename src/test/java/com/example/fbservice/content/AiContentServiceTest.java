@@ -180,6 +180,22 @@ class AiContentServiceTest {
     }
 
     @Test
+    void videoScriptsAndAudienceTasksValidatePlatformBeforeAnyNetworkCall() {
+        AtomicInteger calls = new AtomicInteger();
+        var service = new AiContentService("test-key", "test-model", json, req -> {
+            calls.incrementAndGet();
+            return new AiContentService.ProviderResponse(200, "{}");
+        });
+        expectStatus(HttpStatus.BAD_REQUEST, service,
+            new AiContentRequest(SocialPlatform.FACEBOOK, "Video topic", "Students",
+                AiContentTask.VIDEO_SCRIPT, AiContentLanguage.EN, 7, null));
+        expectStatus(HttpStatus.BAD_REQUEST, service,
+            new AiContentRequest(SocialPlatform.TIKTOK, "Video topic", "Students",
+                AiContentTask.YOUTUBE_SHORTS, AiContentLanguage.EN, 7, null));
+        assertThat(calls.get()).isZero();
+    }
+
+    @Test
     void invalidPlanDaysOrMissingOriginalTextAreRejectedWithoutNetworkCall() {
         AtomicInteger calls=new AtomicInteger();
         var service=new AiContentService("fake","test-model",json,req->{
