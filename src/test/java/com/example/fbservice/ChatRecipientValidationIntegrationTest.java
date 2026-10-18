@@ -39,7 +39,7 @@ class ChatRecipientValidationIntegrationTest {
         try {
             String body = new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(
                     java.util.Map.of("receiver", receiver, "content", content,
-                            "sender", "forged-other-account", "id", 1));
+                            "sender", "forged-other-account", "id", 999999));
             return post("/chat/send").with(csrf())
                     .contentType(MediaType.APPLICATION_JSON).content(body);
         } catch (com.fasterxml.jackson.core.JsonProcessingException ex) {
@@ -77,7 +77,7 @@ class ChatRecipientValidationIntegrationTest {
                 org.springframework.data.domain.PageRequest.of(0, 20)).getContent();
         assertThat(sent).hasSize(1);
         assertThat(sent.get(0).getSender()).isEqualTo("w3-real-author");
-        assertThat(sent.get(0).getId()).isNotEqualTo(1L);
+        assertThat(sent.get(0).getId()).isNotEqualTo(999999L);
     }
 
     @Test
