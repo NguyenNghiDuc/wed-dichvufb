@@ -20,3 +20,12 @@
 - Server lấy `accountId` từ phiên đã xác thực; không nhận account ID từ query/URL.
 - File có header `time_utc,event_kind`, dữ liệu chỉ gồm timestamp UTC và enum cố định, không xuất mật khẩu, token, IP, User-Agent. Response `Cache-Control: no-store`, `Content-Disposition: attachment`.
 - Bản xuất không chứa toàn bộ lịch sử nếu có hơn 200 sự kiện; trang hiển thị 20 mục mỗi trang và có thể phân trang.
+
+
+## W1 rate-limiter TTL and capacity hardening
+
+- TrafficLimiter now stores each key's own fixed-window duration. When the 20,000-key in-memory store reaches capacity, cleanup uses the per-key expiration time, never the shorter duration of the incoming request.
+- A one-hour password-change or all-sessions-revoke throttle therefore cannot be evicted after only ten minutes by unrelated login traffic.
+- New-key capacity checks and hit counts are serialized to prevent concurrent requests from exceeding the intended in-memory cap. The key's window duration must stay consistent while active. Sub-millisecond durations are rejected rather than silently disabling limits.
+- Deterministic unit tests fill the capacity, verify short-window cleanup preserves hourly throttles, and verify concurrent requests cannot overfill the store.
+- **Still limited to one application instance**; production with multiple backend replicas requires shared Redis/gateway limiting and load tests. This patch neither enables such infrastructure nor handles unknown client proxy addresses.
