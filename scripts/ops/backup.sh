@@ -33,11 +33,10 @@ command -v docker >/dev/null || { echo 'Docker CLI unavailable' >&2; exit 2; }
   exit 2
 }
 directory="$BACKUP_DIR"
-[[ ! -L "$directory" && "$directory" != "/" ]] || {
-  echo 'Refusing symbolic-link/root backup directory' >&2
+[[ -d "$directory" && ! -L "$directory" && "$directory" != "/" ]] || {
+  echo 'Provide a pre-created, non-symlink, operator-owned private backup directory' >&2
   exit 2
 }
-mkdir -p -- "$directory"
 directory="$(cd -- "$directory" && pwd -P)"
 repo_root="$(pwd -P)"
 case "$directory/" in
