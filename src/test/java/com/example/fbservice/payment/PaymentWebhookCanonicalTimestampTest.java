@@ -69,4 +69,34 @@ class PaymentWebhookCanonicalTimestampTest {
         verifyNoInteractions(transactionManager, deposits, receipts, notifications);
     }
 
+    @Test
+    void missingSignatureIsRejectedBeforeDatabaseTransaction() {
+        assertBadSignature(null);
+    }
+
+    @Test
+    void malformedSignatureIsRejectedBeforeDatabaseTransaction() {
+        assertBadSignature("not-a-hex-signature");
+    }
+
+    @Test
+    void wrongSignatureIsRejectedBeforeDatabaseTransaction() {
+        assertBadSignature("0".repeat(64));
+    }
+
+    private void assertBadSignature(String signature) {
+        PlatformTransactionManager manager = mock(PlatformTransactionManager.class);
+        DepositRequestRepository deposits = mock(DepositRequestRepository.class);
+        PaymentReceiptRepository receipts = mock(PaymentReceiptRepository.class);
+        AccountNotificationRepository notifications = mock(AccountNotificationRepository.class);
+        PaymentWebhookService service = new PaymentWebhookService(
+                "sandbox-test-secret-with-at-least-32-bytes",
+                deposits, receipts, notifications, new ObjectMapper(), manager);
+        ResponseStatusException error = assertThrows(ResponseStatusException.class,
+                () -> service.accept("{}".getBytes(StandardCharsets.UTF_8),
+                        signature, Long.toString(Instant.now().getEpochSecond())));
+        assertEquals(HttpStatus.UNAUTHORIZED, error.getStatusCode());
+        verifyNoInteractions(manager, deposits, receipts, notifications);
+    }
+
 }
