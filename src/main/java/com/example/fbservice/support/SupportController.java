@@ -56,6 +56,19 @@ public class SupportController {
             .body(service.countsForOwner(principal.getName()));
     }
 
+    /** Customer-specific ticket reply page for mobile clients. */
+    @GetMapping("/{id}/messages")
+    public org.springframework.http.ResponseEntity<Page<SupportMessageEntry>> messages(
+            @PathVariable Long id, @RequestParam(defaultValue = "0") int page,
+            Principal principal) {
+        Page<SupportMessageEntry> result = service
+            .pageMessagesForOwner(principal.getName(), id, page)
+            .map(SupportMessageEntry::from);
+        return org.springframework.http.ResponseEntity.ok()
+            .header(org.springframework.http.HttpHeaders.CACHE_CONTROL, "no-store")
+            .body(result);
+    }
+
     @GetMapping("/{id}")
     public String details(@PathVariable Long id, @RequestParam(defaultValue = "0") int page,
                           Principal principal, Model model) {
