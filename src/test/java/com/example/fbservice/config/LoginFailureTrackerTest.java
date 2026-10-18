@@ -17,11 +17,11 @@ class LoginFailureTrackerTest {
             tracker.recordFailure("valid-locked-user");
             assertThat(tracker.isTemporarilyLocked("valid-locked-user")).isFalse();
         }
-        tracker.recordFailure("valid-locked-user");
+        assertThat(tracker.recordFailure("valid-locked-user")).isTrue();
         assertThat(tracker.isTemporarilyLocked("valid-locked-user")).isTrue();
         assertThat(tracker.isTemporarilyLocked("unrelated-user")).isFalse();
         now.addAndGet(Duration.ofMinutes(14).toMillis());
-        tracker.recordFailure("valid-locked-user");
+        assertThat(tracker.recordFailure("valid-locked-user")).isFalse();
         assertThat(tracker.isTemporarilyLocked("valid-locked-user")).isTrue();
         now.addAndGet(Duration.ofMinutes(1).toMillis());
         assertThat(tracker.isTemporarilyLocked("valid-locked-user")).isFalse();

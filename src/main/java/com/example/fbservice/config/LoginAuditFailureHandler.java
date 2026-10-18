@@ -37,12 +37,15 @@ public class LoginAuditFailureHandler extends SimpleUrlAuthenticationFailureHand
         String submitted = request.getParameter("username");
         // Track attempts for valid-looking names whether an account exists or not.
         // This avoids account-existence differences in lockout behavior.
-        failures.recordFailure(submitted);
+        boolean newlyLocked=failures.recordFailure(submitted);
         // Only record an event for a real, syntactically valid account.
         // This does not disclose whether the account exists to the caller.
         if (submitted != null && submitted.matches("[A-Za-z0-9._-]{3,40}")) {
-            users.findByUsername(submitted).ifPresent(account ->
-                securityEvents.record(account.getId(), SecurityActivity.Kind.SIGN_IN_FAILED));
+            users.findByUsername(submitted).ifPresent(account -> {
+                securityEvents.record(account.getId(), SecurityActivity.Kind.SIGN_IN_FAILED);
+                if (newlyLocked)
+                    securityEvents.record(account.getId(), SecurityActivity.Kind.SIGN_IN_LOCKED);
+            });
         }
         response.setHeader("Cache-Control", "no-store");
         super.onAuthenticationFailure(request, response, exception);

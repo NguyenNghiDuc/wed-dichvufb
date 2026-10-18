@@ -2,6 +2,8 @@ package com.example.fbservice;
 
 import com.example.fbservice.model.User;
 import com.example.fbservice.repository.UserRepository;
+import com.example.fbservice.security.SecurityActivity;
+import com.example.fbservice.security.SecurityActivityRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -22,6 +24,7 @@ class TemporaryLoginLockoutIntegrationTest {
     @Autowired MockMvc mvc;
     @Autowired UserRepository users;
     @Autowired PasswordEncoder encoder;
+    @Autowired SecurityActivityRepository securityEvents;
 
     private void create(String name) {
         User u=new User();
@@ -45,6 +48,11 @@ class TemporaryLoginLockoutIntegrationTest {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/login?error"));
         }
+        var target=users.findByUsername("lock-target-user").orElseThrow();
+        assertThat(securityEvents.findTop200ByAccountIdOrderByCreatedAtDescIdDesc(target.getId()))
+            .extracting(SecurityActivity::getKind)
+            .filteredOn(kind -> kind == SecurityActivity.Kind.SIGN_IN_LOCKED)
+            .hasSize(1);
         // Even the correct password is not accepted while the one-account lock is active.
         mvc.perform(post("/login").with(csrf()).with(req->{
                 req.setRemoteAddr("198.51.100.120");return req;

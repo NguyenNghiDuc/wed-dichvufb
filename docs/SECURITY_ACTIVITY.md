@@ -29,3 +29,9 @@
 - New-key capacity checks and hit counts are serialized to prevent concurrent requests from exceeding the intended in-memory cap. The key's window duration must stay consistent while active. Sub-millisecond durations are rejected rather than silently disabling limits.
 - Deterministic unit tests fill the capacity, verify short-window cleanup preserves hourly throttles, and verify concurrent requests cannot overfill the store.
 - **Still limited to one application instance**; production with multiple backend replicas requires shared Redis/gateway limiting and load tests. This patch neither enables such infrastructure nor handles unknown client proxy addresses.
+
+## Tạm khóa đăng nhập và phát hiện bất thường
+
+- Sau **20 lần xác thực thất bại trong vòng 15 phút** cho cùng tên tài khoản, bộ theo dõi W1 khóa khả năng đăng nhập của tên đó trong **15 phút** (không đổi trạng thái ADMIN khóa dài hạn trong database). Lượt thử từ nhiều địa chỉ IP vẫn cộng dồn. Không tiết lộ sự tồn tại của username qua phản hồi, vẫn `/login?error`.
+- Khi vượt ngưỡng, ghi một sự kiện `SIGN_IN_LOCKED` theo account ID trong lịch sử bảo mật, không kèm IP, thiết bị, mật khẩu, token hoặc cookie. Yêu cầu bị khóa không tiếp tục ghi hàng loạt.
+- Trạng thái khóa hiện **chỉ ở bộ nhớ của từng instance** và mất khi khởi động lại, có thể bị lạm dụng gây từ chối dịch vụ cho tên tài khoản đã biết. Chủ dự án cần chấp thuận chính sách này và triển khai lưu trữ chung / báo động trước khi chạy nhiều node ở production.

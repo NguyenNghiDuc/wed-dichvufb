@@ -50,26 +50,29 @@ public class LoginFailureTracker {
         return false;
     }
 
-    public synchronized void recordFailure(String username) {
+    /** True exactly when this failure crosses the temporary-lock threshold. */
+    public synchronized boolean recordFailure(String username) {
         String key=key(username);
-        if (key==null) return;
+        if (key==null) return false;
         long now=clock.getAsLong();
         Attempt current=attempts.get(key);
-        if (current!=null && current.blockedUntil()>now) return;
+        if (current!=null && current.blockedUntil()>now) return false;
         if (current==null || current.blockedUntil()>0 ||
                 now-current.start() >= WINDOW_MILLIS) {
             if (current==null && attempts.size() >= MAX_ENTRIES) {
                 // Preserve known-account lockouts instead of evicting them.
                 // Existing per-peer rate limiting still applies for excess distinct names.
                 attempts.entrySet().removeIf(e -> expired(e.getValue(),now));
-                if (attempts.size() >= MAX_ENTRIES) return;
+                if (attempts.size() >= MAX_ENTRIES) return false;
             }
             attempts.put(key,new Attempt(now,1,0));
-        } else {
-            int failures=current.failures()+1;
-            attempts.put(key,new Attempt(current.start(),failures,
-                failures >= THRESHOLD ? now+LOCK_MILLIS : 0));
+            return false;
         }
+        int failures=current.failures()+1;
+        boolean newlyLocked=failures == THRESHOLD;
+        attempts.put(key,new Attempt(current.start(),failures,
+            newlyLocked ? now+LOCK_MILLIS : 0));
+        return newlyLocked;
     }
 
     public synchronized void resetAfterSuccess(String username) {
