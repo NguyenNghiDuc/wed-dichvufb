@@ -139,6 +139,29 @@ class AiContentServiceTest {
     }
 
     @Test
+    void scriptAudienceAbAndProofreadHaveBoundedProviderRequests() {
+        java.util.List<String> prompts = new java.util.ArrayList<>();
+        var service = new AiContentService("test-key", "test-model", json, request -> {
+            String payload = request.bodyPublisher().orElseThrow().contentLength() > 0
+                ? request.bodyPublisher().orElseThrow().toString() : "";
+            return new AiContentService.ProviderResponse(200,
+                "{\\"choices\\":[{\\"message\\":{\\"content\\":\\"Safe suggestion\\"}}]}");
+        });
+        for (var task : new AiContentTask[]{AiContentTask.VIDEO_SCRIPT,
+                AiContentTask.TARGET_AUDIENCE, AiContentTask.AB_VARIANTS, AiContentTask.PROOFREAD}) {
+            var input = new AiContentRequest(SocialPlatform.TIKTOK, "Study habits",
+                "College students", task, AiContentLanguage.VI, 7, "Original draft");
+            assertThat(service.generate(input).get("task")).isEqualTo(task.name());
+        }
+        expectStatus(HttpStatus.BAD_REQUEST, service,
+            new AiContentRequest(SocialPlatform.FACEBOOK, "Study habits", "Students",
+                AiContentTask.VIDEO_SCRIPT, AiContentLanguage.VI, 7, null));
+        expectStatus(HttpStatus.BAD_REQUEST, service,
+            new AiContentRequest(SocialPlatform.TIKTOK, "Study habits", "Students",
+                AiContentTask.PROOFREAD, AiContentLanguage.VI, 7, null));
+    }
+
+    @Test
     void invalidPlanDaysOrMissingOriginalTextAreRejectedWithoutNetworkCall() {
         AtomicInteger calls=new AtomicInteger();
         var service=new AiContentService("fake","test-model",json,req->{
