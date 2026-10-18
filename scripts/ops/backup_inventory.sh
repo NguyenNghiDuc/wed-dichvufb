@@ -34,7 +34,11 @@ for archive in "${archives[@]}"; do
       echo 'CRITICAL: backup file is readable by group/others' >&2; exit 1;
     }
   done
-  expected_line="$(cat -- "$archive.sha256")"
+  [[ "$(stat -c '%s' -- "$archive.sha256")" -le 256 ]] || {
+  echo 'Invalid oversized checksum manifest' >&2
+  exit 2
+}
+expected_line="$(cat -- "$archive.sha256")"
   actual="$(sha256sum "$archive" | cut -d ' ' -f1)"
   [[ "$expected_line" == "$actual  $(basename "$archive")" ]] || {
     echo 'CRITICAL: checksum mismatch or malformed filename/manifest' >&2; exit 1;
