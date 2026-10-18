@@ -5,6 +5,8 @@ import com.example.fbservice.campaign.*;
 import java.time.LocalDateTime;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
+import org.springframework.jdbc.core.JdbcTemplate;
+import java.sql.Timestamp;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -25,6 +27,7 @@ class AdminAttentionQueueIntegrationTest {
     @Autowired AdminAttentionQueueService queue;
     @Autowired CampaignOrderRepository orders;
     @Autowired MockMvc mvc;
+    @Autowired JdbcTemplate jdbc;
 
     // Independent fixtures: pagination tests insert old orders into the same H2 database.
     @BeforeEach
@@ -118,7 +121,12 @@ class AdminAttentionQueueIntegrationTest {
         CampaignOrder stale = create("w4-stale-assigned", CampaignStatus.APPROVED,
             now.minusDays(8), now.minusDays(5));
         stale.assignTo("w4-staff-stale");
-        orders.save(stale);
+        orders.saveAndFlush(stale);
+        // @PreUpdate intentionally refreshes updatedAt for real assignments.
+        // Restore the historical fixture in SQL after flushing instead of
+        // bypassing production lifecycle/audit behavior.
+        jdbc.update("update campaign_orders set updated_at = ? where id = ?",
+            Timestamp.valueOf(now.minusDays(5)), stale.getId());
         CampaignOrder fresh = create("w4-fresh-assigned", CampaignStatus.APPROVED,
             now.minusDays(5), now.minusHours(1));
         fresh.assignTo("w4-staff-fresh");
