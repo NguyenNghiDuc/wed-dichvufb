@@ -31,7 +31,8 @@
 <div class="table-panel admin-table-scroll"><table class="data-table admin-table">
 <thead><tr><th>ID</th><th>Tài khoản</th><th>Email</th><th>Vai trò</th><th>Trạng thái</th><th>Thao tác</th></tr></thead><tbody>
 <tr th:each="u : ${users}"><td class="admin-id" th:text="|#${u.id}|"></td>
-<td><strong th:text="${u.username}"></strong></td>
+<td><a class="table-link" th:href="@{/admin/users/{id}(id=${u.id})}"
+th:attr="aria-label=|Xem chi tiết tài khoản ${u.username}|"><strong th:text="${u.username}"></strong></a></td>
 <td class="admin-muted-cell" th:text="${u.email != null ? u.email : '—'}"></td>
 <td><span class="admin-role" th:text="${u.role}"></span></td>
 <td><span class="admin-status" th:classappend="${u.enabled ? ' is-active' : ' is-locked'}"
