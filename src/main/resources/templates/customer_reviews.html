@@ -10,6 +10,12 @@
 <div class="page-header"><div><div class="eyebrow">Phản hồi đã gửi</div>
 <h1>Đánh giá dịch vụ của tôi</h1>
 <p class="muted">Chỉ những đánh giá của tài khoản này; không hiển thị công khai.</p></div></div>
+<section class="customer-review-summary" aria-label="Thống kê đánh giá cá nhân">
+  <article><span>Tổng đánh giá</span><strong th:text="${reviewSummary.total()}">0</strong></article>
+  <article><span>Điểm trung bình</span><strong th:text="|${reviewSummary.average()}/5|">0/5</strong></article>
+  <article><span>Đánh giá 5 sao</span><strong th:text="${reviewSummary.fiveStars()}">0</strong></article>
+</section>
+<p class="footnote">Số liệu chỉ tính các đánh giá của tài khoản này, không bị ảnh hưởng bởi bộ lọc hiện tại.</p>
 <form method="get" th:action="@{/campaigns/reviews}" class="actions customer-filter-form"
       role="search" aria-label="Lọc đánh giá của tôi">
   <label for="reviewRating">Số sao</label>
