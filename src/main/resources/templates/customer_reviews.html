@@ -29,6 +29,8 @@
          placeholder="Từ khóa trong đánh giá" th:value="${query}">
   <button type="submit" class="btn btn-small">Lọc đánh giá</button>
   <a class="btn btn-outline btn-small" th:href="@{/campaigns/reviews}">Xóa lọc</a>
+  <a class="btn btn-outline btn-small"
+     th:href="@{/campaigns/reviews/export.csv(rating=${selectedRating},q=${query})}">↓ Xuất CSV đánh giá theo bộ lọc</a>
 </form>
 <div class="table-panel"><table class="data-table">
 <thead><tr><th>Chiến dịch</th><th>Đánh giá</th><th>Phản hồi</th><th>Ngày gửi</th></tr></thead>
