@@ -33,15 +33,15 @@ class LegacyCustomerOrderDetailIntegrationTest {
 
     @Test @WithMockUser(username="detail-owner")
     void detailIsReadOnlyAndScopedToAuthenticatedOwner() throws Exception {
-        Order mine=create("detail-owner", "Khách tự tạo nội dung");
-        Order foreign=create("detail-other", "Ghi chú bí mật của người khác");
+        Order mine=create("detail-owner", "owned-detail-note");
+        Order foreign=create("detail-other", "foreign-secret-note");
         mvc.perform(get("/order/" + mine.getId()))
             .andExpect(status().isOk())
             .andExpect(view().name("legacy_order_detail"))
             .andExpect(content().string(containsString("Chi tiết đơn hàng cũ")))
-            .andExpect(content().string(containsString("Khách tự tạo nội dung")))
+            .andExpect(content().string(containsString("owned-detail-note")))
             .andExpect(content().string(containsString("70 VND")))
-            .andExpect(content().string(not(containsString("Ghi chú bí mật"))));
+            .andExpect(content().string(not(containsString("foreign-secret-note"))));
         mvc.perform(get("/order/" + foreign.getId()))
             .andExpect(status().isNotFound());
         mvc.perform(get("/order/" + mine.getId()).with(user("detail-other")))
