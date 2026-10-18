@@ -59,6 +59,19 @@ public class ChatService {
         return messages.markThreadRead(viewer, other, LocalDateTime.now());
     }
 
+    /**
+     * Private, per-message read receipt; repeat and unrelated-account attempts
+     * both return zero without disclosing existence of a message.
+     */
+    @Transactional
+    public int markMessageRead(String viewer, Long messageId) {
+        if (viewer == null || viewer.isBlank())
+            throw new IllegalArgumentException("Authentication required");
+        if (messageId == null || messageId <= 0)
+            throw new IllegalArgumentException("Invalid message ID");
+        return messages.markOneRead(viewer, messageId, LocalDateTime.now());
+    }
+
     /** Both directions, always scoped to the logged-in user by the controller. */
     @Transactional(readOnly = true)
     public Page<ChatMessage> threadFor(String viewer, String other, int page, int size) {
