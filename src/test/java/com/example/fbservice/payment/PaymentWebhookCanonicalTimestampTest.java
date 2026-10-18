@@ -124,4 +124,28 @@ class PaymentWebhookCanonicalTimestampTest {
         verifyNoInteractions(manager, deposits, receipts, notifications);
     }
 
+    @Test
+    void missingSecretDisablesWebhookBeforeDatabaseAccess() {
+        assertDisabledSecret("");
+    }
+
+    @Test
+    void tooShortSecretDisablesWebhookBeforeDatabaseAccess() {
+        assertDisabledSecret("short");
+    }
+
+    private void assertDisabledSecret(String secret) {
+        PlatformTransactionManager manager = mock(PlatformTransactionManager.class);
+        DepositRequestRepository deposits = mock(DepositRequestRepository.class);
+        PaymentReceiptRepository receipts = mock(PaymentReceiptRepository.class);
+        AccountNotificationRepository notifications = mock(AccountNotificationRepository.class);
+        PaymentWebhookService service = new PaymentWebhookService(
+                secret, deposits, receipts, notifications, new ObjectMapper(), manager);
+        ResponseStatusException error = assertThrows(ResponseStatusException.class,
+                () -> service.accept("{}".getBytes(StandardCharsets.UTF_8),
+                        "0".repeat(64), Long.toString(Instant.now().getEpochSecond())));
+        assertEquals(HttpStatus.SERVICE_UNAVAILABLE, error.getStatusCode());
+        verifyNoInteractions(manager, deposits, receipts, notifications);
+    }
+
 }
