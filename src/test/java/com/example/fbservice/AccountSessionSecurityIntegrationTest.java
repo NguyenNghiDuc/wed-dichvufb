@@ -34,14 +34,26 @@ class AccountSessionSecurityIntegrationTest {
  MockHttpSession login(String name,String device) throws Exception {
   return (MockHttpSession)mvc.perform(post("/login").with(csrf()).with(r->{r.setRemoteAddr("198.51.100."+address.getAndIncrement());return r;})
     .header("User-Agent",device).param("username",name).param("password","SessionPass123!"))
-   .andExpect(redirectedUrl("/campaigns")).andReturn().getRequest().getSession(false);
+   .andExpect(redirectedUrl("/")).andReturn().getRequest().getSession(false);
+ }
+ @Test void loginAlwaysReturnsHomeAndClearsSavedRequest() throws Exception {
+  var u=account("home_after_saved_request");
+  var prior=mvc.perform(get("/profile")).andExpect(status().is3xxRedirection()).andReturn();
+  var anonymous=(MockHttpSession)prior.getRequest().getSession(false);
+  assertThat(anonymous.getAttribute("SPRING_SECURITY_SAVED_REQUEST")).isNotNull();
+  var result=mvc.perform(post("/login").session(anonymous).with(csrf())
+    .param("username",u.getUsername()).param("password","SessionPass123!"))
+    .andExpect(redirectedUrl("/")).andReturn();
+  var loggedIn=(MockHttpSession)result.getRequest().getSession(false);
+  assertThat(loggedIn.getAttribute("SPRING_SECURITY_SAVED_REQUEST")).isNull();
+  mvc.perform(get("/").session(loggedIn)).andExpect(status().isOk());
  }
  @Test void sessionsStoreOnlyHashAndRotateAnonymousIdentityAndIgnoreForwardedIp() throws Exception {
   var u=account("device_metadata");var anonymous=new MockHttpSession();String oldId=anonymous.getId();
   var result=mvc.perform(post("/login").session(anonymous).with(csrf()).with(r->{r.setRemoteAddr("192.0.2.10");return r;})
     .header("X-Forwarded-For","203.0.113.99").header("User-Agent","<script>alert(1)</script> Browser")
     .param("username",u.getUsername()).param("password","SessionPass123!"))
-   .andExpect(redirectedUrl("/campaigns")).andReturn();
+   .andExpect(redirectedUrl("/")).andReturn();
   var session=(MockHttpSession)result.getRequest().getSession(false);
   assertThat(session.getId()).isNotEqualTo(oldId);
   assertThat(jdbc.queryForObject("select session_hash from account_sessions where user_id=?",String.class,u.getId()))
@@ -56,7 +68,7 @@ class AccountSessionSecurityIntegrationTest {
  @Test void loggingInAgainInTheSameBrowserDoesNotLeaveAGhostSession() throws Exception {
   var u=account("device_relogin");var first=login(u.getUsername(),"Relogin browser");String oldId=first.getId();
   var next=mvc.perform(post("/login").session(first).with(csrf()).param("username",u.getUsername()).param("password","SessionPass123!"))
-   .andExpect(redirectedUrl("/campaigns")).andReturn().getRequest().getSession(false);
+   .andExpect(redirectedUrl("/")).andReturn().getRequest().getSession(false);
   assertThat(next.getId()).isNotEqualTo(oldId);assertThat(sessions.list(u,next.getId())).hasSize(1);
  }
  @Test void revokeOneSessionRequiresPasswordCsrfAndOwnershipAndLeavesOtherSessionUsable() throws Exception {

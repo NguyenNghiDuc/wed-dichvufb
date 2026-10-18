@@ -60,6 +60,6 @@ class ApplicationPagesSmokeTest {
                 .param("username", "smoketest_user_001")
                 .param("password", "strongpassword123"))
             .andExpect(status().is3xxRedirection())
-            .andExpect(redirectedUrl("/campaigns"));
+            .andExpect(redirectedUrl("/"));
     }
 }

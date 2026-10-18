@@ -24,7 +24,7 @@ class AccountSettingsIntegrationTest {
  User account(String name){User u=new User();u.setUsername(name);u.setPassword(encoder.encode("OldPass123!"));return users.saveAndFlush(u);}
  org.springframework.mock.web.MockHttpSession login(String username,String password) throws Exception {
   return (org.springframework.mock.web.MockHttpSession)mvc.perform(post("/login").with(csrf()).param("username",username).param("password",password))
-   .andExpect(redirectedUrl("/campaigns")).andReturn().getRequest().getSession(false);
+   .andExpect(redirectedUrl("/")).andReturn().getRequest().getSession(false);
  }
  @Test void updateNameIsOwnerScopedAndDoesNotChangeIdentity() throws Exception {
   var alice=account("settings_alice");var bob=account("settings_bob");

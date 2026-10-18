@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class TrackedLoginSuccessHandler extends SavedRequestAwareAuthenticationSuccessHandler {
  private final AccountSessionService sessions;
- public TrackedLoginSuccessHandler(AccountSessionService sessions){this.sessions=sessions;setDefaultTargetUrl("/campaigns");}
+ public TrackedLoginSuccessHandler(AccountSessionService sessions){this.sessions=sessions;setDefaultTargetUrl("/");setAlwaysUseDefaultTargetUrl(true);}
  @Override public void onAuthenticationSuccess(HttpServletRequest request,HttpServletResponse response,Authentication authentication)
      throws IOException,ServletException{
   try{sessions.register((AccountPrincipal)authentication.getPrincipal(),request,
