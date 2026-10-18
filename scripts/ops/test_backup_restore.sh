@@ -34,10 +34,11 @@ archive="$(find "$scratch" -maxdepth 1 -type f -name 'growlab_*.dump' -print -qu
 [[ -n "$archive" && -f "$archive.sha256" ]] || { echo 'Backup output missing' >&2; exit 1; }
 [[ "$(stat -c '%a' "$archive")" == 600 ]] || { echo 'Backup permissions too broad' >&2; exit 1; }
 # Deliberately damage a COPY; checksum must reject BEFORE restore is attempted.
-cp -- "$archive" "$scratch/corrupt.dump"
-cp -- "$archive.sha256" "$scratch/corrupt.dump.sha256"
-printf '%s' 'tampered' >> "$scratch/corrupt.dump"
-if bash scripts/ops/restore_sandbox.sh --sandbox "$scratch/corrupt.dump"; then
+corrupt="$scratch/growlab_$(date -u +%Y%m%dT%H%M%SZ)_corrupt.dump"
+cp -- "$archive" "$corrupt"
+cp -- "$archive.sha256" "$corrupt.sha256"
+printf '%s' 'tampered' >> "$corrupt"
+if bash scripts/ops/restore_sandbox.sh --sandbox "$corrupt"; then
   echo 'FAIL: tampered archive was accepted' >&2
   exit 1
 fi
