@@ -25,11 +25,14 @@ public class ContentDraftService {
     }
 
     @Transactional(readOnly=true)
-    public List<ContentDraft> mine(String owner){return drafts.findByOwnerUsernameOrderByCreatedAtDesc(owner);}
+    public List<ContentDraft> mine(String owner){
+        requireOwner(owner);
+        return drafts.findByOwnerUsernameOrderByCreatedAtDesc(owner);
+    }
 
     @Transactional(readOnly=true)
     public Page<ContentDraft> pageMine(String owner,int page) {
-        if(owner==null||owner.isBlank())throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+        requireOwner(owner);
         if(page<0||page>10000)throw new IllegalArgumentException("Trang không hợp lệ.");
         return drafts.findByOwnerUsername(owner,PageRequest.of(page,PAGE_SIZE,
             Sort.by(Sort.Order.desc("createdAt"),Sort.Order.desc("id"))));
@@ -37,6 +40,8 @@ public class ContentDraftService {
 
     @Transactional(readOnly=true)
     public ContentDraft findMineById(String owner,Long id) {
+        requireOwner(owner);
+        requireId(id);
         return drafts.findByIdAndOwnerUsername(id,owner)
             .orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND));
     }
@@ -57,13 +62,24 @@ public class ContentDraftService {
     }
 
     private ContentDraft lockMine(String owner,Long id) {
+        requireOwner(owner);
+        requireId(id);
         return drafts.lockByIdAndOwner(id,owner)
             .orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND));
     }
 
+    private void requireOwner(String owner) {
+        if(owner==null||owner.isBlank())throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+    }
+
+    private void requireId(Long id) {
+        if(id==null||id<=0)throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+    }
+
     private void validate(String owner,SocialPlatform platform,String title,
                           String body,LocalDateTime when) {
-        if(owner==null||owner.isBlank()||platform==null||title==null||title.isBlank()||
+        requireOwner(owner);
+        if(platform==null||title==null||title.isBlank()||
             title.length()>120||body==null||body.isBlank()||body.length()>3000)
             throw new IllegalArgumentException("Nội dung hoặc nền tảng không hợp lệ.");
         if(when!=null) {
