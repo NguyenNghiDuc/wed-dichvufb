@@ -39,6 +39,16 @@ expect_refused 'staging with no DNS or secret' env -u STAGING_HOST -u POSTGRES_P
 expect_refused 'invalid rollback SHAs' bash scripts/ops/rollback_plan.sh --plan BAD-SHA ALSO-BAD
 expect_refused 'TLS smoke without host' env -u STAGING_HOST bash scripts/ops/smoke.sh --tls
 export RESTORE_TEST_PASSWORD='fixture-test-only-not-a-real-secret'
+export BACKUP_DIR='./backups'
+expect_refused 'relative backup path' bash scripts/ops/backup.sh --fixture
+export BACKUP_DIR="$(pwd -P)"
+expect_refused 'backup inside repository' bash scripts/ops/backup.sh --fixture
+mkdir -p "$sandbox/open"
+chmod 755 "$sandbox/open"
+export BACKUP_DIR="$sandbox/open"
+expect_refused 'world-readable backup folder' bash scripts/ops/backup.sh --fixture
+unset BACKUP_DIR
+
 expect_refused 'missing archive' bash scripts/ops/restore_sandbox.sh --sandbox "$sandbox/missing.dump"
 printf 'fake-archive' > "$sandbox/wrong.dump"
 printf '%064d  wrong.dump\n' 0 > "$sandbox/wrong.dump.sha256"
