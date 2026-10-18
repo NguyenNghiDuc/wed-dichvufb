@@ -20,7 +20,8 @@
 </form>
 </div></main>
 <script>
-  for (const [fieldId, countId, limit] of [['title', 'title-count', 120], ['body', 'body-count', 3000]]) {
+  for (const item of [{fieldId:'title', countId:'title-count', limit:120}, {fieldId:'body', countId:'body-count', limit:3000}]) {
+    const {fieldId, countId, limit} = item;
     const field = document.getElementById(fieldId);
     const count = document.getElementById(countId);
     if (field && count) {
