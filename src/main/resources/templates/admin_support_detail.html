@@ -1,7 +1,7 @@
 <!doctype html><html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Admin hỗ trợ · GrowLab</title><link rel="stylesheet" th:href="@{/style.css}"><link rel="stylesheet" th:href="@{/support-chat.css}"></head>
 <body><main class="page container"><a th:href="@{/admin/support}" class="table-link">← Tất cả yêu cầu</a>
-<div class="page-header"><div><div class="eyebrow">Admin</div><h1 th:text="${ticket.subject}"></h1><p class="muted" th:text="|Tài khoản: ${ticket.ownerUsername}|"></p><span class="status" th:text="${ticket.status.title}"></span></div></div>
+<div class="page-header"><div><div class="eyebrow">Admin</div><h1 th:text="${ticket.subject}"></h1><p class="muted" th:text="|Tài khoản: ${ticket.ownerUsername}|"></p><a class="btn btn-outline btn-small" th:href="@{/chat/ui/{other}(other=${ticket.ownerUsername})}">Nhắn trực tiếp cho khách</a><span class="status" th:text="${ticket.status.title}"></span></div></div>
 <article class="card"><p th:text="${ticket.description}"></p>
 <p>Đang phụ trách: <strong th:text="${ticket.assigneeUsername != null ? ticket.assigneeUsername : 'Chưa phân công'}"></strong></p>
 <form method="post" th:if="${ticket.assigneeUsername == null and ticket.status.name() != 'CLOSED'}"
