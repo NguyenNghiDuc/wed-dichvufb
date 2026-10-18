@@ -17,11 +17,15 @@ Không phải nhật ký chống chỉnh sửa toàn diện.</p></div></div>
 <div class="admin-filter-field"><label for="actor">Người thực hiện (chính xác)</label>
 <input id="actor" name="actor" maxlength="100" pattern="[a-zA-Z0-9._-]{3,100}"
        placeholder="Tên tài khoản Admin" th:value="${actorFilter}"></div>
+<div class="admin-filter-field"><label for="auditFrom">Từ ngày</label>
+<input id="auditFrom" name="from" type="date" th:value="${from}"></div>
+<div class="admin-filter-field"><label for="auditTo">Đến ngày</label>
+<input id="auditTo" name="to" type="date" th:value="${to}"></div>
 <div class="admin-filter-actions"><button type="submit" class="btn btn-small">Áp dụng</button>
 <a class="btn btn-outline btn-small" th:href="@{/admin/activity}">Xóa lọc</a></div></form>
 <div class="admin-table-heading"><strong>Hoạt động gần đây</strong><div class="admin-row-actions">
 <span>Chỉ đọc · Giới hạn 50 dòng</span>
-<a class="btn btn-outline btn-small" th:href="@{/admin/activity/export.csv(area=${selectedArea},actor=${actorFilter})}">Xuất CSV (50 dòng) ↗</a></div></div>
+<a class="btn btn-outline btn-small" th:href="@{/admin/activity/export.csv(area=${selectedArea},actor=${actorFilter},from=${from},to=${to})}">Xuất CSV (50 dòng) ↗</a></div></div>
 <div class="table-panel admin-table-scroll"><table class="data-table admin-table">
 <thead><tr><th>Thời gian</th><th>Loại</th><th>Người thực hiện</th><th>Đối tượng</th><th>Thay đổi</th></tr></thead>
 <tbody><tr th:each="e : ${entries}"><td th:text="${#temporals.format(e.createdAt,'dd/MM/yyyy HH:mm')}"></td>

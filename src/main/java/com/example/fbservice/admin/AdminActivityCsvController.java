@@ -1,6 +1,8 @@
 package com.example.fbservice.admin;
 
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -20,10 +22,12 @@ public class AdminActivityCsvController {
     @GetMapping(value = "/admin/activity/export.csv", produces = "text/csv;charset=UTF-8")
     public ResponseEntity<byte[]> download(@RequestParam(defaultValue = "ALL")
                                              AdminActivityService.Area area,
-                                             @RequestParam(required = false) String actor) {
+                                             @RequestParam(required = false) String actor,
+                                             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+                                             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
         StringBuilder csv = new StringBuilder("\uFEFF");
         csv.append("timestamp,area,actor,target,details\r\n");
-        for (AdminActivityService.Entry e : activities.recent(area, actor)) {
+        for (AdminActivityService.Entry e : activities.recent(area, actor, from, to)) {
             csv.append(cell(e.createdAt().toString())).append(',')
                .append(cell(e.area().name())).append(',')
                .append(cell(e.actor())).append(',')
