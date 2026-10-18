@@ -1,0 +1,48 @@
+# Local W10 recovery tests ONLY. No public ports, no persistent real data.
+# Run with: docker compose -f compose.yaml -f compose.recovery.yaml --profile recovery ...
+services:
+  fixture-db:
+    image: postgres:16-alpine
+    profiles: ["recovery"]
+    restart: "no"
+    environment:
+      POSTGRES_DB: growlab_fixture
+      POSTGRES_USER: fixture
+      POSTGRES_PASSWORD: ${RESTORE_TEST_PASSWORD:?Provide a random RESTORE_TEST_PASSWORD for isolated tests}
+    tmpfs:
+      - /var/lib/postgresql/data:rw,nosuid,nodev,size=256m,mode=0700
+    networks:
+      - recovery_isolated
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fixture -d growlab_fixture"]
+      interval: 3s
+      timeout: 3s
+      retries: 15
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 100
+    mem_limit: 384m
+  recovery-db:
+    image: postgres:16-alpine
+    profiles: ["recovery"]
+    restart: "no"
+    environment:
+      POSTGRES_DB: growlab_recovery
+      POSTGRES_USER: recovery
+      POSTGRES_PASSWORD: ${RESTORE_TEST_PASSWORD:?Provide a random RESTORE_TEST_PASSWORD for isolated tests}
+    tmpfs:
+      - /var/lib/postgresql/data:rw,nosuid,nodev,size=256m,mode=0700
+    networks:
+      - recovery_isolated
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U recovery -d growlab_recovery"]
+      interval: 3s
+      timeout: 3s
+      retries: 15
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 100
+    mem_limit: 384m
+networks:
+  recovery_isolated:
+    internal: true
