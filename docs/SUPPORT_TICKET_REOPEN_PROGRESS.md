@@ -23,6 +23,21 @@ This work extends existing Draft PR #35 on `feature/issue27-support-workflow`.
   reassign it using the existing audited mechanism. Reopening never
   revives a previously disabled account or sends a new notification.
 
+## Optional staff closing note
+
+- STAFF/ADMIN may optionally send `resolutionNote` (10–500 characters
+  when provided) with `POST /admin/support/{id}/close`. Omission is
+  backward-compatible with existing close actions. The existing
+  assignee/role authorization and CSRF rules still apply.
+- A supplied note is written as a private ticket reply, together with the
+  system-authored CLOSED status entry, in the same transaction.
+  It is never copied into W8 notifications, does not change the database
+  schema, and is escaped by `th:text` for both customer/staff views.
+- `SupportTicketClosureNoteIntegrationTest` checks normal CSRF,
+  authorization, input bounds, timeline persistence, foreign-owner access
+  restrictions, and stored XSS. This is an internal note, not an SLA
+  resolution timestamp.
+
 ## Owner- and staff-scoped progress
 
 - `GET /support/{id}/progress` requires the exact ticket owner;
