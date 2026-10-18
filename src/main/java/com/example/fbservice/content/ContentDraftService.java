@@ -24,6 +24,13 @@ public class ContentDraftService {
         return drafts.save(new ContentDraft(owner,platform,title.strip(),body.strip(),when));
     }
 
+    @Transactional
+    public ContentDraft duplicateMine(String owner, Long id) {
+        ContentDraft original = findMineById(owner, id);
+        // A duplicated draft is always unscheduled; copying must never trigger publishing.
+        return save(owner, original.getPlatform(), original.getTitle(), original.getBody(), null);
+    }
+
     @Transactional(readOnly=true)
     public List<ContentDraft> mine(String owner){
         requireOwner(owner);
