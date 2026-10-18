@@ -135,9 +135,11 @@ public class SupportAdminController {
     }
 
     @PostMapping("/{id}/close")
-    public String close(@PathVariable Long id, Principal principal, Model model) {
+    public String close(@PathVariable Long id,
+                        @RequestParam(required = false) String resolutionNote,
+                        Principal principal, Model model) {
         try {
-            service.closeAsAdmin(principal.getName(), id);
+            service.closeAsAdmin(principal.getName(), id, resolutionNote);
             return "redirect:/admin/support/" + id;
         } catch (IllegalArgumentException exception) {
             model.addAttribute("error", exception.getMessage());
