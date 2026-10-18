@@ -22,7 +22,7 @@
       if (key !== quoteKey) {
         quoteKey = key; quote = null; quoteError = ''; pendingQuote = false;
         clearTimeout(timer); quoteRequest?.abort();
-        if (coupon?.value.trim() && service.value) {
+        if (service.value) {
           pendingQuote = true;
           timer = setTimeout(async () => {
             quoteRequest = new AbortController();
@@ -40,15 +40,16 @@
           }, 250);
         }
       }
-      const formatted = quote ? money.format(quote.totalPriceVnd) : price ? money.format(Number(price)) : '— đ';
-      text('summary-original', price ? money.format(quote?.originalPriceVnd ?? Number(price)) : '— đ');
+      const formatted = quote ? money.format(quote.totalPriceVnd) : service.value ? 'Đang cập nhật…' : '— đ';
+      text('summary-original', quote ? money.format(quote.originalPriceVnd) : '— đ');
       text('summary-discount', money.format(quote?.discountVnd || 0));
       text('confirm-coupon', quote?.couponCode || 'Không dùng mã');
       text('confirm-discount', money.format(quote?.discountVnd || 0));
+      text('price-status', pendingQuote ? 'Đang lấy báo giá từ server…' : quoteError || (quote ? 'Báo giá đã cập nhật từ server; được kiểm tra lại khi gửi.' : 'Chọn gói để xem báo giá.'));
       if (couponStatus) couponStatus.textContent = !coupon.value.trim() ? 'Mã được kiểm tra tại server. Xem trước không giữ lượt; hủy đơn không trả lượt.'
         : !service.value ? 'Chọn gói trước để kiểm tra mã.' : pendingQuote ? 'Đang kiểm tra mã…'
         : quoteError || (quote ? 'Mã ' + quote.couponCode + ': giảm dự kiến ' + money.format(quote.discountVnd) + '. Server sẽ kiểm tra lại khi tạo đơn.' : 'Đang chờ kiểm tra mã.');
-      document.getElementById('checkout-submit').disabled = ![...service.options].some(o => o.value) || Boolean(coupon?.value.trim() && (!quote || pendingQuote || quoteError));
+      document.getElementById('checkout-submit').disabled = ![...service.options].some(o => o.value) || Boolean(service.value && (!quote || pendingQuote || quoteError));
       for (const prefix of ['summary', 'confirm']) {
         text(prefix + '-platform', platformTitle);
         text(prefix + '-service', serviceTitle);
@@ -58,12 +59,42 @@
       text('confirm-url', document.getElementById('targetUrl').value);
       text('confirm-brief', brief.value);
     };
+    const steps = [...form.querySelectorAll('.checkout-step')];
+    const progress = document.getElementById('checkout-progress');
+    const controls = document.getElementById('wizard-controls');
+    const back = document.getElementById('wizard-back');
+    const next = document.getElementById('wizard-next');
+    let activeStep = 0;
+    const showStep = (step, focus = false) => {
+      activeStep = step;
+      steps.forEach((section, index) => { section.hidden = index !== step; });
+      [...progress.children].forEach((item, index) => {
+        item.classList.toggle('active', index === step);
+        item.classList.toggle('complete', index < step);
+        if (index === step) item.setAttribute('aria-current', 'step'); else item.removeAttribute('aria-current');
+      });
+      back.hidden = step === 0; next.hidden = step === steps.length - 1;
+      document.getElementById('checkout-submit').hidden = step !== steps.length - 1;
+      if (focus) { const first = steps[step].querySelector('input,select,textarea'); first?.focus(); }
+    };
+    progress.hidden = false; controls.hidden = false;
+    next.addEventListener('click', () => {
+      for (const field of steps[activeStep].querySelectorAll('input,select,textarea')) if (!field.reportValidity()) return;
+      showStep(Math.min(activeStep + 1, steps.length - 1), true);
+    });
+    back.addEventListener('click', () => showStep(Math.max(activeStep - 1, 0), true));
+    form.addEventListener('invalid', event => {
+      const section = event.target.closest('.checkout-step');
+      if (section) showStep(steps.indexOf(section));
+    }, true);
+    showStep(0);
     document.getElementById('coupon-recheck')?.addEventListener('click', () => { quoteKey = ''; update(); });
     form.addEventListener('input', update);
     form.addEventListener('change', update);
     form.addEventListener('submit', event => {
-      if (coupon?.value.trim() && (!quote || pendingQuote || quoteError || quoteKey !== currentKey())) {
-        event.preventDefault(); confirmed = false; coupon.focus(); return;
+      if (activeStep < steps.length - 1) { event.preventDefault(); next.click(); return; }
+      if (service.value && (!quote || pendingQuote || quoteError || quoteKey !== currentKey())) {
+        event.preventDefault(); confirmed = false; showStep(2); coupon.focus(); return;
       }
       if (!confirmed && typeof dialog.showModal === 'function') {
         event.preventDefault();
@@ -83,7 +114,7 @@
     });
     dialog.querySelector('[data-close-dialog]').addEventListener('click', () => dialog.close());
     window.addEventListener('pageshow', () => {
-      confirmed = false;
+      confirmed = false; quoteKey = '';
       const button = document.getElementById('checkout-submit');
       button.disabled = ![...service.options].some(option => option.value);
       button.textContent = 'Xem lại và gửi yêu cầu';

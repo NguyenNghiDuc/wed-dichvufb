@@ -41,7 +41,7 @@ class CouponIntegrationTest {
    .andExpect(status().isOk()).andExpect(jsonPath("$.originalPriceVnd").value(base)).andExpect(jsonPath("$.discountVnd").value(10000));
   assertThat(coupons.detail(coupon.getId()).getUsedCount()).isZero();
   var result=mvc.perform(post("/campaigns").with(user("coupon_buyer")).with(csrf()).param("platform","TIKTOK").param("serviceType","CONTENT_PLAN").param("targetUrl","https://tiktok.com/@coupon_demo").param("brief","Nội dung tư vấn cần thực hiện.").param("couponCode","price10").param("quotedPriceVnd","1").param("discountVnd","999999999"))
-   .andExpect(redirectedUrl("/campaigns")).andReturn();
+   .andExpect(redirectedUrlPattern("/campaigns/*/success")).andReturn();
   Long id=(Long)result.getFlashMap().get("createdOrderId");var order=orders.findById(id).orElseThrow();
   assertThat(order.getQuotedPriceVnd()).isEqualTo(base-10000);assertThat(order.getOriginalPriceVnd()).isEqualTo(base);assertThat(order.getCouponCode()).isEqualTo("PRICE10");
   mvc.perform(get("/campaigns/"+id).with(user("coupon_buyer"))).andExpect(status().isOk()).andExpect(content().string(containsString("PRICE10")));

@@ -42,7 +42,7 @@ public class TiktokOrderController {
         try{
             var order=ordering.create(principal.getName(),request,serverVersion);
             redirect.addFlashAttribute("success","Đã nhận đơn #"+order.getId()+". Đang chờ duyệt, chưa phát sinh thanh toán.");
-            return "redirect:/tiktok/orders/"+order.getId();
+            return "redirect:/tiktok/orders/"+order.getId()+"/success";
         }catch(IllegalArgumentException e){model.addAttribute("error",e.getMessage());return checkout(request,model,principal);}
     }
     @GetMapping

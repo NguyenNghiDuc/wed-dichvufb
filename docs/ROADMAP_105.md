@@ -1,4 +1,4 @@
-# Roadmap 105 hạng mục — GrowLab
+# Roadmap 125 hạng mục — GrowLab
 
 **Chính sách nghiệm thu:** Mặc định mọi hạng mục là [ ] CHƯA NGHIỆM THU, kể cả nếu đã có phiên bản thử nghiệm trong code. Chỉ đổi thành [x] khi có bằng chứng thực tế (unit/integration/security/UAT thích hợp) và review. Không tự đồng nhất “CI xanh” với “không có lỗ hổng”.
 
@@ -137,7 +137,7 @@
 - [ ] **104** Triển khai staging và production với HTTPS
 - [ ] **105** Kiểm thử tải cao, kiểm tra Docker và quy trình rollback
 
-## Sprint P0 đang triển khai
+## Nền tảng vận hành và bảo mật
 
 - Bảo vệ endpoint auth bằng giới hạn request theo IP/phiên, thêm security headers và kiểm thử.
 - Bổ sung hủy chiến dịch khi còn chờ duyệt, ghi nhật ký và thông báo; chống truy cập chéo tài khoản.
@@ -170,28 +170,34 @@ Các checkbox trên là trạng thái nghiệm thu production/review, không ph�
 4. AI có hạn mức/chi phí, OAuth mạng xã hội và queue theo quyền chính thức. Không yêu cầu mật khẩu mạng xã hội.
 5. Hoàn thiện UX còn thiếu, kiểm thử tải/backup/restore, staging HTTPS và nghiệm thu production.
 
-### IX. 20 đề xuất UX/kinh doanh bổ sung (chưa triển khai)
+### IX. Danh sách 106–125 theo ưu tiên của chủ dự án
 
-106. Ghim dịch vụ thường dùng vào dashboard.
-107. So sánh các gói dịch vụ theo giá, phạm vi và thời gian dự kiến.
-108. Lưu đơn nháp và tiếp tục sau khi đăng nhập.
-109. Đặt lại từ đơn cũ, báo giá và xác thực lại ở server.
-110. Xem trước dữ liệu nhập CSV theo từng dòng trước khi tạo đơn hàng loạt.
-111. Lưu phiên bản báo giá tại thời điểm xác nhận đơn.
-112. Hiển thị thời gian dự kiến và điều kiện xử lý của từng gói.
-113. Checklist bàn giao kết quả và xác nhận của khách hàng.
-114. Nhắc khách bổ sung thông tin còn thiếu trên đơn.
-115. Tệp đính kèm hỗ trợ có kiểm tra loại/kích thước và quyền tải.
-116. Gắn nhãn, mức ưu tiên và SLA cho phiếu hỗ trợ.
-117. Trung tâm thông báo có tùy chọn loại thông báo.
-118. Chọn múi giờ hiển thị và định dạng ngày/tiền tệ.
-119. Tùy chỉnh cột và lưu bộ lọc báo cáo.
-120. Hướng dẫn từng bước khi sử dụng lần đầu.
-121. Thông báo bảo trì và trang trạng thái dịch vụ.
-122. Khảo sát mức hài lòng sau khi đóng hỗ trợ.
-123. Luồng yêu cầu xuất dữ liệu cá nhân và đóng tài khoản có xác minh.
-124. Chế độ trợ năng: tăng cỡ chữ, tương phản và reduced motion.
-125. Theo dõi nguồn giới thiệu/chiến dịch từ dữ liệu first-party có sự đồng ý.
+Danh sách này thay thế 20 đề xuất trước. Ưu tiên và ý nghĩa mã số theo yêu cầu mới; “có code” không thay cho nghiệm thu production.
+
+| Mã | Chức năng | Ưu tiên |
+|---|---|---|
+| 106 | Menu danh mục dịch vụ nhiều cấp | P1 |
+| 107 | Tìm kiếm dịch vụ có gợi ý tức thì | P1 |
+| 108 | Lọc dịch vụ theo nền tảng, giá, mục tiêu | P1 |
+| 109 | So sánh nhiều gói dịch vụ cạnh nhau | P1 |
+| 110 | Tính báo giá tức thì khi chọn gói | P0 |
+| 111 | Lưu gói yêu thích | P2 |
+| 112 | Lưu đơn nháp đang điền | P1 |
+| 113 | Quy trình đặt dịch vụ từng bước | P0 |
+| 114 | Xem lại thông tin trước khi gửi đơn | P0 |
+| 115 | Trang xác nhận tạo đơn thành công | P0 |
+| 116 | Timeline trực quan của từng đơn | P1 |
+| 117 | Tải tài liệu, ảnh minh chứng vào yêu cầu | P1 |
+| 118 | Khách hàng và nhân viên trao đổi ngay trong đơn | P1 |
+| 119 | Trang dịch vụ liên quan | P2 |
+| 120 | Bảng giá và FAQ riêng cho từng dịch vụ | P1 |
+| 121 | Đánh giá từ đơn hoàn thành đã xác minh | P1 |
+| 122 | Thanh tìm kiếm và danh mục đẹp trên mobile | P1 |
+| 123 | Hỗ trợ nhanh từ trang chi tiết dịch vụ | P1 |
+| 124 | SEO riêng cho từng trang dịch vụ | P1 |
+| 125 | Phân tích tỷ lệ xem dịch vụ → gửi yêu cầu | P2 |
+
+Đợt P0 tập trung 110/113/114 cho form tư vấn và 115 cho cả tư vấn/TikTok. TikTok đã có báo giá theo server/số lượng và bước chọn dịch vụ; đợt này không tự tuyên bố hoàn tất toàn bộ P1/P2. Đánh giá riêng từ đơn hoàn thành đã có code ở 023/121; công bố lên trang dịch vụ cần luồng quyền/đồng ý riêng.
 
 ### Đợt tiếp theo: đánh giá dịch vụ và FAQ có tìm kiếm
 

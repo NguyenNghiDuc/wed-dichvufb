@@ -70,7 +70,7 @@ public class CampaignWebController {
             CampaignOrder created = service.create(principal.getName(), new CampaignOrderRequest(platform, serviceType, targetUrl, brief,couponCode));
             redirect.addFlashAttribute("success", "Đã nhận yêu cầu #" + created.getId() + ". Chiến dịch đang chờ duyệt.");
             redirect.addFlashAttribute("createdOrderId", created.getId());
-            return "redirect:/campaigns";
+            return "redirect:/campaigns/"+created.getId()+"/success";
         } catch (IllegalArgumentException exception) {
             model.addAttribute("error", exception.getMessage());
             model.addAttribute("couponCode",couponCode);

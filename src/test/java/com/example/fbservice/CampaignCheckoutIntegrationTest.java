@@ -59,7 +59,7 @@ class CampaignCheckoutIntegrationTest {
         mvc.perform(post("/campaigns").with(csrf()).param("platform", "TIKTOK")
                 .param("serviceType", "CONTENT_PLAN").param("targetUrl", "https://www.tiktok.com/@demo")
                 .param("brief", BRIEF).param("quotedPriceVnd", "1"))
-            .andExpect(redirectedUrl("/campaigns"))
+            .andExpect(redirectedUrlPattern("/campaigns/*/success"))
             .andExpect(flash().attributeExists("success", "createdOrderId"));
         var order = orders.findByOwnerUsernameOrderByCreatedAtDesc("checkout_owner").get(0);
         assertThat(order.getQuotedPriceVnd()).isEqualTo(149000);
