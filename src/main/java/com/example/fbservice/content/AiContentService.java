@@ -19,6 +19,8 @@ import org.springframework.web.server.ResponseStatusException;
 public class AiContentService {
     private static final URI OFFICIAL_ENDPOINT=URI.create("https://api.openai.com/v1/chat/completions");
     private static final int MAX_JSON=200_000;
+    // Limit bytes as they arrive; an upstream server must not fill heap before JSON validation.
+    private static final int MAX_RESPONSE_BYTES=MAX_JSON;
     private static final HttpClient HTTP=HttpClient.newBuilder()
         .connectTimeout(Duration.ofSeconds(5)).build();
 
@@ -37,8 +39,15 @@ public class AiContentService {
     public AiContentService(@Value("${growth.ai.api-key:}") String key,
                             @Value("${growth.ai.model:gpt-4o-mini}") String model,ObjectMapper json) {
         this(key,model,json,request->{
-            HttpResponse<String> response=HTTP.send(request,HttpResponse.BodyHandlers.ofString());
-            return new ProviderResponse(response.statusCode(),response.body());
+            HttpResponse<java.io.InputStream> response=HTTP.send(
+                request,HttpResponse.BodyHandlers.ofInputStream());
+            try(java.io.InputStream stream=response.body()) {
+                byte[] bytes=stream.readNBytes(MAX_RESPONSE_BYTES+1);
+                if(bytes.length>MAX_RESPONSE_BYTES)
+                    throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,"AI response too large");
+                return new ProviderResponse(response.statusCode(),
+                    new String(bytes,java.nio.charset.StandardCharsets.UTF_8));
+            }
         });
     }
 
