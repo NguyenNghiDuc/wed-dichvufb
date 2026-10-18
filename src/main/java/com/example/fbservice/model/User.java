@@ -21,6 +21,12 @@ public class User {
     @Column(length = 255)
     private String email;
 
+    @Column(name = "display_name", length = 80)
+    private String displayName;
+
+    @Column(name = "auth_version", nullable = false, columnDefinition = "bigint default 0")
+    private long authVersion;
+
     @Column(nullable = false, length = 16)
     private String role = "USER";
 

@@ -12,6 +12,10 @@ import org.springframework.data.repository.query.Param;
 public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByUsername(String username);
     boolean existsByUsername(String username);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select u from User u where u.username = :username")
+    Optional<User> lockByUsername(@Param("username") String username);
     Page<User> findAllByOrderByIdDesc(Pageable pageable);
     long countByEnabledTrue();
     List<User> findTop100ByEnabledTrueAndRoleInOrderByUsernameAsc(List<String> roles);

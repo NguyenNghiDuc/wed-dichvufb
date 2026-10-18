@@ -23,6 +23,7 @@ public final class AccountStatusFilter extends OncePerRequestFilter {
         if (authentication != null && authentication.getPrincipal() instanceof AccountPrincipal principal) {
             boolean valid = users.findById(principal.getAccountId()).map(account ->
                 account.isEnabled()
+                && account.getAuthVersion() == principal.getAuthVersion()
                 && account.getUsername().equals(principal.getUsername())
                 && authentication.getAuthorities().stream()
                     .anyMatch(authority -> authority.getAuthority().equals("ROLE_" + account.getRole()))
