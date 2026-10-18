@@ -1,0 +1,47 @@
+<!doctype html><html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GrowLab · Chi tiết tài khoản</title>
+<link rel="stylesheet" th:href="@{/style.css}">
+<link rel="stylesheet" th:href="@{/admin.css}"></head>
+<body class="admin-body"><main class="page container admin-page">
+<nav class="admin-breadcrumb" aria-label="Điều hướng">
+<a th:href="@{/admin/users}">← Quản lý tài khoản</a><span>/</span><strong>Chi tiết</strong>
+</nav>
+<div class="page-header admin-page-header"><div><div class="eyebrow">Quản trị tài khoản</div>
+<h1 th:text="|Tài khoản ${account.username}|">Chi tiết tài khoản</h1>
+<p class="muted">Xem trạng thái và lịch sử thay đổi. Mọi thao tác khóa và phân quyền cần xác thực, CSRF và audit trên trang quản lý tài khoản.</p>
+</div><a class="btn btn-outline btn-small"
+ th:href="@{/admin/users(username=${account.username})}">Chỉnh sửa tại danh sách →</a></div>
+<div class="admin-insight-grid" aria-label="Tóm tắt tài khoản">
+<article class="admin-insight-card"><span class="admin-insight-label">Mã tài khoản</span>
+<strong th:text="|#${account.id}|">#0</strong></article>
+<article class="admin-insight-card"><span class="admin-insight-label">Vai trò hiện tại</span>
+<strong th:text="${account.role}">USER</strong></article>
+<article class="admin-insight-card"><span class="admin-insight-label">Trạng thái tài khoản</span>
+<strong th:text="${account.enabled ? 'Đang hoạt động' : 'Đã khóa'}">Đang hoạt động</strong></article>
+</div>
+<section class="admin-status-panel" aria-labelledby="audit-heading">
+<div class="page-header"><div><h2 id="audit-heading">Lịch sử khóa và cấp quyền</h2>
+<p class="muted" th:text="|${eventTotal} bản ghi · 20 mục/trang · mới nhất trước|">0 bản ghi</p></div>
+<a class="btn btn-outline btn-small"
+ th:href="@{/admin/users/audit(targetId=${account.id})}">Tra cứu audit nâng cao →</a>
+</div>
+<div class="table-panel admin-table-scroll"><table class="data-table admin-table">
+<thead><tr><th>Thời gian</th><th>Admin thực hiện</th><th>Hành động</th><th>Trước</th><th>Sau</th></tr></thead>
+<tbody><tr th:each="e : ${events}">
+<td th:text="${#temporals.format(e.createdAt,'dd/MM/yyyy HH:mm')}"></td>
+<td th:text="${e.actor}"></td><td><span class="admin-role" th:text="${e.operation}"></span></td>
+<td th:text="${e.beforeValue}"></td><td th:text="${e.afterValue}"></td>
+</tr><tr th:if="${#lists.isEmpty(events)}">
+<td colspan="5" class="admin-empty">Chưa có thay đổi được ghi nhận.</td></tr></tbody>
+</table></div>
+<nav class="admin-pager" aria-label="Phân trang nhật ký tài khoản">
+<a class="btn btn-outline btn-small" th:if="${hasPrevious}"
+th:href="@{/admin/users/{id}(id=${account.id},page=${page - 1})}">← Trước</a>
+<span th:text="|Trang ${page + 1} / ${totalPages == 0 ? 1 : totalPages}|">Trang 1</span>
+<a class="btn btn-outline btn-small" th:if="${hasNext}"
+th:href="@{/admin/users/{id}(id=${account.id},page=${page + 1})}">Sau →</a></nav>
+</section>
+<p class="admin-caption">Không hiển thị mật khẩu, mật khẩu đã băm, email hay địa chỉ IP.
+Nhật ký lưu trong database và cần chính sách giữ dữ liệu/backup riêng để đủ tiêu chuẩn kiểm toán.</p>
+</main></body></html>
