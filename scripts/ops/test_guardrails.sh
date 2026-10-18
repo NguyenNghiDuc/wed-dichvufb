@@ -73,6 +73,10 @@ printf 'fake-but-syntactically-checksummed-fixture' > "$sandbox/backups/$filenam
 (cd "$sandbox/backups" && sha256sum "$filename" > "$filename.sha256")
 bash scripts/ops/backup_inventory.sh --check "$sandbox/backups" 24 > "$sandbox/inventory"
 grep -q 'PASS:' "$sandbox/inventory"
+digest="$(sha256sum "$sandbox/backups/$filename" | cut -d ' ' -f1)"
+printf '%s  wrong-name.dump\n' "$digest" > "$sandbox/backups/$filename.sha256"
+expect_refused 'backup inventory manifest wrong filename' bash scripts/ops/backup_inventory.sh --check "$sandbox/backups" 24
+printf '%s  %s\n' "$digest" "$filename" > "$sandbox/backups/$filename.sha256"
 printf 'tampered' >> "$sandbox/backups/$filename"
 expect_refused 'tampered backup inventory' bash scripts/ops/backup_inventory.sh --check "$sandbox/backups" 24
 # Old backup copied today must still be classified stale by the archived UTC timestamp.
