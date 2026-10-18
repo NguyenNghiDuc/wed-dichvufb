@@ -13,3 +13,9 @@ POST `/notifications/read-all`: marks only the signed-in customer's currently un
 
 Tests: `mvn -Dtest=NotificationsIntegrationTest,NotificationInboxIntegrationTest test`, followed by `mvn test`.
 No production deployment or roadmap acceptance without CI and staging UAT.
+
+## Tìm kiếm nội dung an toàn
+- `q` tìm tiêu đề và nội dung, sau khi bỏ khoảng trắng hai đầu; tối đa 80 ký tự Unicode, từ chối control chars.
+- Truy vấn Criteria có tham số, kèm ràng buộc owner trước, hỗ trợ kết hợp `days`, `unreadOnly` và phân trang 20 mục. Ký tự LIKE `%`, `_` và `!` được escape thành literal, không biến thành wildcard.
+- Không dùng trực tiếp q để ghép SQL, ORDER BY hay redirect URL. Đường dẫn bộ lọc và phân trang giữ q bằng Thymeleaf URI encoding.
+- Đây là tìm kiếm chuỗi trên dữ liệu của một chủ tài khoản; trước tải lớn cần đánh giá hiệu năng với PostgreSQL thực và cân nhắc full-text indexes theo kế hoạch W7.

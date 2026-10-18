@@ -6,11 +6,12 @@ import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-public interface AccountNotificationRepository extends JpaRepository<AccountNotification, Long> {
+public interface AccountNotificationRepository extends JpaRepository<AccountNotification, Long>, JpaSpecificationExecutor<AccountNotification> {
     // Retained for existing consumers while the inbox uses bounded page queries.
     List<AccountNotification> findTop100ByOwnerUsernameOrderByCreatedAtDesc(String username);
     Optional<AccountNotification> findByIdAndOwnerUsername(Long id, String username);
