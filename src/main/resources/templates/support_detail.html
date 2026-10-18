@@ -17,6 +17,9 @@
 không phải thời gian SLA đã cam kết hay thời điểm hoàn tất được xác minh.</p>
 </section>
 <section class="section"><h2>Trao đổi</h2>
+<p class="muted support-empty" role="status" th:if="${#lists.isEmpty(messages)}">
+Chưa có phản hồi nào phù hợp. Bạn có thể gửi tin nhắn mới hoặc xóa bộ lọc tìm kiếm.
+</p>
 <form method="get" th:action="@{/support/{id}(id=${ticket.id})}"
       class="actions support-filters" role="search" aria-label="Tìm trong phản hồi">
 <label for="ticketMessageSearch">Tìm nội dung trao đổi</label>
