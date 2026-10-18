@@ -22,7 +22,7 @@ Do not mark a task complete without its exact commit, CI run and (where relevant
 | 16 | Check migration concurrency and transaction isolation | PENDING |
 | 17 | Compare data counts and checksums before/after upgrade | PENDING |
 | 18 | Isolated backup/restore rollback rehearsal | PENDING |
-| 19 | Document numbering policy across W1–W10 | IN PROGRESS |
+| 19 | Document numbering policy across W1–W10 | PARTIAL: documented, unverified in integrated workflow |
 | 20 | Test integrated W2/W3/W6 migration sequence | BLOCKED |
 | 21 | Verify migration script content equivalence after renumbering | PENDING |
 | 22 | Verify second Flyway migrate is a no-op | PENDING |
@@ -44,3 +44,7 @@ W1 authentication, W2 customer, W3 support, W4 admin, W5 AI, W6 payment, W7 data
 - W7 Draft PR: https://github.com/NguyenNghiDuc/wed-dichvufb/pull/50
 - Existing guard: scripts/flyway_collision_check.py from merged PR #39
 - Execution gates: docs/W7_FLYWAY_INTEGRATION_GATE.md
+
+## Reporting contract
+
+After every W7 code/test/commit turn, publish all 25 rows and status counts. VERIFIED means working code, relevant passing tests, successful exact-HEAD CI, and acceptance evidence; documentation or a draft PR alone never qualifies. Status legend: VERIFIED, CODED_UNVERIFIED, PARTIAL, NOT_STARTED, BLOCKED.
