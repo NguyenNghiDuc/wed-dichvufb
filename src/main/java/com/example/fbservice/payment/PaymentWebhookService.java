@@ -138,6 +138,15 @@ public class PaymentWebhookService {
                     || receipt.getAmountVnd() != event.amountVnd()) {
                 throw new ResponseStatusException(HttpStatus.CONFLICT, "Event ID reused with different details");
             }
+            // A retry is only safe to acknowledge if the persisted deposit is
+            // still consistent with the receipt. A manual status/amount edit
+            // must raise a conflict rather than falsely reporting acceptance.
+            if (!"APPROVED".equals(deposit.getStatus())
+                    || deposit.getAmount() != receipt.getAmountVnd()
+                    || deposit.getOwnerUsername() == null
+                    || deposit.getOwnerUsername().isBlank()) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "Receipt and deposit out of sync");
+            }
             return Map.of("accepted", true, "duplicate", true);
         }
         if (deposit.getAmount() != event.amountVnd()) {
