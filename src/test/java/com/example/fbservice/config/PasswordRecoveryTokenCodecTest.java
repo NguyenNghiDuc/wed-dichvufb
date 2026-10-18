@@ -25,7 +25,9 @@ class PasswordRecoveryTokenCodecTest {
         // The exact same link becomes invalid once the account password changes.
         assertThat(codec.isValidForAccount(issued,102L,
             "$2a$10$changed-test-revision-not-a-real-password")).isFalse();
-        assertThat(codec.isValidForAccount(issued.replace('A','B'),102L,
+        char different=issued.charAt(0) == 'A' ? 'B' : 'A';
+        String altered=different+issued.substring(1);
+        assertThat(codec.isValidForAccount(altered,102L,
             "$2a$10$old-test-revision-not-a-real-password")).isFalse();
     }
 
