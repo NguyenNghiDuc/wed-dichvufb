@@ -4,7 +4,7 @@
 - Ghi lại 4 loại sự kiện: đăng nhập thành công, đăng nhập thất bại cho tài khoản đã tồn tại, đổi mật khẩu và thu hồi mọi phiên. Không lưu mật khẩu, token, cookie, User-Agent hay IP, nhằm giảm dữ liệu nhạy cảm.
 - Ghi nhật ký đăng nhập sau xác thực bằng LoginAuditSuccessHandler; các thay đổi mật khẩu/thu hồi phiên ghi cùng giao dịch database và rollback nếu ghi sự kiện thất bại.
 - Dữ liệu UTC; đăng nhập sai chỉ tạo sự kiện theo ID nếu tên tài khoản hợp lệ và đã tồn tại. Không phản hồi khác biệt cho tên không tồn tại; giới hạn đăng nhập đã được áp dụng sau CSRF để giảm spam. Không ghi IP, mật khẩu hoặc mật danh đăng nhập thử.
-- Migration PostgreSQL/Flyway `V20__account_security_activity.sql` độc lập, không sửa migration của W2–W6. Thứ tự khi tích hợp phải kiểm tra phiên bản mới của main.
+- Dùng Flyway repeatable migration `R__w1_account_security_activity.sql` với CREATE IF NOT EXISTS, không chiếm số phiên bản migration V10–V19 của W2–W6. Vì chưa merge/deploy bản V20 nên thay thế trước nghiệm thu; kiểm tra lại schema khi tích hợp main.
 - Log giới hạn 20 mục mỗi lần xem; chưa có quy trình lưu trữ/retention dài hạn và cần kế hoạch xóa theo chính sách doanh nghiệp trước khi production.
 - Không phải danh sách thiết bị đang online hay chứng nhận xác thực đa yếu tố.
 
