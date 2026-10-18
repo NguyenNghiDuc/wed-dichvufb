@@ -114,7 +114,7 @@ public class PaymentWebhookService {
                 payload.get("depositRequestId").longValue(),
                 payload.get("amountVnd").longValue(),
                 payload.get("status").textValue());
-        if (event == null || event.eventId() == null
+        if (event.eventId() == null
                 || !event.eventId().matches("[a-zA-Z0-9_-]{8,100}")
                 || event.depositRequestId() == null || event.depositRequestId() < 1
                 || event.amountVnd() == null || event.amountVnd() < 1000
