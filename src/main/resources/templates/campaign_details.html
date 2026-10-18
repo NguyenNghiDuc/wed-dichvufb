@@ -27,6 +27,8 @@
         method="post" th:action="@{/campaigns/{id}/cancel(id=${order.id})}"
         class="customer-cancel-form">
     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+    <label class="customer-cancel-reason" for="cancelReason">Lý do hủy (không bắt buộc)</label>
+    <input id="cancelReason" name="reason" maxlength="200" placeholder="Bạn có thể ghi lý do để lưu trong lịch sử đơn">
     <button class="btn btn-outline btn-small" type="submit">
       Hủy yêu cầu trước khi duyệt
     </button>
