@@ -34,13 +34,10 @@ for archive in "${archives[@]}"; do
       echo 'CRITICAL: backup file is readable by group/others' >&2; exit 1;
     }
   done
-  expected="$(cut -d ' ' -f1 < "$archive.sha256")"
-  [[ "$expected" =~ ^[0-9a-fA-F]{64}$ ]] || {
-    echo 'CRITICAL: invalid checksum manifest' >&2; exit 1;
-  }
+  expected_line="$(cat -- "$archive.sha256")"
   actual="$(sha256sum "$archive" | cut -d ' ' -f1)"
-  [[ "$actual" == "$expected" ]] || {
-    echo 'CRITICAL: checksum mismatch' >&2; exit 1;
+  [[ "$expected_line" == "$actual  $(basename "$archive")" ]] || {
+    echo 'CRITICAL: checksum mismatch or malformed filename/manifest' >&2; exit 1;
   }
   # Derive age from UTC backup filename, not mtime (copying an old archive resets mtime).
   filename="$(basename "$archive")"
