@@ -62,6 +62,18 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
             @Param("viewer") String viewer,
             @Param("contacts") java.util.List<String> contacts);
 
+    /**
+     * Mark one incoming message as read. The receiver predicate prevents a
+     * sender or an unrelated account from acknowledging another user's mail.
+     * A missing/foreign/already-read ID returns zero without revealing which.
+     */
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("update ChatMessage m set m.readAt = :readAt " +
+           "where m.id = :messageId and m.receiver = :viewer and m.readAt is null")
+    int markOneRead(@Param("viewer") String viewer,
+                    @Param("messageId") Long messageId,
+                    @Param("readAt") LocalDateTime readAt);
+
     /** Atomic read receipt for messages actually addressed to this recipient. */
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("update ChatMessage m set m.readAt = :readAt " +
