@@ -99,6 +99,8 @@ public class AiContentService {
                 .header("Content-Type","application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(payload)).build();
             ProviderResponse response=transport.send(request);
+            if(response.status()==401||response.status()==403)
+                throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,"AI provider authorization failed");
             if(response.status()==429)
                 throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,"AI provider quota reached");
             if(response.status()==408||response.status()==504)
