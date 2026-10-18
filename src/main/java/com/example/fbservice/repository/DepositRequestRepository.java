@@ -7,7 +7,8 @@ import java.util.Optional;
 import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 
-public interface DepositRequestRepository extends JpaRepository<DepositRequest,Long> {
+public interface DepositRequestRepository extends JpaRepository<DepositRequest,Long>, JpaSpecificationExecutor<DepositRequest> {
+    Optional<DepositRequest> findByIdAndOwnerUsername(Long id,String username);
     List<DepositRequest> findByOwnerUsernameOrderByCreatedAtDesc(String username);
     long countByStatus(String status);
     @Lock(LockModeType.PESSIMISTIC_WRITE)

@@ -8,7 +8,7 @@
 <article class="card"><div class="muted">Tổng chiến dịch</div><div class="metric" th:text="${metrics.totalCampaigns}">0</div></article>
 <article class="card"><div class="muted">Chiến dịch cần duyệt</div><div class="metric" th:text="${metrics.pendingCampaigns}">0</div></article>
 <article class="card"><div class="muted">Phiếu hỗ trợ cần xử lý</div><div class="metric" th:text="${metrics.openTickets}">0</div></article>
-<article class="card"><div class="muted">Yêu cầu nạp đang chờ</div><div class="metric" th:text="${metrics.pendingDepositRequests}">0</div></article>
+<article class="card"><div class="muted">Yêu cầu nạp đang chờ</div><div class="metric" th:text="${metrics.pendingDepositRequests}">0</div><a class="table-link" th:href="@{/admin/deposits(status='PENDING')}">Xem yêu cầu đang chờ →</a></article>
 <article class="card"><div class="muted">Dịch vụ đang mở</div><div class="metric" th:text="${metrics.activeServices}">0</div></article>
 <article class="card"><div class="muted">Chờ duyệt trên 48 giờ</div><div class="metric" th:text="${metrics.pendingNeedsReview}">0</div><a th:href="@{/admin/campaign-orders(status='PENDING_REVIEW')}">Rà soát đơn chờ duyệt →</a></article>
 <article class="card"><div class="muted">Đang xử lý trên 7 ngày từ cập nhật gần nhất</div><div class="metric" th:text="${metrics.progressingNeedsReview}">0</div><a th:href="@{/admin/campaign-orders(status='IN_PROGRESS')}">Rà soát đơn đang xử lý →</a></article>

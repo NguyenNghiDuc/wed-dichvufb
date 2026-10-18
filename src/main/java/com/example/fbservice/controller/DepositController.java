@@ -36,8 +36,22 @@ public class DepositController {
     }
 
     @GetMapping("/list")
-    public String list(Model model, Principal principal) {
-        model.addAttribute("deposits", deposits.findAllForUser(principal.getName()));
+    public String list(Model model, Principal principal,@RequestParam(defaultValue="0") int page,
+                       @RequestParam(required=false) String status) {
+        var records=deposits.page(principal.getName(),status,page);
+        model.addAttribute("deposits",records.getContent());
+        model.addAttribute("records",records);model.addAttribute("selectedStatus",status);
         return "deposit_list";
     }
+    @GetMapping("/{id}")
+    public String detail(@PathVariable Long id,Principal principal,Model model) {
+        model.addAttribute("deposit",deposits.detail(id,principal.getName()));return "deposit_detail";
+    }
+
+    @PostMapping("/{id}/cancel")
+    public String cancel(@PathVariable Long id,Principal principal,RedirectAttributes redirect) {
+        deposits.cancel(id,principal.getName());redirect.addFlashAttribute("success","Đã hủy yêu cầu nạp tiền.");
+        return "redirect:/deposit/"+id;
+    }
+
 }
