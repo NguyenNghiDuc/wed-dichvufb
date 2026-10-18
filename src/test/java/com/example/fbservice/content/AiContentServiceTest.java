@@ -164,6 +164,22 @@ class AiContentServiceTest {
     }
 
     @Test
+    void proofreadAndOptimizeDoNotSendRequestsWithoutSourceDraft() {
+        AtomicInteger calls = new AtomicInteger();
+        var service = new AiContentService("test-key", "test-model", json, req -> {
+            calls.incrementAndGet();
+            return new AiContentService.ProviderResponse(200,
+                "{\\"choices\\":[{\\"message\\":{\\"content\\":\\"ok\\"}}]}");
+        });
+        for (var task : new AiContentTask[]{AiContentTask.PROOFREAD, AiContentTask.OPTIMIZE}) {
+            expectStatus(HttpStatus.BAD_REQUEST, service,
+                new AiContentRequest(SocialPlatform.TIKTOK, "Study tips", "Students",
+                    task, AiContentLanguage.VI, 7, "  "));
+        }
+        assertThat(calls.get()).isZero();
+    }
+
+    @Test
     void invalidPlanDaysOrMissingOriginalTextAreRejectedWithoutNetworkCall() {
         AtomicInteger calls=new AtomicInteger();
         var service=new AiContentService("fake","test-model",json,req->{
