@@ -3,6 +3,9 @@ package com.example.fbservice;
 import com.example.fbservice.notification.AccountNotification;
 import com.example.fbservice.notification.AccountNotificationRepository;
 import org.junit.jupiter.api.Test;
+import java.sql.Timestamp;
+import java.time.LocalDate;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -23,6 +26,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class NotificationInboxIntegrationTest {
     @Autowired MockMvc mvc;
     @Autowired AccountNotificationRepository repo;
+    @Autowired JdbcTemplate jdbc;
 
     private void seed(String owner, int total) {
         for (int i = 0; i < total; i++) {
@@ -87,6 +91,39 @@ class NotificationInboxIntegrationTest {
         mvc.perform(get("/notifications").param("page", "not-a-number")).andExpect(status().isBadRequest());
         mvc.perform(get("/notifications").param("unreadOnly", "nonsense"))
             .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser(username="inbox-date-owner")
+    void dateFilterKeepsOwnerAndUnreadIsolation() throws Exception {
+        seed("inbox-date-owner", 3);
+        seed("inbox-date-other", 2);
+        var oldest = repo.findTop100ByOwnerUsernameOrderByCreatedAtDesc("inbox-date-owner").get(0);
+        jdbc.update("UPDATE account_notifications SET created_at = ? WHERE id = ?",
+                Timestamp.valueOf(LocalDate.now().minusDays(45).atStartOfDay()), oldest.getId());
+        mvc.perform(get("/notifications").param("days", "7"))
+            .andExpect(status().isOk())
+            .andExpect(model().attribute("items", hasSize(2)))
+            .andExpect(model().attribute("days", 7))
+            .andExpect(model().attribute("unread", 3L));
+        mvc.perform(get("/notifications").param("days", "30").param("unreadOnly", "true"))
+            .andExpect(status().isOk())
+            .andExpect(model().attribute("items", hasSize(2)))
+            .andExpect(model().attribute("unreadOnly", true));
+        mvc.perform(get("/notifications").param("days", "90"))
+            .andExpect(model().attribute("items", hasSize(3)));
+        mvc.perform(get("/notifications").param("days", "7").with(user("inbox-date-other")))
+            .andExpect(model().attribute("items", hasSize(2)))
+            .andExpect(model().attribute("unread", 2L));
+    }
+
+    @Test
+    @WithMockUser(username="inbox-period-validation")
+    void invalidPeriodIsRejectedInsteadOfQueryingUnboundedHistory() throws Exception {
+        for (String days : new String[]{"-1", "1", "365", "bad"}) {
+            mvc.perform(get("/notifications").param("days", days))
+                .andExpect(status().isBadRequest());
+        }
     }
 
     @Test

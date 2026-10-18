@@ -1,6 +1,7 @@
 package com.example.fbservice.notification;
 
 import java.security.Principal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.data.domain.Page;
@@ -27,21 +28,36 @@ public class NotificationController {
     @Transactional(readOnly = true)
     public String list(@RequestParam(defaultValue = "0") int page,
                        @RequestParam(defaultValue = "false") boolean unreadOnly,
+                       @RequestParam(defaultValue = "0") int days,
                        Model model, Principal principal, HttpServletResponse response) {
         if (page < 0 || page > 10000) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid notification page");
         }
+        // 0 means the entire history; limited fixed windows keep the UI predictable.
+        if (days != 0 && days != 7 && days != 30 && days != 90) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid notification period");
+        }
         String owner = principal.getName();
         PageRequest request = PageRequest.of(page, PAGE_SIZE,
                 Sort.by(Sort.Order.desc("createdAt"), Sort.Order.desc("id")));
-        Page<AccountNotification> result = unreadOnly
-                ? notifications.findByOwnerUsernameAndReadAtIsNull(owner, request)
-                : notifications.findByOwnerUsername(owner, request);
+        Page<AccountNotification> result;
+        if (days == 0) {
+            result = unreadOnly
+                    ? notifications.findByOwnerUsernameAndReadAtIsNull(owner, request)
+                    : notifications.findByOwnerUsername(owner, request);
+        } else {
+            LocalDateTime since = LocalDate.now().minusDays(days - 1L).atStartOfDay();
+            result = unreadOnly
+                    ? notifications.findByOwnerUsernameAndReadAtIsNullAndCreatedAtGreaterThanEqual(
+                            owner, since, request)
+                    : notifications.findByOwnerUsernameAndCreatedAtGreaterThanEqual(owner, since, request);
+        }
 
         response.setHeader("Cache-Control", "no-store");
         model.addAttribute("items", result.getContent());
         model.addAttribute("unread", notifications.countByOwnerUsernameAndReadAtIsNull(owner));
         model.addAttribute("unreadOnly", unreadOnly);
+        model.addAttribute("days", days);
         model.addAttribute("pageNumber", page);
         model.addAttribute("hasPrevious", result.hasPrevious());
         model.addAttribute("hasNext", result.hasNext());

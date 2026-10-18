@@ -18,6 +18,10 @@ public interface AccountNotificationRepository extends JpaRepository<AccountNoti
 
     Page<AccountNotification> findByOwnerUsername(String username, Pageable pageable);
     Page<AccountNotification> findByOwnerUsernameAndReadAtIsNull(String username, Pageable pageable);
+    Page<AccountNotification> findByOwnerUsernameAndCreatedAtGreaterThanEqual(
+            String username, LocalDateTime since, Pageable pageable);
+    Page<AccountNotification> findByOwnerUsernameAndReadAtIsNullAndCreatedAtGreaterThanEqual(
+            String username, LocalDateTime since, Pageable pageable);
 
     /**
      * Atomic, owner-scoped, repeat-safe bulk update. Never loads another customer's
