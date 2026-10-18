@@ -39,6 +39,33 @@ class SecurityRegressionTest {
     }
 
     @Test
+    void staleAuthenticationFormsAreRejectedAndOfferFreshSameOriginForms() throws Exception {
+        for (String path : new String[]{"/login", "/register"}) {
+            mvc.perform(post(path).param("username", "stale_csrf_account").param("password", "UnusedPass123!"))
+                .andExpect(status().isSeeOther())
+                .andExpect(header().string("Location", path + "?sessionExpired"));
+            mvc.perform(post(path).with(csrf().useInvalidToken()))
+                .andExpect(status().isSeeOther())
+                .andExpect(header().string("Location", path + "?sessionExpired"));
+            mvc.perform(get(path).param("sessionExpired", ""))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Phiên xác thực đã hết hạn")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("name=\"_csrf\"")));
+        }
+        mvc.perform(post("/profile/display-name").param("displayName", "Blocked"))
+            .andExpect(status().isForbidden());
+        var fresh = mvc.perform(get("/login")).andExpect(status().isOk()).andReturn();
+        var token = java.util.regex.Pattern.compile("name=\"_csrf\"[^>]*value=\"([^\"]+)\"")
+            .matcher(fresh.getResponse().getContentAsString());
+        assertThat(token.find()).isTrue();
+        mvc.perform(post("/login")
+                .session((org.springframework.mock.web.MockHttpSession) fresh.getRequest().getSession(false))
+                .param("_csrf", token.group(1))
+                .param("username", "csrf_recovery_unknown_user").param("password", "NotThePassword123!"))
+            .andExpect(status().isFound()).andExpect(redirectedUrl("/login?error"));
+    }
+
+    @Test
     void excessiveLoginAttemptsRespond429() throws Exception {
         for (int index = 0; index < 10; index++) {
             mvc.perform(post("/login").with(csrf())

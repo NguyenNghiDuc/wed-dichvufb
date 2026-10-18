@@ -23,6 +23,7 @@ public class WebSecurityConfig {
                 // The signed machine-to-machine callback is the ONLY CSRF exception.
                 // Restrict it to POST; all other state-changing methods remain protected.
                 new AntPathRequestMatcher("/api/v1/payments/webhooks/internal", "POST")))
+            .exceptionHandling(errors -> errors.accessDeniedHandler(new AuthenticationAccessDeniedHandler()))
             .authorizeHttpRequests(auth -> auth
                 .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
                 .requestMatchers(org.springframework.http.HttpMethod.GET,
