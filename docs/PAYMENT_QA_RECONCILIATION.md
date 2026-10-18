@@ -7,7 +7,7 @@ This is **not** a VNPay IPN/return callback, bank transfer confirmation, custome
 - `X-GrowLab-Timestamp`: ASCII Unix time **seconds**, decimal (10–12 digits), within 300 seconds before or after server time.
 - `X-GrowLab-Signature`: exactly 64 hex characters; `hex(HMAC-SHA256(secret, ASCII(timestamp) || "." || exact raw HTTP body bytes))`.
 
-Example body **shape only** (no valid signature): `{"eventId":"sandbox-settlement-0001","depositRequestId":1,"amountVnd":50000,"status":"SETTLED"}`. All fields are mandatory; eventId is 8–100 ASCII letters/digits/underscore/hyphen. Only one JSON object is accepted: duplicate field names, trailing JSON documents and amountVnd outside 1,000–1,000,000,000 VND are rejected. Unknown JSON fields are rejected, even when the callback has a valid HMAC; a provider-specific bank transaction identifier is **not** accepted by this internal test protocol. `depositRequestId` and `amountVnd` must be JSON integer literals inside signed 64-bit limits: quoted numbers, fractional decimals and exponent notation are rejected rather than coerced. Generate a new signature and fresh timestamp for each retry after five minutes; **reuse the original eventId** so a retry cannot duplicate the effect. Keep producer and receiver clocks synchronized using NTP. Do not reserialize JSON between signing and sending.
+Example body **shape only** (no valid signature): `{"eventId":"sandbox-settlement-0001","depositRequestId":1,"amountVnd":50000,"status":"SETTLED"}`. All fields are mandatory; eventId is 8–100 ASCII letters/digits/underscore/hyphen. Only one JSON object is accepted: duplicate field names, trailing JSON documents and amountVnd outside 1,000–1,000,000,000 VND are rejected. Unknown JSON fields are rejected, even when the callback has a valid HMAC; a provider-specific bank transaction identifier is **not** accepted by this internal test protocol. `depositRequestId` and `amountVnd` must be JSON integer literals inside signed 64-bit limits: quoted numbers, fractional decimals and exponent notation are rejected rather than coerced. Each authentication header must appear **exactly once**: repeated timestamp or signature headers return 401, even when the duplicated values are identical, to prevent ambiguous proxy/application parsing. Generate a new signature and fresh timestamp for each retry after five minutes; **reuse the original eventId** so a retry cannot duplicate the effect. Keep producer and receiver clocks synchronized using NTP. Do not reserialize JSON between signing and sending.
 
 The service checks the signature and parses/validates the event **before starting a database transaction**, reducing connection pressure from forged or malformed traffic; local tests assert those requests never ask the transaction manager for a transaction. After validation it locks the deposit with `PESSIMISTIC_WRITE`, compares the exact VND amount, enforces the allowed status transition PENDING → APPROVED and commits a single receipt row. The database additionally enforces UNIQUE(event_id) and UNIQUE(deposit_request_id). One accepted event generates one account notification. Duplicate retry with same eventId, amount and deposit returns `{"accepted":true,"duplicate":true}` without another receipt/notification. A different event claiming a processed deposit returns HTTP 409. Invalid/missing signature, stale timestamp: 401; malformed event: 400; oversized body: 413; mismatched reference/amount: 409; no deposit: 404; no secret: 503. **APPROVED means only an authorized internal test event was recorded, not that money arrived.** It must not be treated as payment confirmation by any future wallet logic.
 
@@ -80,6 +80,17 @@ psql --dbname=growlab_restore -c 'SELECT COUNT(*) FROM payment_receipts'
 ## Additive database constraints and rollout review
 
 Flyway V12 adds `NOT VALID` PostgreSQL amount-range CHECK constraints. PostgreSQL enforces them on **new** writes while allowing preexisting out-of-range legacy rows to remain until the operator reviews, reconciles, and separately validates them. Run an approved query for violating historical rows before applying `VALIDATE CONSTRAINT`; do not auto-correct payment records. The CI test verifies a direct invalid deposit/receipt write is refused. No real wallet ledger or bank mapping exists.
+
+## Bounded CI concurrency smoke (not an external load benchmark)
+
+`PostgresPaymentConcurrencyIntegrationTest` performs a bounded 8-worker,
+32-distinct-deposit signed callback run against a disposable PostgreSQL 16 CI
+database. It asserts every callback is accepted, each deposit is approved, and
+exactly one receipt and one notification are recorded per event. Additional
+race tests cover same-event retries and cross-deposit collisions. This is an
+integrity smoke only: it does **not** establish peak throughput, p95 latency,
+production connection saturation, staging TLS performance, or the safe
+processing rate of any external provider.
 
 ## Acceptance evidence remaining
 - [ ] Latest Java 17 Maven test run with PostgreSQL 16 + Flyway V1–V12, the 4096-byte controller limit, strict JSON validation, reconciliation role tests and Docker Compose config validation.
