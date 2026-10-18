@@ -61,13 +61,20 @@ public class AdminUserController {
     }
 
     @GetMapping("/audit")
-    public String audit(@RequestParam(defaultValue = "0") int page, Model model) {
-        Page<AdminAccountAudit> records = service.pageAudit(page);
+    public String audit(@RequestParam(defaultValue = "0") int page,
+                        @RequestParam(required = false) String actor,
+                        @RequestParam(required = false) Long targetId,
+                        @RequestParam(required = false) String operation, Model model) {
+        Page<AdminAccountAudit> records =
+            service.pageAudit(page, actor, targetId, operation);
         model.addAttribute("events", records.getContent());
         model.addAttribute("auditPage", page);
         model.addAttribute("hasPrevious", records.hasPrevious());
         model.addAttribute("hasNext", records.hasNext());
         model.addAttribute("totalAuditPages", records.getTotalPages());
+        model.addAttribute("filterActor", actor == null ? "" : actor.trim());
+        model.addAttribute("filterTargetId", targetId);
+        model.addAttribute("filterOperation", operation == null ? "" : operation.trim());
         return "admin_user_audit";
     }
 }

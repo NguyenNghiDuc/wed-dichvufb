@@ -51,9 +51,34 @@ public class AdminUserService {
 
     @Transactional(readOnly=true)
     public Page<AdminAccountAudit> pageAudit(int page) {
+        return pageAudit(page, null, null, null);
+    }
+
+    /** Filter audit records using exact database-side predicates, never user SQL fragments. */
+    @Transactional(readOnly=true)
+    public Page<AdminAccountAudit> pageAudit(int page, String actor,
+                                            Long targetId, String operation) {
         validatePage(page);
-        return audit.findAll(PageRequest.of(page, 20,
-                Sort.by(Sort.Order.desc("createdAt"), Sort.Order.desc("id"))));
+        String exactActor = actor == null || actor.isBlank() ? null : actor.trim();
+        String exactOperation = operation == null || operation.isBlank() ? null : operation.trim();
+        if (exactActor != null && !exactActor.matches("[a-zA-Z0-9._-]{3,100}"))
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid audit actor");
+        if (targetId != null && targetId <= 0)
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid account ID");
+        if (exactOperation != null &&
+            !List.of("ACCOUNT_ENABLED", "ACCOUNT_ROLE").contains(exactOperation))
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid audit operation");
+
+        Specification<AdminAccountAudit> spec = (root, query, builder) -> {
+            List<Predicate> filters = new ArrayList<>();
+            if (exactActor != null) filters.add(builder.equal(root.get("actor"), exactActor));
+            if (targetId != null) filters.add(builder.equal(root.get("targetUserId"), targetId));
+            if (exactOperation != null)
+                filters.add(builder.equal(root.get("operation"), exactOperation));
+            return builder.and(filters.toArray(new Predicate[0]));
+        };
+        return audit.findAll(spec, PageRequest.of(page, 20,
+            Sort.by(Sort.Order.desc("createdAt"), Sort.Order.desc("id"))));
     }
 
     @Transactional(readOnly=true)
