@@ -34,6 +34,9 @@ public interface CampaignOrderRepository extends JpaRepository<CampaignOrder, Lo
     Page<CampaignOrder> findByAssigneeUsername(String username, Pageable pageable);
     Optional<CampaignOrder> findByIdAndOwnerUsername(Long id, String username);
     List<CampaignOrder> findAllByOrderByCreatedAtDesc();
+    /** Owner-scoped monthly trend without fetching campaign rows into memory. */
+    long countByOwnerUsernameAndCreatedAtGreaterThanEqualAndCreatedAtLessThan(
+        String ownerUsername, LocalDateTime startInclusive, LocalDateTime endExclusive);
     long countByStatus(CampaignStatus status);
     long countByStatusAndCreatedAtBefore(CampaignStatus status, LocalDateTime cutoff);
     long countByStatusAndUpdatedAtBefore(CampaignStatus status, LocalDateTime cutoff);
