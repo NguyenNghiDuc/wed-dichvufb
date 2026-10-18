@@ -1,0 +1,44 @@
+/* Scoped inbox design for GrowLab; all rules live outside HTML for CSP compatibility. */
+.notifications-page { --notice-orange: #e66d24; --notice-border: #f2dfd1; }
+.notifications-page .page-header { margin-bottom: 1rem; }
+.notifications-page .notification-tools {
+  display: flex; align-items: end; flex-wrap: wrap; gap: .85rem;
+  margin-bottom: 1rem; padding: 1rem;
+  background: #fffaf7; border: 1px solid var(--notice-border); border-radius: 14px;
+}
+.notifications-page .notification-tools > form,
+.notifications-page .notification-tools > nav { display: flex; flex-wrap: wrap; align-items: center; gap: .55rem; }
+.notifications-page .notification-tools label { font-size: .88rem; font-weight: 600; color: #543f36; }
+.notifications-page .notification-tools select,
+.notifications-page .notification-tools input[type=search] {
+  box-sizing: border-box; max-width: 100%; min-height: 40px; padding: .55rem .7rem;
+  border: 1px solid #dac7bd; border-radius: 9px; background: #fff;
+  color: #302922; font: inherit;
+}
+.notifications-page .notification-tools input[type=search] { min-width: 12rem; }
+.notifications-page .notification-tools select:focus-visible,
+.notifications-page .notification-tools input:focus-visible,
+.notifications-page a:focus-visible,
+.notifications-page button:focus-visible {
+  outline: 3px solid var(--notice-orange); outline-offset: 2px;
+}
+.notifications-page .notifications-table { overflow-x: auto; }
+.notifications-page .notifications-table .data-table { min-width: 520px; }
+.notifications-page .notifications-table td { vertical-align: top; }
+.notifications-page .notifications-table td:nth-child(2) { min-width: 240px; overflow-wrap: anywhere; }
+.notifications-page .notifications-table td p { margin: .4rem 0; white-space: pre-wrap; }
+.notifications-page .notification-empty { padding: 2.25rem 1rem; text-align: center; color: #776c66; }
+.notifications-page .notification-message { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.7; }
+.notifications-page .form-panel { overflow-wrap: anywhere; }
+.notifications-page .actions { align-items: center; }
+@media (max-width: 680px) {
+  .notifications-page .notification-tools { display: grid; gap: .75rem; padding: .8rem; }
+  .notifications-page .notification-tools > form,
+  .notifications-page .notification-tools > nav { width: 100%; }
+  .notifications-page .notification-tools form[role=search] { display: grid; grid-template-columns: 1fr auto; }
+  .notifications-page .notification-tools form[role=search] label { grid-column: 1 / -1; }
+  .notifications-page .notification-tools input[type=search] { min-width: 0; width: 100%; }
+  .notifications-page .notification-tools form > .btn { white-space: normal; }
+  .notifications-page .notifications-table .data-table { min-width: 500px; }
+  .notifications-page .actions { flex-wrap: wrap; }
+}

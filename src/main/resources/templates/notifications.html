@@ -5,9 +5,10 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Thông báo · GrowLab</title>
 <link rel="stylesheet" th:href="@{/style.css}">
+<link rel="stylesheet" th:href="@{/notifications.css}">
 </head>
 <body>
-<main class="page container">
+<main class="page container notifications-page">
 <a class="table-link" th:href="@{/campaigns}">← Chiến dịch của tôi</a>
 <div class="page-header">
   <div>
@@ -52,7 +53,7 @@
     <button type="submit" class="btn btn-outline btn-small">Đánh dấu tất cả đã đọc</button>
   </form>
 </div>
-<div class="table-panel"><table class="data-table">
+<div class="table-panel notifications-table" role="region" aria-label="Danh sách thông báo" tabindex="0"><table class="data-table">
 <thead><tr><th>Ngày</th><th>Nội dung</th><th>Trạng thái</th></tr></thead>
 <tbody>
 <tr th:each="item : ${items}">
@@ -74,7 +75,7 @@
   </td>
 </tr>
 <tr th:if="${#lists.isEmpty(items)}">
-<td colspan="3">Không có thông báo phù hợp.</td>
+<td colspan="3" class="notification-empty">Không có thông báo phù hợp. Bạn có thể thay đổi bộ lọc để tìm lại.</td>
 </tr>
 </tbody></table></div>
 <nav class="actions" aria-label="Phân trang thông báo">
