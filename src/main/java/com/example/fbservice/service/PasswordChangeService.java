@@ -21,11 +21,14 @@ public class PasswordChangeService {
     private final UserRepository users;
     private final PasswordEncoder passwords;
     private final TrafficLimiter limiter;
+    private final com.example.fbservice.security.SecurityActivityService activity;
 
-    public PasswordChangeService(UserRepository users, PasswordEncoder passwords, TrafficLimiter limiter) {
+    public PasswordChangeService(UserRepository users, PasswordEncoder passwords, TrafficLimiter limiter,
+                                 com.example.fbservice.security.SecurityActivityService activity) {
         this.users = users;
         this.passwords = passwords;
         this.limiter = limiter;
+        this.activity = activity;
     }
 
     /**
@@ -53,6 +56,7 @@ public class PasswordChangeService {
             throw new IllegalArgumentException("Mật khẩu hiện tại không chính xác.");
         }
         account.setPassword(passwords.encode(currentPassword));
+        activity.record(account.getId(), com.example.fbservice.security.SecurityActivity.Kind.SESSIONS_REVOKED);
     }
 
     @Transactional
@@ -90,5 +94,6 @@ public class PasswordChangeService {
             throw new IllegalArgumentException("Mật khẩu mới phải khác mật khẩu hiện tại.");
         }
         account.setPassword(passwords.encode(newPassword));
+        activity.record(account.getId(), com.example.fbservice.security.SecurityActivity.Kind.PASSWORD_CHANGED);
     }
 }

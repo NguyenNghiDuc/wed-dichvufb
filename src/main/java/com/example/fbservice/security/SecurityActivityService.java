@@ -1,0 +1,38 @@
+package com.example.fbservice.security;
+
+import com.example.fbservice.config.AccountPrincipal;
+import com.example.fbservice.model.User;
+import com.example.fbservice.repository.UserRepository;
+import java.util.List;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
+
+@Service
+public class SecurityActivityService {
+    private final SecurityActivityRepository events;
+    private final UserRepository users;
+
+    public SecurityActivityService(SecurityActivityRepository events,UserRepository users) {
+        this.events=events;this.users=users;
+    }
+
+    @Transactional
+    public void record(Long accountId, SecurityActivity.Kind kind) {
+        events.save(new SecurityActivity(accountId, kind));
+    }
+
+    @Transactional(readOnly=true)
+    public List<SecurityActivity> recent(AccountPrincipal principal) {
+        if(principal==null || principal.getAccountId()==null)
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+        User account=users.findById(principal.getAccountId())
+            .orElseThrow(()->new ResponseStatusException(HttpStatus.UNAUTHORIZED));
+        if(!account.isEnabled() || !account.getUsername().equals(principal.getUsername())
+                || !principal.isCredentialCurrent(account.getPassword())) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+        }
+        return events.findTop20ByAccountIdOrderByCreatedAtDescIdDesc(account.getId());
+    }
+}

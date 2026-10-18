@@ -15,7 +15,8 @@ import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 @Configuration
 public class WebSecurityConfig {
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http, UserRepository users, AuthenticationRateLimitFilter loginLimiter) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, UserRepository users, AuthenticationRateLimitFilter loginLimiter,
+                                                   LoginAuditSuccessHandler loginAuditSuccessHandler) throws Exception {
         return http
             .csrf(csrf -> csrf.ignoringRequestMatchers(
                 // The signed machine-to-machine callback is the ONLY CSRF exception.
@@ -35,7 +36,7 @@ public class WebSecurityConfig {
                 "form-action 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:")))
             .addFilterBefore(loginLimiter, UsernamePasswordAuthenticationFilter.class)
             .addFilterBefore(new AccountStatusFilter(users), AuthorizationFilter.class)
-            .formLogin(form -> form.loginPage("/login").defaultSuccessUrl("/campaigns", true).permitAll())
+            .formLogin(form -> form.loginPage("/login").successHandler(loginAuditSuccessHandler).permitAll())
             .logout(logout -> logout.logoutSuccessUrl("/").permitAll())
             .build();
     }
