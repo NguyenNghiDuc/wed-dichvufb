@@ -61,6 +61,13 @@ public class CampaignCsvExportService {
     @Transactional(readOnly = true)
     public String exportMine(String username, Long orderId, CampaignStatus status,
                              CampaignServiceType serviceType, LocalDate from, LocalDate to, String q) {
+        return exportMine(username, orderId, status, serviceType, from, to, q, null);
+    }
+
+    @Transactional(readOnly = true)
+    public String exportMine(String username, Long orderId, CampaignStatus status,
+                             CampaignServiceType serviceType, LocalDate from, LocalDate to,
+                             String q, SocialPlatform platform) {
         StringBuilder csv = new StringBuilder("\uFEFF");
         csv.append("id,platform,service,status,price_vnd,created_at,target_url,brief\r\n");
         int exported = 0;
@@ -68,7 +75,7 @@ public class CampaignCsvExportService {
         while (exported < MAX_ROWS) {
             // pageMine applies ownership in the database query, validates the filters,
             // and caps each batch at 50 rows; do not fetch all users and filter in Java.
-            Page<CampaignOrder> page = customerOrders.pageMine(username, pageNumber, 50, orderId, status, serviceType, from, to, q);
+            Page<CampaignOrder> page = customerOrders.pageMine(username, pageNumber, 50, orderId, status, serviceType, from, to, q, platform);
             if (page.isEmpty()) break;
             for (CampaignOrder order : page.getContent()) {
                 if (exported >= MAX_ROWS) break;
