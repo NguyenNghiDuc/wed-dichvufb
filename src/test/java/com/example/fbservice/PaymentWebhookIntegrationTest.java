@@ -155,6 +155,25 @@ class PaymentWebhookIntegrationTest {
     }
 
     @Test
+    void rejectsCoercedOrFractionalSignedPaymentAmountsAndIds() throws Exception {
+        DepositRequest deposit = newDeposit("webhook-owner-strict-numbers", 50000);
+        String valid = event("strictNumericEvt123", deposit.getId(), 50000, "SETTLED");
+        String quotedAmount = valid.replace("\"amountVnd\":50000", "\"amountVnd\":\"50000\"");
+        String fractional = valid.replace("\"amountVnd\":50000", "\"amountVnd\":50000.9");
+        String exponential = valid.replace("\"amountVnd\":50000", "\"amountVnd\":5e4");
+        String quotedId = valid.replace("\"depositRequestId\":" + deposit.getId(),
+                "\"depositRequestId\":\"" + deposit.getId() + "\"");
+        long before = receipts.count();
+        mvc.perform(request(quotedAmount, now())).andExpect(status().isBadRequest());
+        mvc.perform(request(fractional, now())).andExpect(status().isBadRequest());
+        mvc.perform(request(exponential, now())).andExpect(status().isBadRequest());
+        mvc.perform(request(quotedId, now())).andExpect(status().isBadRequest());
+        assertThat(receipts.count()).isEqualTo(before);
+        assertThat(deposits.findById(deposit.getId()).orElseThrow().getStatus())
+                .isEqualTo("PENDING");
+    }
+
+    @Test
     void transportLimitsRawBodyWithoutPersistingSettlement() throws Exception {
         DepositRequest deposit = newDeposit("webhook-owner-limit", 99000);
         String timestamp = now();
