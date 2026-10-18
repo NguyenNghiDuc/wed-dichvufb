@@ -84,6 +84,8 @@ for script in scripts/ops/*.sh; do
   bash -n "$script" || { echo "FAIL: Bash syntax in $script" >&2; exit 1; }
 done
 bash scripts/ops/test_guardrails.sh
+bash scripts/ops/test_secret_guard.sh
+bash scripts/ops/secret_guard.sh
 [[ "$count" -eq 25 ]] || { echo "FAIL: counted $count/25" >&2; exit 1; }
 echo '25/25 W10 CODE CONTRACTS AND OFFLINE NEGATIVE TESTS PASS.'
 echo 'NOT ACCEPTED: real Docker fixture restore, live TLS, staging UAT, CI/CodeQL review, production approval.'
