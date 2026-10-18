@@ -200,3 +200,7 @@ Bổ sung code và kiểm thử cho 023/027: nhận xét riêng theo đơn đã 
 ### Đợt thông báo toàn hệ thống
 
 Bổ sung 086, phần website của 026 và audit 090: tạo bản nháp/xem trước, nhóm nhận theo quyền và tài khoản hoạt động, xác nhận gửi tối đa 5.000 người, chống gửi lặp và lịch sử thao tác. Tích hợp trung tâm thông báo hiện có; chưa gửi email. Xem `SYSTEM_BROADCASTS.md` để biết giới hạn, migration V14 và kiểm thử giao dịch/đồng thời PostgreSQL.
+
+### Đợt mã giảm giá đơn tư vấn
+
+Bổ sung 071, quản trị 087 và mở rộng 033: mã VND/phần trăm, trần giảm/giá trị đơn tối thiểu, hạn dùng UTC, giới hạn tổng và mỗi tài khoản; xem trước giá server và lưu snapshot khi tạo đơn. Lượt chỉ dùng trong transaction thành công, hủy/từ chối không trả lượt. Chưa áp dụng cho TikTok hoặc ví/thanh toán thật. Xem `COUPONS_AND_CAMPAIGN_PRICING.md` cho migration V15, API và kiểm thử PostgreSQL đồng thời/rollback.

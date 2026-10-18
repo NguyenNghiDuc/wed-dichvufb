@@ -15,14 +15,16 @@ import org.springframework.web.server.ResponseStatusException;
 @Service
 public class CampaignOrderService {
     private final com.example.fbservice.catalog.ServiceCatalogService catalog;
+    private final com.example.fbservice.promotion.CouponService coupons;
     private final CampaignOrderRepository orders;
     private final CampaignEventRepository events;
     private final AccountNotificationRepository notifications;
 
     public CampaignOrderService(CampaignOrderRepository orders, CampaignEventRepository events,
                                 AccountNotificationRepository notifications,
-                                com.example.fbservice.catalog.ServiceCatalogService catalog) {
-        this.catalog=catalog;
+                                com.example.fbservice.catalog.ServiceCatalogService catalog,
+                                com.example.fbservice.promotion.CouponService coupons) {
+        this.catalog=catalog;this.coupons=coupons;
         this.orders = orders;
         this.events = events;
         this.notifications = notifications;
@@ -32,7 +34,10 @@ public class CampaignOrderService {
     public CampaignOrder create(String username, CampaignOrderRequest request) {
         if (username == null || username.isBlank()) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
         validate(request);
-        CampaignOrder order = orders.save(new CampaignOrder(username, request, catalog.quote(request.serviceType())));
+        var quote=coupons.reserve(username,request.couponCode(),catalog.quote(request.serviceType()));
+        CampaignOrder order = new CampaignOrder(username,request,quote.totalPriceVnd());
+        order.pricing(quote.originalPriceVnd(),quote.discountVnd(),quote.couponCode());
+        orders.save(order);coupons.recordUse(quote,order.getId(),username);
         events.save(new CampaignEvent(order.getId(), null, CampaignStatus.PENDING_REVIEW, username, "Chiến dịch được tạo"));
         notifications.save(new AccountNotification(username, "Đã nhận chiến dịch #" + order.getId(),
                 "Yêu cầu đang chờ kiểm duyệt."));

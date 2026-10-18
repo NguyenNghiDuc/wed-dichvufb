@@ -65,14 +65,15 @@ public class CampaignWebController {
     @PostMapping
     public String create(@RequestParam SocialPlatform platform, @RequestParam CampaignServiceType serviceType,
                          @RequestParam String targetUrl, @RequestParam String brief,
-                         Principal principal, Model model, RedirectAttributes redirect) {
+                         @RequestParam(required=false) String couponCode,Principal principal, Model model, RedirectAttributes redirect) {
         try {
-            CampaignOrder created = service.create(principal.getName(), new CampaignOrderRequest(platform, serviceType, targetUrl, brief));
+            CampaignOrder created = service.create(principal.getName(), new CampaignOrderRequest(platform, serviceType, targetUrl, brief,couponCode));
             redirect.addFlashAttribute("success", "Đã nhận yêu cầu #" + created.getId() + ". Chiến dịch đang chờ duyệt.");
             redirect.addFlashAttribute("createdOrderId", created.getId());
             return "redirect:/campaigns";
         } catch (IllegalArgumentException exception) {
             model.addAttribute("error", exception.getMessage());
+            model.addAttribute("couponCode",couponCode);
             return selectedForm(platform, serviceType, targetUrl, brief, model);
         }
     }
