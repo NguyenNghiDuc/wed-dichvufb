@@ -2,6 +2,10 @@
 # Restore ONLY to isolated, empty, tmpfs-backed recovery-db. Never touches app db.
 set -Eeuo pipefail
 umask 077
+[[ -f compose.yaml && -f scripts/ops/backup.sh && -f compose.recovery.yaml ]] || {
+  echo 'Run W10 scripts from the reviewed GrowLab repository root' >&2
+  exit 2
+}
 [[ $# == 2 && "$1" == "--sandbox" ]] || {
   echo "Usage: $0 --sandbox /path/to/growlab_backup.dump" >&2
   exit 2
