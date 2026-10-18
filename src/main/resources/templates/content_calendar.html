@@ -84,6 +84,18 @@
     </form>
     <p id="content-metrics-status" class="muted" role="status" aria-live="polite"></p>
     <pre id="content-metrics-result" class="muted" aria-label="Kết quả phân tích dữ liệu do bạn cung cấp"></pre>
+    <details class="form-panel" id="metrics-batch-section">
+      <summary><strong>Phân tích tối đa 100 bài đã có dữ liệu</strong></summary>
+      <p class="muted">Dán một bài trên mỗi dòng, cách nhau bằng dấu phẩy: NỀN_TẢNG, NGÀY_GIỜ_UTC, LƯỢT_XEM, THÍCH, BÌNH_LUẬN, CHIA_SẺ, LƯU. Không nhập tên người, mật khẩu hoặc mã truy cập. Số liệu chưa được mạng xã hội xác minh.</p>
+      <form id="content-metrics-batch-form" th:attr="data-api-url=@{/api/v1/content-analytics/preview}">
+        <div class="field"><label for="metrics-batch-input">Dữ liệu tự nhập (1–100 dòng)</label>
+          <textarea id="metrics-batch-input" name="rows" maxlength="20000" rows="6" spellcheck="false"
+            placeholder="TIKTOK,2026-10-01T12:00,120,10,1,2,0" required></textarea></div>
+        <button type="submit" class="btn btn-outline">Phân tích nhóm bài đã nhập</button>
+      </form>
+      <p id="content-metrics-batch-status" class="muted" role="status" aria-live="polite"></p>
+      <pre id="content-metrics-batch-result" class="muted" aria-label="Kết quả tổng hợp số liệu tự nhập"></pre>
+    </details>
   </div>
 </section>
 
