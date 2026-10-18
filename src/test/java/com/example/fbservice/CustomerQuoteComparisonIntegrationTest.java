@@ -45,6 +45,13 @@ class CustomerQuoteComparisonIntegrationTest {
         mvc.perform(get("/api/v1/campaign-orders/quote")
                 .param("serviceType","AD_STRATEGY"))
             .andExpect(status().isBadRequest());
+        mvc.perform(get("/campaigns/new"))
+            .andExpect(status().isOk())
+            .andExpect(view().name("campaign_form"))
+            .andExpect(content().string(org.hamcrest.Matchers.containsString("So sánh các gói")))
+            .andExpect(content().string(org.hamcrest.Matchers.containsString("119000 đ")))
+            .andExpect(content().string(org.hamcrest.Matchers.not(
+                org.hamcrest.Matchers.containsString("Tư vấn chiến dịch quảng cáo"))));
 
         var order=campaigns.create("quotes-customer",
             new CampaignOrderRequest(SocialPlatform.YOUTUBE,
