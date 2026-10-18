@@ -83,6 +83,14 @@ public class ChatController {
         }
     }
 
+    /** Owner-only aggregate badge; never returns another person's username. */
+    @GetMapping("/unread/count")
+    public ResponseEntity<Map<String, Long>> unreadCount(Principal principal) {
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CACHE_CONTROL, "no-store")
+                .body(Map.of("unread", chat.unreadTotalFor(principal.getName())));
+    }
+
     /** Mobile/browser JSON inbox: only contacts of the signed-in account. */
     @GetMapping("/contacts")
     public ResponseEntity<Page<ChatContactSummary>> contacts(
