@@ -82,6 +82,11 @@ class CustomerCampaignKeywordSearchIntegrationTest {
 
     @Test @WithMockUser(username="keyword-invalid")
     void rejectsLongOrControlInputAndPreservesExistingDateValidation() throws Exception {
+        String injected = "<img src=x onerror=alert(1)>";
+        mvc.perform(get("/campaigns").param("q", injected))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString("&lt;img")))
+            .andExpect(content().string(not(containsString(injected))));
         mvc.perform(get("/api/v1/campaign-orders/page").param("q","x".repeat(81)))
             .andExpect(status().isBadRequest());
         mvc.perform(get("/campaigns").param("q","line\nnext"))
