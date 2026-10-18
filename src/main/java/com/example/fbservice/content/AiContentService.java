@@ -42,13 +42,17 @@ public class AiContentService {
             HttpResponse<java.io.InputStream> response=HTTP.send(
                 request,HttpResponse.BodyHandlers.ofInputStream());
             try(java.io.InputStream stream=response.body()) {
-                byte[] bytes=stream.readNBytes(MAX_RESPONSE_BYTES+1);
-                if(bytes.length>MAX_RESPONSE_BYTES)
-                    throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,"AI response too large");
-                return new ProviderResponse(response.statusCode(),
-                    new String(bytes,java.nio.charset.StandardCharsets.UTF_8));
+                return new ProviderResponse(response.statusCode(),readBounded(stream));
             }
         });
+    }
+
+    /** Applies a hard byte budget even when the upstream response has no Content-Length. */
+    static String readBounded(java.io.InputStream stream) throws IOException {
+        byte[] bytes=stream.readNBytes(MAX_RESPONSE_BYTES+1);
+        if(bytes.length>MAX_RESPONSE_BYTES)
+            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,"AI response too large");
+        return new String(bytes,java.nio.charset.StandardCharsets.UTF_8);
     }
 
     // Test seam: no provider key or network needed in unit tests.
