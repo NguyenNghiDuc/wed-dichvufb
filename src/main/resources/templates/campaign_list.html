@@ -5,10 +5,10 @@
 <title>Chiến dịch của tôi · GrowLab</title>
 <link rel="stylesheet" th:href="@{/style.css}">
 <script defer th:src="@{/campaign.js}"></script>
-</head>
+<script defer th:src="@{/site.js}"></script></head>
 <body class="account-page">
-<header class="topbar"><nav class="nav container"><a class="brand" th:href="@{/}"><span class="brand-icon">↗</span>Grow<strong>Lab</strong></a><div class="nav-links"><a th:href="@{/}">Trang chủ</a><a th:href="@{/tiktok/orders}">Đơn TikTok</a><a th:href="@{/notifications}">Thông báo</a><a th:href="@{/support}">Hỗ trợ</a><a th:href="@{/profile}">Tài khoản</a><a th:href="@{/content-calendar}">Lịch nội dung</a><form method="post" th:action="@{/logout}"><input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"><button class="logout" type="submit">Đăng xuất</button></form></div></nav></header>
-<main class="page container">
+<header th:replace="~{fragments/site_layout :: header}"></header>
+<main class="page container" id="page-content" tabindex="-1">
 <div class="page-header"><div><div class="eyebrow">Dashboard</div><h1>Chiến dịch của tôi</h1><p class="muted">Theo dõi quá trình xét duyệt và xử lý yêu cầu.</p></div><a class="btn" th:href="@{/campaigns/new}">+ Tạo chiến dịch</a></div>
 
 <div class="success-message" role="status" th:if="${success}"><span th:text="${success}"></span> <a th:if="${createdOrderId}" th:href="@{/campaigns/{id}(id=${createdOrderId})}">Xem chi tiết đơn →</a></div>

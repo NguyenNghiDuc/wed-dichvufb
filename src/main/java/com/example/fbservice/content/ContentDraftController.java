@@ -46,6 +46,7 @@ public class ContentDraftController {
             return "redirect:/content-calendar";
         }catch(IllegalArgumentException ex){
             model.addAttribute("error",ex.getMessage());
+            submitted(model,platform,title,body,scheduledAtUtc);
             return list(0,model,principal);
         }
     }
@@ -70,6 +71,7 @@ public class ContentDraftController {
             return "redirect:/content-calendar";
         }catch(IllegalArgumentException ex){
             model.addAttribute("error",ex.getMessage());
+            submitted(model,platform,title,body,scheduledAtUtc);
             return edit(id,principal,model);
         }
     }
@@ -78,5 +80,12 @@ public class ContentDraftController {
     public String delete(@PathVariable Long id,Principal principal){
         service.deleteMine(principal.getName(),id);
         return "redirect:/content-calendar";
+    }
+
+    private void submitted(Model model,SocialPlatform platform,String title,String body,LocalDateTime when){
+        model.addAttribute("inputPlatform",platform);
+        model.addAttribute("inputTitle",title);
+        model.addAttribute("inputBody",body);
+        model.addAttribute("inputSchedule",when==null?"":when.format(INPUT_DATE));
     }
 }

@@ -79,7 +79,7 @@ public class CampaignCsvExportService {
         csv.append("\r\n");
     }
 
-    static String escape(Object value) {
+    public static String escape(Object value) {
         String raw = value == null ? "" : value.toString();
         String trimmed = raw.stripLeading();
         if (!trimmed.isEmpty() && "=+-@".indexOf(trimmed.charAt(0)) >= 0) {

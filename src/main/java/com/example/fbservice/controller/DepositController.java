@@ -23,7 +23,7 @@ public class DepositController {
     }
 
     @PostMapping("/create")
-    public String create(@ModelAttribute DepositRequest input, Principal principal, Model model) {
+    public String create(@ModelAttribute("deposit") DepositRequest input, Principal principal, Model model) {
         try {
             deposits.save(input, principal.getName());
             return "redirect:/deposit/list";

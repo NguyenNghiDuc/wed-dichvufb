@@ -1,10 +1,8 @@
 <!doctype html><html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>GrowLab · Quản trị tổng quan</title><link rel="stylesheet" th:href="@{/style.css}"></head>
-<body><header class="topbar"><nav class="nav container"><a class="brand" th:href="@{/}"><span class="brand-icon">↗</span>Grow<strong>Lab</strong></a>
-<div class="nav-links"><a th:href="@{/admin/campaign-orders}">Đơn hàng</a><a th:href="@{/admin/users}">Tài khoản</a><a th:href="@{/admin/catalog}">Dịch vụ</a><a th:href="@{/admin/support}">Hỗ trợ</a><a th:href="@{/staff/campaign-orders}">Đơn được giao</a>
-<form method="post" th:action="@{/logout}"><input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"><button type="submit" class="logout">Đăng xuất</button></form></div></nav></header>
-<main class="page container"><div class="page-header"><div><div class="eyebrow">Dashboard Admin</div><h1>Tổng quan vận hành GrowLab</h1><p class="muted">Số liệu được lấy từ database, không mô phỏng doanh thu.</p></div></div>
+<title>GrowLab · Quản trị tổng quan</title><link rel="stylesheet" th:href="@{/style.css}"><script defer th:src="@{/site.js}"></script></head>
+<body class="account-page"><header th:replace="~{fragments/site_layout :: header}"></header>
+<main class="page container" id="page-content" tabindex="-1"><div class="page-header"><div><div class="eyebrow">Dashboard Admin</div><h1>Tổng quan vận hành GrowLab</h1><p class="muted">Số liệu được lấy từ database, không mô phỏng doanh thu.</p></div></div>
 <div class="metrics-grid">
 <article class="card"><div class="muted">Tổng tài khoản</div><div class="metric" th:text="${metrics.totalUsers}">0</div><span class="muted" th:text="|${metrics.enabledUsers} đang hoạt động|"></span></article>
 <article class="card"><div class="muted">Tổng chiến dịch</div><div class="metric" th:text="${metrics.totalCampaigns}">0</div></article>

@@ -23,3 +23,11 @@ The existing consulting campaign, support, content, staff and catalog workflows 
 ## Validation
 
 The test suite covers database-backed ordering, URL and amount validation, server states/revisions, historic price preservation, permissions, CSRF, status transitions, cancellation and pagination. Account tests check names, password validation/hashing and revocation. Notification tests check ownership and bulk-read behavior. PostgreSQL integration tests also validate migrations against the complete entity schema.
+
+## Shared UI and workflow improvements
+
+All account, public authentication/help, staff and admin templates share the dark pink/cyan theme and a role-aware navigation fragment. Public visitors see login/register; customer, staff and admin links are rendered according to authenticated roles. The unread badge uses the current owner's database count. `/site.js` provides accessible password visibility, byte-limit feedback, character counters, POST loading states and confirmation dialogs for destructive actions. Server-side authorization, CSRF and validation remain authoritative when JavaScript is disabled.
+
+TikTok customer and admin lists now export their current ID/status filter as UTF-8 CSV with BOM, a 5,000-row cap, formula-safe cell escaping and `Cache-Control: no-store`. Customer export derives ownership from authentication; it accepts no owner override. Admin export requires ADMIN.
+
+Customers may close their own resolved support request; repeated close is idempotent and other owners receive 404. Closed requests cannot accept replies. Invalid support, registration and content create/edit forms preserve non-secret submitted data. Registration validates the bcrypt 72-byte UTF-8 ceiling instead of relying only on character length. Passwords are never echoed into returned HTML.

@@ -98,6 +98,16 @@ public class SupportTicketService {
             "Hỗ trợ #" + id + " đã đóng", "Yêu cầu đã được đóng bởi nhân viên " + admin + "."));
     }
 
+    @Transactional
+    public void closeAsOwner(String user, Long id) {
+        SupportTicket ticket = tickets.lockForOwner(id, user)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        if (ticket.getStatus() == TicketStatus.CLOSED) return;
+        ticket.close();
+        notices.save(new AccountNotification(user, "Đã đóng hỗ trợ #" + id,
+            "Bạn đã xác nhận đóng yêu cầu hỗ trợ."));
+    }
+
     private Pageable paging(int page) {
         if (page < 0 || page > 10000) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Trang không hợp lệ.");
         return PageRequest.of(page, 20, Sort.by(Sort.Order.desc("updatedAt"), Sort.Order.desc("id")));

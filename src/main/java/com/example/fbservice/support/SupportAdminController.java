@@ -37,6 +37,7 @@ public class SupportAdminController {
             return "redirect:/admin/support/" + id;
         } catch (IllegalArgumentException exception) {
             model.addAttribute("error", exception.getMessage());
+            model.addAttribute("inputMessage", message);
             return details(id, model);
         }
     }

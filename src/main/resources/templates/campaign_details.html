@@ -6,10 +6,10 @@
 <title>Chi tiết chiến dịch · GrowLab</title>
 <link rel="stylesheet" th:href="@{/style.css}">
 <script defer th:src="@{/campaign.js}"></script>
-</head>
+<script defer th:src="@{/site.js}"></script></head>
 <body class="account-page">
-<header class="topbar"><nav class="nav container"><a class="brand" th:href="@{/}"><span class="brand-icon">✦</span>Grow<strong>Lab</strong></a><div class="nav-links"><a th:href="@{/campaigns}">Chiến dịch của tôi</a><a th:href="@{/notifications}">Thông báo</a><a th:href="@{/support}">Hỗ trợ</a></div></nav></header>
-<main class="page container">
+<header th:replace="~{fragments/site_layout :: header}"></header>
+<main class="page container" id="page-content" tabindex="-1">
   <a class="table-link" th:href="@{/campaigns}">← Các chiến dịch</a>
   <div class="page-header">
     <div>

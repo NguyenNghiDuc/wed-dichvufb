@@ -22,7 +22,7 @@ public class WebSecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
                 .requestMatchers("/dich-vu/**").permitAll()
-                .requestMatchers("/", "/login", "/register", "/help", "/style.css", "/landing.js", "/favicon.ico",
+                .requestMatchers("/", "/login", "/register", "/help", "/style.css", "/landing.js", "/site.js", "/favicon.ico",
                     "/actuator/health", "/actuator/health/**").permitAll()
                 .requestMatchers("/api/v1/payments/webhooks/internal").permitAll()
                 .requestMatchers("/admin/support/**", "/staff/**").hasAnyRole("ADMIN", "STAFF")

@@ -7,6 +7,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 @RequestMapping("/support")
@@ -30,12 +31,15 @@ public class SupportController {
 
     @PostMapping
     public String create(@RequestParam String subject, @RequestParam String description,
-                         Principal principal, Model model) {
+                         Principal principal, Model model, RedirectAttributes redirect) {
         try {
             SupportTicket ticket = service.create(principal.getName(), subject, description);
+            redirect.addFlashAttribute("success", "Đã gửi yêu cầu hỗ trợ.");
             return "redirect:/support/" + ticket.getId();
         } catch (IllegalArgumentException exception) {
             model.addAttribute("error", exception.getMessage());
+            model.addAttribute("inputSubject", subject);
+            model.addAttribute("inputDescription", description);
             return "support_form";
         }
     }
@@ -55,7 +59,15 @@ public class SupportController {
             return "redirect:/support/" + id;
         } catch (IllegalArgumentException exception) {
             model.addAttribute("error", exception.getMessage());
+            model.addAttribute("inputMessage", message);
             return details(id, principal, model);
         }
+    }
+
+    @PostMapping("/{id}/close")
+    public String close(@PathVariable Long id, Principal principal, RedirectAttributes redirect) {
+        service.closeAsOwner(principal.getName(), id);
+        redirect.addFlashAttribute("success", "Yêu cầu hỗ trợ đã đóng.");
+        return "redirect:/support/" + id;
     }
 }
