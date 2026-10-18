@@ -58,6 +58,20 @@ public class ChatController {
         }
     }
 
+    /**
+     * Mark a single incoming message read. A foreign or nonexistent ID yields
+     * the same zero result; no message content or participant information leaks.
+     * Browser calls require the ordinary CSRF token (no exception here).
+     */
+    @PostMapping("/messages/{id}/read")
+    public Map<String, Integer> markMessageRead(@PathVariable Long id, Principal principal) {
+        try {
+            return Map.of("marked", chat.markMessageRead(principal.getName(), id));
+        } catch (IllegalArgumentException exception) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid message ID");
+        }
+    }
+
     /** Mobile/browser JSON inbox: only contacts of the signed-in account. */
     @GetMapping("/contacts")
     public ResponseEntity<Page<ChatContactSummary>> contacts(
