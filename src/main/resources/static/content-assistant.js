@@ -103,6 +103,30 @@ document.addEventListener("DOMContentLoaded", () => {
               }
             }
           }
+          if (["HASHTAGS", "TIKTOK_IDEAS", "YOUTUBE_SHORTS", "HEADLINES"].includes(payload.task)
+              && payload.topic.length <= 100) {
+            const params = new URLSearchParams({
+              platform: payload.platform, topic: payload.topic,
+              task: payload.task, language: payload.language
+            });
+            const local = await fetch(form.dataset.ideasFallbackUrl + "?" + params.toString(), {
+              credentials: "same-origin"
+            });
+            if (local.ok) {
+              const template = await local.json();
+              if (template.mode === "TEMPLATE_ONLY" && template.task === payload.task
+                  && template.platform === payload.platform && template.language === payload.language
+                  && Array.isArray(template.suggestions)
+                  && template.suggestions.length >= 3 && template.suggestions.length <= 5
+                  && template.suggestions.every(item =>
+                    typeof item === "string" && item.length <= 600)) {
+                result.value = template.suggestions.join("\n\n");
+                if (copyToDraft) copyToDraft.disabled = result.value.length > 3000;
+                status.textContent = "MẪU CÓ SẴN " + payload.language +
+                  ", KHÔNG phải AI; hãy tự kiểm tra trước khi sử dụng.";
+              }
+            }
+          }
           if (payload.task === "CAPTION" && payload.language === "VI" && payload.topic.length <= 100) {
             const params = new URLSearchParams({ platform: payload.platform, topic: payload.topic });
             const local = await fetch(form.dataset.fallbackUrl + "?" + params.toString(), {
