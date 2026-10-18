@@ -19,6 +19,8 @@ public class WebSecurityConfig {
                 // Restrict it to POST; all other state-changing methods remain protected.
                 new AntPathRequestMatcher("/api/v1/payments/webhooks/internal", "POST")))
             .authorizeHttpRequests(auth -> auth
+                // Public READ-ONLY catalog detail pages; POSTs still require login and CSRF.
+                .requestMatchers(new AntPathRequestMatcher("/dich-vu/**", "GET")).permitAll()
                 .requestMatchers("/", "/login", "/register", "/help", "/style.css", "/favicon.ico",
                     "/actuator/health", "/actuator/health/**").permitAll()
                 .requestMatchers("/api/v1/payments/webhooks/internal").permitAll()

@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" th:content="${description}" content="Tư vấn phát triển nội dung trên mạng xã hội · GrowLab">
+  <title th:text="|${serviceTitle} · GrowLab|">Dịch vụ phát triển TikTok · GrowLab</title>
+  <link rel="stylesheet" th:href="@{/style.css}">
+</head>
+<body class="service-detail grow-showcase">
+<a class="grow-skip" href="#noi-dung">Chuyển đến nội dung</a>
+<header class="topbar grow-header">
+  <nav class="nav container" aria-label="Điều hướng chính">
+    <a class="brand" th:href="@{/}"><span class="brand-icon" aria-hidden="true">↗</span>Grow<strong>Lab</strong></a>
+    <div class="nav-links">
+      <a th:href="@{/#dich-vu}">Dịch vụ</a>
+      <a th:href="@{/help}">Hướng dẫn</a>
+      <a th:href="@{/campaigns}">Chiến dịch của tôi</a>
+      <a th:href="@{/login}">Đăng nhập</a>
+      <a class="btn btn-small" th:href="@{/register}">Đăng ký miễn phí →</a>
+    </div>
+  </nav>
+</header>
+<div class="grow-ribbon">
+  <div class="container"><span class="grow-pulse" aria-hidden="true"></span>
+    <span>Tư vấn tăng trưởng thực chất · Chọn gói rõ ràng · Không yêu cầu mật khẩu mạng xã hội</span>
+    <a href="#tao-yeu-cau">Xem bảng giá <span aria-hidden="true">↗</span></a>
+  </div>
+</div>
+
+<div class="container grow-shell" id="noi-dung">
+  <aside class="grow-side" aria-label="Danh mục dịch vụ GrowLab">
+    <div class="grow-side-block">
+      <h2>Danh mục nền tảng</h2>
+      <nav class="grow-side-nav" aria-label="Chọn nền tảng">
+        <a th:each="p, i : ${platformOptions}"
+           th:href="@{/dich-vu/{platform}/{plan}(platform=${p.slug},plan=${planSlug})}"
+           th:classappend="${p.selected} ? ' is-current' : ''">
+          <span class="grow-platform-mark" aria-hidden="true" th:text="${#strings.substring(p.label,0,1)}">T</span>
+          <span th:text="${p.label}">TikTok</span>
+          <span class="grow-side-arrow" aria-hidden="true">›</span>
+        </a>
+      </nav>
+    </div>
+    <div class="grow-side-block grow-side-packages">
+      <h2>Gói đang cung cấp</h2>
+      <nav class="grow-side-nav" aria-label="Chọn gói tư vấn">
+        <a th:each="p : ${planOptions}"
+           th:href="@{/dich-vu/{platform}/{plan}(platform=${platformSlug},plan=${p.slug})}"
+           th:classappend="${p.selected} ? ' is-current' : ''">
+          <span class="grow-side-symbol" aria-hidden="true">↗</span>
+          <span th:text="${p.label}">Đánh giá hồ sơ</span>
+        </a>
+      </nav>
+    </div>
+    <div class="grow-side-help">
+      <div class="grow-help-symbol" aria-hidden="true">?</div>
+      <strong>Cần hỗ trợ chọn gói?</strong>
+      <p>Xem các câu hỏi hoặc liên hệ nhân viên GrowLab.</p>
+      <a th:href="@{/help}">Trung tâm hỗ trợ ↗</a>
+    </div>
+  </aside>
+
+  <main class="grow-main">
+    <nav class="grow-breadcrumb" aria-label="Đường dẫn trang">
+      <a th:href="@{/}">Trang chủ</a><span aria-hidden="true">›</span>
+      <a th:href="@{/#dich-vu}">Dịch vụ</a><span aria-hidden="true">›</span>
+      <span th:text="${serviceTitle}">Tư vấn hồ sơ TikTok</span>
+    </nav>
+
+    <div class="grow-first-screen">
+      <section class="grow-hero" aria-labelledby="grow-main-heading">
+        <div class="grow-hero-copy">
+          <span class="grow-hero-kicker"><span aria-hidden="true">✦</span> GROWLAB SOCIAL STUDIO</span>
+          <h1 id="grow-main-heading">Xây kênh <span th:text="${platformName}">TikTok</span> <em>có chiến lược.</em></h1>
+          <p th:text="${description}">Đánh giá và tối ưu hồ sơ, phát triển nội dung có định hướng.</p>
+          <div class="grow-hero-tags">
+            <span>✓ Không cần mật khẩu</span><span>✓ Tư vấn thủ công</span>
+            <span>✓ Theo dõi tiến độ</span>
+          </div>
+          <a class="grow-hero-link" href="#mo-ta">Khám phá dịch vụ <span aria-hidden="true">↘</span></a>
+        </div>
+        <div class="grow-art" role="img" aria-label="Minh họa kế hoạch phát triển kênh theo ba bước">
+          <div class="grow-art-halo"></div>
+          <div class="grow-art-card grow-art-top">
+            <span class="grow-art-icon" aria-hidden="true">✦</span>
+            <span><b>Nội dung rõ mục tiêu</b><small>Lập kế hoạch phù hợp kênh</small></span>
+          </div>
+          <div class="grow-art-orbit">
+            <span class="grow-orbit-core" aria-hidden="true">↗</span>
+            <span class="grow-orbit-text">GROWTH<br>STUDIO</span>
+          </div>
+          <div class="grow-art-card grow-art-bottom">
+            <span class="grow-art-icon grow-art-green" aria-hidden="true">✓</span>
+            <span><b>Từng bước minh bạch</b><small>Gửi yêu cầu → nhận tư vấn</small></span>
+          </div>
+        </div>
+        <p class="grow-art-disclaimer">Đồ họa minh họa quy trình, không phải số liệu tăng trưởng thực tế.</p>
+      </section>
+
+      <section id="tao-yeu-cau" class="grow-checkout" aria-labelledby="grow-checkout-title">
+        <div class="grow-checkout-head">
+          <div><span class="grow-mini-eyebrow">TẠO YÊU CẦU</span>
+            <h2 id="grow-checkout-title">Bắt đầu với GrowLab</h2></div>
+          <span class="grow-checkout-status">Đang nhận đơn</span>
+        </div>
+        <ol class="grow-progress" aria-label="Bốn bước gửi yêu cầu">
+          <li><b>1</b><span>Nền tảng</span></li>
+          <li><b>2</b><span>Gói</span></li>
+          <li><b>3</b><span>Thông tin</span></li>
+          <li><b>4</b><span>Gửi</span></li>
+        </ol>
+        <div class="grow-pick-label"><span>01</span> Chọn nền tảng</div>
+        <nav class="grow-platform-choice" aria-label="Nền tảng yêu cầu">
+          <a th:each="p : ${platformOptions}"
+             th:href="@{/dich-vu/{platform}/{plan}(platform=${p.slug},plan=${planSlug})}"
+             th:classappend="${p.selected} ? ' is-selected' : ''"
+             th:attr="aria-current=${p.selected} ? 'page' : null"
+             th:text="${p.label}">TikTok</a>
+        </nav>
+        <div class="grow-pick-label"><span>02</span> Chọn dịch vụ phù hợp</div>
+        <nav class="grow-plan-choice" aria-label="Các gói tư vấn">
+          <a th:each="p : ${planOptions}"
+             th:href="@{/dich-vu/{platform}/{plan}(platform=${platformSlug},plan=${p.slug})}"
+             th:classappend="${p.selected} ? ' is-selected' : ''"
+             th:attr="aria-current=${p.selected} ? 'page' : null">
+            <span class="grow-choice-radio" aria-hidden="true"></span>
+            <span th:text="${p.label}">Đánh giá hồ sơ</span><span class="grow-choice-arrow" aria-hidden="true">↗</span>
+          </a>
+        </nav>
+        <div class="grow-quote-card">
+          <span>Giá tư vấn hiện tại</span>
+          <strong th:text="|${#numbers.formatInteger(offering.priceVnd, 1, 'POINT')} ₫|">79.000 ₫</strong>
+          <small>Giá từ bảng giá GrowLab; chưa phát sinh thanh toán.</small>
+        </div>
+        <form class="grow-checkout-form" th:if="${signedIn}" method="post" th:action="@{/campaigns}">
+          <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+          <input type="hidden" name="platform" th:value="${platform.name()}">
+          <input type="hidden" name="serviceType" th:value="${serviceType.name()}">
+          <div class="grow-pick-label"><span>03</span> Thông tin kênh và mục tiêu</div>
+          <label for="grow-profile-link">Liên kết kênh / hồ sơ <span aria-hidden="true">*</span></label>
+          <input id="grow-profile-link" name="targetUrl" type="url" required maxlength="512"
+                 pattern="https://.+" autocomplete="url" placeholder="https://www.tiktok.com/@tenkenh">
+          <p class="grow-field-hint">Chỉ dùng HTTPS trên nền tảng đã chọn. Không nhập mật khẩu hoặc mã OTP.</p>
+          <label for="grow-campaign-brief">Bạn muốn cải thiện điều gì? <span aria-hidden="true">*</span></label>
+          <textarea id="grow-campaign-brief" name="brief" minlength="10" maxlength="1000" required
+                    placeholder="Mô tả mục tiêu của kênh, đối tượng khách hàng và nội dung cần hỗ trợ..."></textarea>
+          <button class="btn full grow-submit" type="submit">Gửi yêu cầu tư vấn <span aria-hidden="true">→</span></button>
+          <p class="grow-field-hint">Bước 04: yêu cầu được tạo và chờ nhân viên duyệt; chưa thanh toán tự động.</p>
+        </form>
+        <div class="grow-checkout-guest" th:unless="${signedIn}">
+          <p>Đăng nhập để nhập đường dẫn kênh và gửi yêu cầu tư vấn.</p>
+          <a class="btn full grow-submit" th:href="@{/login}">Đăng nhập để tiếp tục →</a>
+          <a th:href="@{/register}">Chưa có tài khoản? Tạo tài khoản</a>
+        </div>
+        <div class="grow-checkout-footer"><span>✓ Không cần mật khẩu</span><span>✓ Báo giá công khai</span></div>
+      </section>
+    </div>
+
+    <div class="grow-proof" aria-label="Đặc điểm dịch vụ">
+      <div><span aria-hidden="true">01</span><strong>Gói tư vấn rõ ràng</strong><small>Đọc nội dung từng gói</small></div>
+      <div><span aria-hidden="true">02</span><strong>Kiểm soát thông tin</strong><small>Chỉ sử dụng liên kết công khai</small></div>
+      <div><span aria-hidden="true">03</span><strong>Trạng thái minh bạch</strong><small>Theo dõi trong tài khoản</small></div>
+      <div><span aria-hidden="true">04</span><strong>Hỗ trợ khi cần</strong><small>Trung tâm trợ giúp GrowLab</small></div>
+    </div>
+
+    <nav class="grow-sections-nav" aria-label="Đi nhanh đến nội dung">
+      <a href="#mo-ta">Giới thiệu</a>
+      <a href="#bang-gia">Bảng giá</a>
+      <a href="#huong-dan">Quy trình</a>
+      <a href="#meo-phat-trien">Mẹo phát triển</a>
+      <a href="#hoi-dap">Câu hỏi</a>
+      <a href="#danh-gia">Đánh giá</a>
+    </nav>
+
+    <section id="mo-ta" class="grow-info-section">
+      <header class="grow-info-heading"><span class="grow-number">01</span>
+        <div><span class="grow-mini-eyebrow">HIỂU RÕ DỊCH VỤ</span><h2>Phát triển kênh bằng nội dung có giá trị</h2></div>
+      </header>
+      <p class="grow-intro-prose" th:text="${description}"></p>
+      <p class="grow-intro-prose">Không phải mọi kênh đều cần một công thức giống nhau. GrowLab tập trung vào việc xác định đối tượng, cải thiện hồ sơ và nội dung, sau đó hướng dẫn theo dõi số liệu hợp lệ để điều chỉnh chiến lược.</p>
+      <div class="grow-feature-grid">
+        <article th:each="benefit, stat : ${benefits}">
+          <span class="grow-feature-icon" aria-hidden="true" th:text="${stat.count}">1</span>
+          <h3 th:text="${benefit}">Đánh giá hồ sơ</h3>
+          <p>Gợi ý thực tế phù hợp với phạm vi gói tư vấn đã chọn.</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="bang-gia" class="grow-info-section">
+      <header class="grow-info-heading"><span class="grow-number">02</span>
+        <div><span class="grow-mini-eyebrow">LỰA CHỌN MINH BẠCH</span><h2>So sánh các gói tư vấn</h2></div>
+      </header>
+      <p class="grow-intro-prose">Giá lấy trực tiếp từ danh mục đang hoạt động của GrowLab. Đây là giá cho dịch vụ tư vấn, không phải giá theo lượt follow hoặc tương tác.</p>
+      <div class="grow-table-scroll">
+        <table class="grow-pricing-table">
+          <thead><tr><th scope="col">Gói dịch vụ</th><th scope="col">Hình thức</th><th scope="col">Giá tham khảo</th><th scope="col">Chọn</th></tr></thead>
+          <tbody>
+            <tr th:each="plan : ${priceRows}">
+              <td><strong th:text="${plan.title}">Đánh giá hồ sơ</strong><small>Tư vấn GrowLab</small></td>
+              <td>Tư vấn theo yêu cầu</td>
+              <td class="grow-money" th:text="|${#numbers.formatInteger(plan.priceVnd, 1, 'POINT')} ₫|">79.000 ₫</td>
+              <td><a th:href="@{/dich-vu/{platform}/{plan}(platform=${platformSlug},plan=${plan.slug})}">Chọn gói →</a></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="grow-table-footnote">Bảng giá có thể thay đổi; hệ thống lưu giá theo thời điểm gửi yêu cầu.</p>
+    </section>
+
+    <section id="huong-dan" class="grow-info-section">
+      <header class="grow-info-heading"><span class="grow-number">03</span>
+        <div><span class="grow-mini-eyebrow">QUY TRÌNH 4 BƯỚC</span><h2>Từ ý tưởng đến yêu cầu tư vấn</h2></div>
+      </header>
+      <div class="grow-guide-grid">
+        <article><span>01</span><h3>Chọn nền tảng</h3><p>Chọn TikTok, Facebook, Instagram hoặc YouTube phù hợp với kênh.</p></article>
+        <article><span>02</span><h3>So sánh gói</h3><p>Xem gói đang mở bán, nội dung và báo giá từ hệ thống.</p></article>
+        <article><span>03</span><h3>Nhập đường dẫn</h3><p>Cung cấp link công khai và mục tiêu cụ thể, không chia sẻ thông tin đăng nhập.</p></article>
+        <article><span>04</span><h3>Gửi &amp; theo dõi</h3><p>Gửi yêu cầu, sau đó kiểm tra tình trạng xử lý trong tài khoản.</p></article>
+      </div>
+      <a class="grow-text-action" href="#tao-yeu-cau">Chọn gói và bắt đầu →</a>
+    </section>
+
+    <section id="meo-phat-trien" class="grow-info-section">
+      <header class="grow-info-heading"><span class="grow-number">04</span>
+        <div><span class="grow-mini-eyebrow">KIẾN THỨC ỨNG DỤNG</span><h2>6 cách tăng trưởng tự nhiên và bền vững</h2></div>
+      </header>
+      <div class="grow-tip-grid">
+        <article><span>✦</span><h3>Hồ sơ nhất quán</h3><p>Giới thiệu đúng trọng tâm, hình ảnh và thông điệp dễ nhận diện.</p></article>
+        <article><span>▶</span><h3>Mở đầu ấn tượng</h3><p>Truyền tải giá trị sớm, giúp người xem hiểu lý do tiếp tục theo dõi.</p></article>
+        <article><span>#</span><h3>Từ khóa phù hợp</h3><p>Chọn hashtag, tiêu đề và lời thoại liên quan nội dung thật.</p></article>
+        <article><span>↻</span><h3>Chuỗi nội dung</h3><p>Biến một chủ đề thành những phần nối tiếp có mục tiêu rõ ràng.</p></article>
+        <article><span>◎</span><h3>Tương tác với cộng đồng</h3><p>Phản hồi người xem, lắng nghe góp ý và duy trì chất lượng.</p></article>
+        <article><span>▤</span><h3>Đo lường đúng dữ liệu</h3><p>Đánh giá chỉ số thật khi được cấp quyền, không tạo số liệu giả.</p></article>
+      </div>
+    </section>
+
+    <section id="hoi-dap" class="grow-info-section">
+      <header class="grow-info-heading"><span class="grow-number">05</span>
+        <div><span class="grow-mini-eyebrow">THÔNG TIN CẦN BIẾT</span><h2>Câu hỏi thường gặp</h2></div>
+      </header>
+      <div class="grow-faq">
+        <details th:each="faq : ${faqs}">
+          <summary th:text="${faq.question}">Có cần cung cấp mật khẩu không?</summary>
+          <p th:text="${faq.answer}"></p>
+        </details>
+      </div>
+    </section>
+
+    <section id="danh-gia" class="grow-info-section">
+      <header class="grow-info-heading"><span class="grow-number">06</span>
+        <div><span class="grow-mini-eyebrow">PHẢN HỒI KHÁCH HÀNG</span><h2>Đánh giá dịch vụ</h2></div>
+      </header>
+      <div class="grow-no-reviews"><span aria-hidden="true">☆</span>
+        <div><strong>Chưa hiển thị đánh giá đã xác minh</strong>
+          <p>Điểm sao và bình luận sẽ được hiển thị sau khi có đánh giá thực từ khách hàng và được kiểm chứng.</p></div>
+      </div>
+    </section>
+
+    <section class="grow-bottom-cta" aria-labelledby="grow-cta-title">
+      <div><span>READY TO GROW?</span><h2 id="grow-cta-title">Khởi đầu bằng một kế hoạch tốt.</h2>
+        <p>Khám phá gói tư vấn phù hợp cho <strong th:text="${platformName}">TikTok</strong> và theo dõi mọi yêu cầu trong một nơi.</p></div>
+      <a class="btn" href="#tao-yeu-cau">Xem gói dịch vụ →</a>
+    </section>
+  </main>
+</div>
+<footer class="footer grow-footer"><div class="container">
+  © 2026 GrowLab · Phát triển nội dung mạng xã hội có trách nhiệm.
+  <a th:href="@{/help}">Trợ giúp</a>
+</div></footer>
+</body>
+</html>
