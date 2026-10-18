@@ -142,6 +142,7 @@ class ContentSearchIntegrationTest {
             .andExpect(content().string(containsString("copy-ai-to-draft")))
             .andExpect(content().string(containsString("create-content-form")))
             .andExpect(content().string(containsString("data-plan-fallback-url")))
+            .andExpect(content().string(containsString("data-ideas-fallback-url")))
             .andExpect(content().string(containsString("content-metrics.js")))
             .andExpect(content().string(containsString("content-metrics-batch-form")))
             .andExpect(content().string(containsString("TIKTOK,2026-10-01T12:00,120,10,1,2,0")))
@@ -153,6 +154,8 @@ class ContentSearchIntegrationTest {
             .andExpect(content().string(containsString("result.value = responseData.content")))
             .andExpect(content().string(containsString("draftBody.value = draftText")))
             .andExpect(content().string(containsString("template.suggestions.map")))
+            .andExpect(content().string(containsString("payload.task === \"CAPTION\"")))
+            .andExpect(content().string(containsString("ideasFallbackUrl")))
             .andExpect(content().string(containsString("payload.language === \"VI\"")))
             .andExpect(content().string(not(containsString("draftForm.submit"))))
             .andExpect(content().string(not(containsString("innerHTML"))));
