@@ -1,12 +1,55 @@
-<!doctype html><html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Trợ giúp · GrowLab</title><link rel="stylesheet" th:href="@{/style.css}"></head>
-<body><header class="topbar"><nav class="nav container"><a class="brand" th:href="@{/}"><span class="brand-icon">↗</span>Grow<strong>Lab</strong></a></nav></header>
-<main class="page container"><div class="page-header"><div><div class="eyebrow">Trung tâm trợ giúp</div><h1>Câu hỏi thường gặp</h1><p class="muted">GrowLab tập trung phát triển người theo dõi thật thông qua nội dung và quảng cáo hợp lệ.</p></div></div>
-<div class="card-grid"><article class="card"><h3>Đặt chiến dịch như thế nào?</h3><p>Đăng ký, đăng nhập và chọn gói tư vấn, nhập đường dẫn tài khoản của nền tảng phù hợp.</p></article>
-<article class="card"><h3>Chiến dịch có chạy tự động không?</h3><p>Chưa. Đơn được nhân viên xem xét trước, trạng thái hiển thị trong dashboard.</p></article>
-<article class="card"><h3>Hủy đơn được không?</h3><p>Có thể hủy khi đơn vẫn ở trạng thái chờ duyệt.</p></article>
-<article class="card"><h3>Có tăng lượt theo dõi ảo không?</h3><p>Không. Dịch vụ là kế hoạch nội dung, tối ưu hồ sơ và tư vấn quảng cáo.</p></article>
-<article class="card"><h3>Chức năng nạp tiền đã hoạt động chưa?</h3><p>Chưa có cổng thanh toán thật. Đừng gửi tiền dựa trên form thử nghiệm.</p></article>
-<article class="card"><h3>Liên hệ hỗ trợ ở đâu?</h3><p>Đăng nhập và vào Trung tâm hỗ trợ để gửi phiếu yêu cầu.</p></article></div>
-<div class="actions"><a class="btn" th:href="@{/login}">Đăng nhập</a><a class="btn btn-outline" th:href="@{/support/new}">Tạo yêu cầu hỗ trợ</a></div></main></body></html>
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Trợ giúp · GrowLab</title>
+<link rel="stylesheet" th:href="@{/style.css}">
+</head>
+<body>
+<header class="topbar"><nav class="nav container">
+<a class="brand" th:href="@{/}"><span class="brand-icon">↗</span>Grow<strong>Lab</strong></a>
+</nav></header>
+<main class="page container">
+<div class="page-header">
+  <div><div class="eyebrow">Trung tâm trợ giúp</div><h1>Câu hỏi thường gặp</h1>
+  <p class="muted">Tìm câu trả lời về tài khoản, chiến dịch, nội dung và hỗ trợ của GrowLab.</p></div>
+</div>
+<div class="form-panel">
+  <form method="get" th:action="@{/help}" role="search" aria-label="Tìm kiếm câu hỏi thường gặp">
+    <div class="field">
+      <label for="faq-search">Từ khóa tìm kiếm</label>
+      <input id="faq-search" name="q" type="search" maxlength="80"
+             placeholder="Ví dụ: hủy đơn, lịch nội dung, thanh toán" th:value="${query}">
+    </div>
+    <div class="field">
+      <label for="faq-category">Chủ đề</label>
+      <select id="faq-category" name="category">
+        <option th:each="topic : ${topics}" th:value="${topic.key}"
+                th:text="${topic.label}" th:selected="${topic.key == selectedCategory}"></option>
+      </select>
+    </div>
+    <div class="actions">
+      <button class="btn" type="submit">Tìm câu trả lời</button>
+      <a class="btn btn-outline" th:href="@{/help}">Xóa bộ lọc</a>
+    </div>
+  </form>
+</div>
+<section class="section" aria-labelledby="faq-results-heading">
+  <h2 id="faq-results-heading">Kết quả trợ giúp</h2>
+  <p class="muted" role="status" th:text="|Tìm thấy ${resultCount} câu hỏi phù hợp|"></p>
+  <div class="card-grid">
+    <article class="card" th:each="item : ${faqs}">
+      <h3 th:text="${item.question}"></h3>
+      <p th:text="${item.answer}"></p>
+    </article>
+  </div>
+  <div class="notice" th:if="${#lists.isEmpty(faqs)}">
+    Không tìm thấy câu hỏi phù hợp. Hãy thử từ khóa khác hoặc gửi yêu cầu hỗ trợ.
+  </div>
+</section>
+<div class="actions">
+  <a class="btn" th:href="@{/login}">Đăng nhập</a>
+  <a class="btn btn-outline" th:href="@{/support/new}">Tạo yêu cầu hỗ trợ</a>
+</div>
+<p class="footnote">Nội dung trợ giúp phản ánh chức năng bản thử nghiệm; không bảo đảm thanh toán hoặc tự động đăng bài.</p>
+</main></body></html>
