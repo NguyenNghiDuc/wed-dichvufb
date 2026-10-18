@@ -40,3 +40,18 @@ Human review, PostgreSQL migration and browser UAT are needed before acceptance.
   SQL has been modified by this increment.
 - Outstanding: exact-head CI and CodeQL, mobile and accessibility walkthrough,
   production-size PostgreSQL performance review and independent security QA.
+
+## Private unread summary for the conversation index
+
+- `GET /chat/unread/count` returns `{"unread":N}` from
+  `ChatMessageRepository.countByReceiverAndReadAtIsNull(authenticatedViewer)`.
+  It uses the authenticated principal, never a receiver query parameter,
+  has `Cache-Control: no-store` and is unavailable anonymously.
+- `GET /chat/ui` displays an owner-scoped accessible unread badge and
+  continues to show each contact's unread count. Counts update after
+  per-message or whole-thread read requests. The query uses an existing
+  receiver/read_at index; no migration changes or W8 notification edits.
+- `ChatUnreadBadgeIntegrationTest` checks unread counts, no third-party
+  data, HTML badge, changing counts after receipt and anonymous access.
+  Do not claim push notifications or live updates: values are fetched when
+  the page/API is requested.
