@@ -41,7 +41,7 @@ done
 expected_line="$(cat -- "$archive.sha256")"
 actual="$(sha256sum "$archive" | cut -d ' ' -f1)"
 [[ "$expected_line" == "$actual  $file" ]] || {
-  echo 'Checksum or checksum-manifest filename mismatch; refusing to restore' >&2
+  echo 'Checksum mismatch or malformed filename/manifest; refusing to restore' >&2
   exit 1
 }
 compose=(docker compose -f compose.yaml -f compose.recovery.yaml --profile recovery)
