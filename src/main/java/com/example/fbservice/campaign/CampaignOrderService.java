@@ -154,6 +154,14 @@ public class CampaignOrderService {
     public Page<CampaignOrder> pageMine(String username, int page, int size,
                                         Long orderId, CampaignStatus status,
                                         CampaignServiceType serviceType, LocalDate from, LocalDate to, String q) {
+        return pageMine(username, page, size, orderId, status, serviceType, from, to, q, null);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<CampaignOrder> pageMine(String username, int page, int size,
+                                        Long orderId, CampaignStatus status,
+                                        CampaignServiceType serviceType, LocalDate from, LocalDate to,
+                                        String q, SocialPlatform platform) {
         if (username == null || username.isBlank())
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
         if (page < 0 || page > 10000 || size < 1 || size > 50)
@@ -175,6 +183,7 @@ public class CampaignOrderService {
             if (orderId != null) conditions.add(builder.equal(root.get("id"), orderId));
             if (status != null) conditions.add(builder.equal(root.get("status"), status));
             if (serviceType != null) conditions.add(builder.equal(root.get("serviceType"), serviceType));
+            if (platform != null) conditions.add(builder.equal(root.get("platform"), platform));
             if (!search.isEmpty()) conditions.add(builder.or(
                 builder.greaterThan(builder.locate(builder.lower(root.<String>get("brief")), search), 0),
                 builder.greaterThan(builder.locate(builder.lower(root.<String>get("targetUrl")), search), 0)));
