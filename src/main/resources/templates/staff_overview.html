@@ -25,6 +25,22 @@
 <strong class="metric" th:text="${overview.completed()}">0</strong>
 <a th:href="@{/staff/campaign-orders(status='COMPLETED')}">Xem →</a></article>
 </section>
+<section class="admin-operations-section" aria-labelledby="staff-attention">
+<div class="admin-section-heading"><div><div class="eyebrow">Cần chú ý</div>
+<h2 id="staff-attention">Công việc chưa cập nhật đúng hạn</h2></div></div>
+<div class="admin-summary-grid">
+<article class="card admin-summary-panel admin-attention">
+<h3>Đã duyệt nhưng chưa triển khai trên 72 giờ</h3>
+<strong class="metric" th:text="${overview.staleApproved()}">0</strong>
+<a class="table-link" th:href="@{/staff/campaign-orders(status='APPROVED')}">Rà soát đơn đã duyệt →</a>
+</article>
+<article class="card admin-summary-panel admin-attention">
+<h3>Đang xử lý, chưa cập nhật trên 7 ngày</h3>
+<strong class="metric" th:text="${overview.staleInProgress()}">0</strong>
+<a class="table-link" th:href="@{/staff/campaign-orders(status='IN_PROGRESS')}">Rà soát đơn đang làm →</a>
+</article></div>
+<p class="admin-caption">Chỉ báo cần rà soát, không phải cam kết SLA; liên kết dẫn đến danh sách theo trạng thái, không tự lọc quá hạn.</p>
+</section>
 <section class="admin-operations-section" aria-labelledby="recent-staff-progress">
 <div class="admin-section-heading"><div><div class="eyebrow">30 ngày gần nhất</div>
 <h2 id="recent-staff-progress">Hoạt động được ghi nhận</h2></div></div>

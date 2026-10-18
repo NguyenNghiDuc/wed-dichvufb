@@ -8,6 +8,7 @@ import org.springframework.data.repository.Repository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import java.util.List;
+import java.time.LocalDateTime;
 
 /** Exact assignee + status must both be applied in the database query. */
 public interface AdminStaffQueueRepository extends Repository<CampaignOrder, Long> {
@@ -23,4 +24,20 @@ public interface AdminStaffQueueRepository extends Repository<CampaignOrder, Lon
     @Query("select c.status, count(c.id) from CampaignOrder c " +
            "where c.assigneeUsername = :staff group by c.status")
     List<Object[]> countAssignedStatuses(@Param("staff") String staff);
+
+    /** DB-side owner boundary and stale status predicates, no full-order materialization. */
+    @Query("""
+        select c.status, count(c.id)
+        from CampaignOrder c
+        where c.assigneeUsername = :staff
+          and ((c.status = :approved and c.updatedAt < :approvedBefore)
+            or (c.status = :inProgress and c.updatedAt < :progressBefore))
+        group by c.status
+        """)
+    List<Object[]> countStaleAssignedStatuses(
+        @Param("staff") String staff,
+        @Param("approved") CampaignStatus approved,
+        @Param("inProgress") CampaignStatus inProgress,
+        @Param("approvedBefore") LocalDateTime approvedBefore,
+        @Param("progressBefore") LocalDateTime progressBefore);
 }
