@@ -5,6 +5,26 @@ Dự án nâng cấp từ **wed-dichvufb**: phát triển kênh mạng xã hội
 ## Stack
 Java 17, Spring Boot 3.2.5, Thymeleaf, Spring Security, Spring Data JPA, H2 (phát triển). Giao diện trắng–cam responsive. Nằm trong các thư mục Maven chuẩn `src/main/resources` và `src/test/java`.
 
+## Codespaces và lỗi phiên bản Java
+
+Dự án yêu cầu **JDK 17** và Maven 3.9.x. Nếu Maven báo `Detected JDK version 25 ... not in [17,18)`, terminal đang chọn sai JDK; giữ nguyên kiểm tra Enforcer trong `pom.xml`.
+
+Trong Codespaces hiện có, sau khi cập nhật mã nguồn, chạy:
+
+```bash
+source scripts/use-java17.sh
+java -version
+mvn -version
+mvn -DskipTests package
+mvn spring-boot:run
+```
+
+Script chọn JDK 17 đã cài trong SDKMAN hoặc thư mục JDK chuẩn và cập nhật `JAVA_HOME`/`PATH` của **terminal hiện tại**. Nếu cần chỉ rõ đường dẫn: `source scripts/use-java17.sh /path/to/jdk-17`. Không chạy bằng `bash scripts/use-java17.sh` vì shell con không đổi môi trường terminal cha.
+
+Nếu chưa có JDK 17, mở Command Palette và chọn **Codespaces: Rebuild Container** (hoặc **Dev Containers: Rebuild Container**). Cấu hình `.devcontainer/devcontainer.json` cài Java 17 và Maven 3.9.9 cho workspace mới/được rebuild, đồng thời đặt project runtime JavaSE-17 trong VS Code. Pull mã không tự đổi JDK của container đang chạy; mở terminal mới sau rebuild. Không ép Java language server mới chạy trên Java 17: extension có thể dùng JDK mới hơn, còn project/Maven phải dùng 17.
+
+`-DskipTests package` chỉ kiểm tra build/đóng gói. `mvn clean verify` đầy đủ còn cần PostgreSQL test tại `localhost:5432`, database `growlab_ci` theo cấu hình trong Java CI; rebuild không tự tạo hoặc xóa database này.
+
 ## Khởi động
 
 ```bash
