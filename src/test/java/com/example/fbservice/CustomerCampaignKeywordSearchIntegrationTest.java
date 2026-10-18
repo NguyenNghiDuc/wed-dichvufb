@@ -59,6 +59,7 @@ class CustomerCampaignKeywordSearchIntegrationTest {
         mvc.perform(get("/campaigns").param("q","100%"))
             .andExpect(status().isOk())
             .andExpect(model().attribute("query","100%"))
+            .andExpect(model().attribute("matchedOrders",1L))
             .andExpect(content().string(containsString("value=\"100%\"")))
             .andExpect(content().string(containsString("#" + literal.getId())))
             .andExpect(content().string(not(containsString("#" + foreign.getId()))));
