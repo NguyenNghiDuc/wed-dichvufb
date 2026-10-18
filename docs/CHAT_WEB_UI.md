@@ -1,5 +1,7 @@
 # GrowLab chat UI — Issue #27
 
+GET `/chat/ui?page=0&q=name`: authenticated, owner-only conversation index, 20 distinct contacts/page, optional literal username search and scoped unread badges. Also shows the staff directory (enabled accounts), not real-time online presence.
+GET `/chat/contacts?page=0&q=name`: JSON Page of `{contact, unreadCount}` (20/page), scoped to authenticated Principal, `Cache-Control: no-store`.
 GET `/chat/ui`: authenticated customer or staff contacts page with at most 100 enabled
 STAFF accounts. GET `/chat/ui/open?contact=username`: validate contact and redirect.
 GET `/chat/ui/{other}?page=0`: render only the authenticated viewer's
@@ -12,5 +14,6 @@ Render all untrusted message content with escaped Thymeleaf `th:text` (not `th:u
 White-orange responsive cards and mobile messages CSS.
 Tests `ChatWebIntegrationTest` cover pagination, cross-account isolation, XSS,
 forged sender, CSRF and anonymous access.
-Do not merge until Java CI, PostgreSQL/Flyway migrations V10–V12, CodeQL and
+Tests also include `ChatConversationIndexIntegrationTest`, `ChatUnreadCountsIntegrationTest`, `ChatContactsApiIntegrationTest` and PostgreSQL query checks.
+Do not merge until Java CI, PostgreSQL/Flyway migrations V10–V15, CodeQL and
 mobile/staging UAT pass. No auth/payment/order code altered.
