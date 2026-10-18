@@ -334,12 +334,36 @@ public class SupportTicketService {
             "Hỗ trợ #" + id + " đã phản hồi", "Nhân viên đã phản hồi yêu cầu. Đăng nhập để xem chi tiết."));
     }
 
+    /**
+     * Only the exact ticket owner may reopen a CLOSED ticket. A row lock makes
+     * two concurrent attempts mutually exclusive; the second request is
+     * rejected rather than creating duplicate lifecycle entries.
+     * The status change and immutable timeline entry commit atomically.
+     */
+    @Transactional
+    public void reopenAsOwner(String owner, Long id, String reason) {
+        validate(reason, 10, 500);
+        SupportTicket ticket = tickets.lockForOwner(id, owner)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        if (ticket.getStatus() != TicketStatus.CLOSED)
+            throw new IllegalArgumentException("Chỉ có thể mở lại yêu cầu đã đóng.");
+        limiter.check("support:reopen:" + owner, 5, Duration.ofHours(24));
+        ticket.reopen();
+        messages.save(new SupportMessage(id, "HỆ THỐNG",
+            "Trạng thái thay đổi: ĐÃ ĐÓNG → ĐANG CHỜ (khách hàng yêu cầu mở lại)."));
+        // Reason belongs to this ticket's private, paginated timeline only;
+        // Thymeleaf renders it with th:text (escaped), never as HTML.
+        messages.save(new SupportMessage(id, owner, reason.strip()));
+    }
+
     @Transactional
     public void closeAsAdmin(String admin, Long id) {
         SupportTicket ticket = tickets.lockForAdmin(id)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         ticket.ensureAssignedStaff(admin);
         ticket.close();
+        messages.save(new SupportMessage(id, "HỆ THỐNG",
+            "Trạng thái thay đổi: ĐANG XỬ LÝ → ĐÃ ĐÓNG (bởi nhân viên hỗ trợ)."));
         notices.save(new AccountNotification(ticket.getOwnerUsername(),
             "Hỗ trợ #" + id + " đã đóng", "Yêu cầu đã được đóng bởi nhân viên " + admin + "."));
     }
