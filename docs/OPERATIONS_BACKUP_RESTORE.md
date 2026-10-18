@@ -90,3 +90,10 @@ bash scripts/ops/backup_inventory.sh --check "/path/to/approved/restricted/backu
 - Preserve old volumes unchanged until recovery acceptance; run Flyway validation, user/order ownership tests, security/CSRF checks, and read-only smoke before any DNS switch.
 - Reconcile payments, notifications and external side effects separately: restoring a DB does not undo delivered messages or settlements.
 - Securely document RPO (recovery point), RTO (recovery time), recovery operator, verification timestamp and approval. Do not claim production RPO/RTO until rehearsed on real-equivalent staging hardware.
+
+
+## Extra synthetic-recovery isolation controls
+
+- The full `scripts/ops/test_backup_restore.sh` creates a random `COMPOSE_PROJECT_NAME` for **each** fixture exercise. Cleanup removes only fixture/recovery services from that synthetic project, not containers belonging to the main application or parallel worker.
+- Backups used for restore must have the expected `growlab_YYYYMMDDTHHMMSSZ_<token>.dump` filename, a regular non-symlinked checksum sidecar and restrictive owner-only permissions. The test tampers a correctly named synthetic copy so it exercises the SHA-256 rejection path rather than stopping early on the filename.
+- The operator must create the backup folder **before** running `backup.sh`. The script refuses to create/chmod arbitrary paths; it requires a secure absolute folder outside the repository.
