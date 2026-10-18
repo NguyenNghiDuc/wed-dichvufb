@@ -34,6 +34,7 @@
 <section class="customer-monthly-trend" aria-label="Số chiến dịch theo tháng">
   <h2>Xu hướng chiến dịch 6 tháng gần nhất</h2>
   <p class="footnote">Thống kê theo tháng tạo yêu cầu, chỉ tính chiến dịch của tài khoản này.</p>
+  <a class="btn btn-outline btn-small" th:href="@{/campaigns/summary/monthly.csv}">↓ Xuất thống kê 6 tháng (CSV)</a>
   <ol>
     <li th:each="item : ${monthlyCounts}">
       <span th:text="${item.month()}">2026-10</span>
