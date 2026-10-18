@@ -38,6 +38,10 @@ for item in "$archive" "$archive.sha256"; do
 done
 # Require the exact one-entry manifest emitted by backup.sh; no extra entries or
 # alternate file names may be silently accepted.
+[[ "$(stat -c '%s' -- "$archive.sha256")" -le 256 ]] || {
+  echo 'Invalid oversized checksum manifest' >&2
+  exit 2
+}
 expected_line="$(cat -- "$archive.sha256")"
 actual="$(sha256sum "$archive" | cut -d ' ' -f1)"
 [[ "$expected_line" == "$actual  $file" ]] || {
