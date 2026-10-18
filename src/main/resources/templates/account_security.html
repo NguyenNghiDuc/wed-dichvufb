@@ -4,7 +4,7 @@
 <body><header class="topbar"><nav class="nav container"><a class="brand" th:href="@{/}"><span class="brand-icon">↗</span>Grow<strong>Lab</strong></a></nav></header>
 <main class="page container"><a class="table-link" th:href="@{/profile}">← Hồ sơ</a>
 <div class="page-header"><div><div class="eyebrow">Bảo vệ tài khoản</div><h1>Hoạt động bảo mật gần đây</h1>
-<p class="muted">20 sự kiện mới nhất, theo giờ UTC. Không ghi mật khẩu hoặc token đăng nhập.</p></div></div>
+<p class="muted">Lịch sử theo giờ UTC, 20 sự kiện mỗi trang. Không ghi mật khẩu hoặc token đăng nhập.</p></div></div>
 <div class="actions"><a class="btn btn-outline" th:href="@{/account/password}">Đổi mật khẩu</a>
 <a class="btn btn-outline" th:href="@{/account/sessions}">Đăng xuất mọi thiết bị</a>
 <a class="btn btn-outline" th:href="@{/account/security/export}">Xuất CSV (200 mục)</a></div>
@@ -13,6 +13,13 @@
 <tr th:each="event : ${events}"><td th:text="${event.title}">Hoạt động</td>
 <td th:text="${#temporals.format(event.createdAt,'dd/MM/yyyy HH:mm:ss')}">--</td></tr>
 <tr th:if="${#lists.isEmpty(events)}"><td colspan="2">Chưa có hoạt động bảo mật.</td></tr>
-</tbody></table></div></section>
+</tbody></table></div>
+<nav class="actions" aria-label="Phân trang lịch sử bảo mật">
+<a class="btn btn-outline" th:if="${hasPrevious}"
+ th:href="@{/account/security(page=${pageNumber - 1})}">← Mới hơn</a>
+<span th:text="|Trang ${pageNumber + 1} / ${totalPages == 0 ? 1 : totalPages}|">Trang 1</span>
+<a class="btn btn-outline" th:if="${hasNext}"
+ th:href="@{/account/security(page=${pageNumber + 1})}">Cũ hơn →</a>
+</nav></section>
 <p class="muted">Những lần đăng nhập thất bại của tài khoản cũng được ghi nhận (không ghi mật khẩu, IP hoặc cookie). Nếu phát hiện hoạt động lạ, đổi mật khẩu hoặc đăng xuất mọi thiết bị.</p>
 </main></body></html>

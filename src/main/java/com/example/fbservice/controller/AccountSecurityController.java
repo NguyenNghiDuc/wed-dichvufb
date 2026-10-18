@@ -7,6 +7,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.server.ResponseStatusException;
 
 /** Dedicated W1 page; no edits to W2-owned profile views. */
@@ -19,10 +20,17 @@ public class AccountSecurityController {
     }
 
     @GetMapping("/account/security")
-    public String security(Authentication authentication, Model model) {
+    public String security(@RequestParam(defaultValue = "0") int page,
+                           Authentication authentication, Model model) {
         if(authentication==null || !(authentication.getPrincipal() instanceof AccountPrincipal principal))
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
-        model.addAttribute("events",history.recent(principal));
+        var records = history.page(principal, page);
+        model.addAttribute("events", records.getContent());
+        model.addAttribute("eventCount", records.getTotalElements());
+        model.addAttribute("pageNumber", page);
+        model.addAttribute("hasNext", records.hasNext());
+        model.addAttribute("hasPrevious", records.hasPrevious());
+        model.addAttribute("totalPages", records.getTotalPages());
         return "account_security";
     }
 }

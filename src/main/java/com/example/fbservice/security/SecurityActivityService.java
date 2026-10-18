@@ -4,6 +4,9 @@ import com.example.fbservice.config.AccountPrincipal;
 import com.example.fbservice.model.User;
 import com.example.fbservice.repository.UserRepository;
 import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,6 +24,16 @@ public class SecurityActivityService {
     @Transactional
     public void record(Long accountId, SecurityActivity.Kind kind) {
         events.save(new SecurityActivity(accountId, kind));
+    }
+
+    /** SQL-side paging of the current account's events; never accepts a client account ID. */
+    @Transactional(readOnly=true)
+    public Page<SecurityActivity> page(AccountPrincipal principal, int page) {
+        if (page < 0 || page > 10000)
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid security history page");
+        return events.findByAccountId(currentAccountId(principal),
+            PageRequest.of(page, 20,
+                Sort.by(Sort.Order.desc("createdAt"), Sort.Order.desc("id"))));
     }
 
     @Transactional(readOnly=true)

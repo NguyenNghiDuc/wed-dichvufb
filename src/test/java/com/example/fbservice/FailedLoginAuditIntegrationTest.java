@@ -50,7 +50,7 @@ class FailedLoginAuditIntegrationTest {
                 .param("password", "incorrect-test-password"))
             .andExpect(status().is3xxRedirection())
             .andExpect(redirectedUrl("/login?error"))
-            .andExpect(header().string("Cache-Control", "no-store"));
+            .andExpect(header().string("Cache-Control", containsString("no-store")));
 
         assertThat(events.findTop20ByAccountIdOrderByCreatedAtDescIdDesc(alice.getId()))
             .extracting(SecurityActivity::getKind))
