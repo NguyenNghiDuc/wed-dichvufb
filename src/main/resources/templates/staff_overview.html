@@ -1,0 +1,39 @@
+<!doctype html><html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Công việc của tôi · GrowLab STAFF</title>
+<link rel="stylesheet" th:href="@{/style.css}"><link rel="stylesheet" th:href="@{/admin.css}"></head>
+<body class="admin-body">
+<main class="page container admin-page">
+<a class="table-link" th:href="@{/campaigns}">← Trang chủ tài khoản</a>
+<div class="admin-hero"><div>
+<div class="eyebrow">Staff workspace</div><h1>Công việc của tôi</h1>
+<p>Thống kê các đơn được phân công cho tài khoản hiện tại.</p></div>
+<div class="admin-hero-actions">
+<a class="btn" th:href="@{/staff/campaign-orders}">Xem danh sách công việc →</a>
+</div></div>
+<section aria-label="Số liệu công việc được giao" class="metrics-grid admin-metrics-grid">
+<article class="card admin-metric-card"><span>Đang chờ Admin duyệt</span>
+<strong class="metric" th:text="${overview.awaitingApproval()}">0</strong>
+<a th:href="@{/staff/campaign-orders(status='PENDING_REVIEW')}">Xem →</a></article>
+<article class="card admin-metric-card"><span>Đã duyệt, chờ thực hiện</span>
+<strong class="metric" th:text="${overview.approved()}">0</strong>
+<a th:href="@{/staff/campaign-orders(status='APPROVED')}">Bắt đầu xử lý →</a></article>
+<article class="card admin-metric-card"><span>Đang thực hiện</span>
+<strong class="metric" th:text="${overview.inProgress()}">0</strong>
+<a th:href="@{/staff/campaign-orders(status='IN_PROGRESS')}">Xem tiến độ →</a></article>
+<article class="card admin-metric-card"><span>Hoàn thành (còn phân công)</span>
+<strong class="metric" th:text="${overview.completed()}">0</strong>
+<a th:href="@{/staff/campaign-orders(status='COMPLETED')}">Xem →</a></article>
+</section>
+<section class="admin-operations-section" aria-labelledby="recent-staff-progress">
+<div class="admin-section-heading"><div><div class="eyebrow">30 ngày gần nhất</div>
+<h2 id="recent-staff-progress">Hoạt động được ghi nhận</h2></div></div>
+<div class="admin-summary-grid">
+<article class="card admin-summary-panel"><h3>Đã bắt đầu đơn</h3>
+<strong class="metric" th:text="${overview.startedLast30Days()}">0</strong></article>
+<article class="card admin-summary-panel"><h3>Đã hoàn thành đơn</h3>
+<strong class="metric" th:text="${overview.completedLast30Days()}">0</strong></article>
+</div>
+<p class="admin-caption">Chỉ tính sự kiện tiến độ của chính bạn được hệ thống ghi lại.
+Không phải điểm đánh giá, thời gian làm việc, KPI hay doanh thu.</p>
+</section></main></body></html>

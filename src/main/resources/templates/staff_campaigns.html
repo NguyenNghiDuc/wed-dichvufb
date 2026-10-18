@@ -1,7 +1,9 @@
 <!doctype html><html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Công việc của tôi · GrowLab</title><link rel="stylesheet" th:href="@{/style.css}"><link rel="stylesheet" th:href="@{/admin.css}"></head><body class="admin-body">
-<main class="page container admin-page"><a class="table-link" th:href="@{/campaigns}">← Trang chủ tài khoản</a>
+<main class="page container admin-page"><nav class="admin-breadcrumb">
+<a th:href="@{/staff/overview}">← Tổng quan nhân viên</a>
+<span>/</span><strong>Chiến dịch được phân công</strong></nav>
 <div class="page-header"><div><div class="eyebrow">Nhân viên</div><h1>Chiến dịch được phân công</h1>
 <p class="muted">Chỉ nhìn thấy các đơn do Admin giao cho tài khoản của bạn.</p></div><a class="btn btn-outline" th:href="@{/admin/support}">Hỗ trợ khách hàng</a></div>
 <p class="notice" th:if="${notice}" th:text="${notice}"></p>
