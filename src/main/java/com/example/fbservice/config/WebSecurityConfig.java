@@ -25,6 +25,8 @@ public class WebSecurityConfig {
                 new AntPathRequestMatcher("/api/v1/payments/webhooks/internal", "POST")))
             .authorizeHttpRequests(auth -> auth
                 .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
+                .requestMatchers(org.springframework.http.HttpMethod.GET,
+                    "/images/growlab-workflow.svg", "/images/growlab-compare.svg").permitAll()
                 .requestMatchers("/dich-vu/**").permitAll()
                 .requestMatchers("/", "/login", "/register", "/help", "/style.css", "/landing.js", "/site.js", "/favicon.ico",
                     "/actuator/health", "/actuator/health/**").permitAll()
