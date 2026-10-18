@@ -2,6 +2,7 @@ package com.example.fbservice.content;
 
 import com.example.fbservice.campaign.SocialPlatform;
 import jakarta.validation.Valid;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import jakarta.validation.constraints.*;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -13,9 +14,9 @@ public record ContentMetricsRequest(
     public record Metric(
         @NotNull SocialPlatform platform,
         @NotNull LocalDateTime publishedAtUtc,
-        @Min(1) @Max(1_000_000_000L) long views,
-        @Min(0) @Max(1_000_000_000L) long likes,
-        @Min(0) @Max(1_000_000_000L) long comments,
-        @Min(0) @Max(1_000_000_000L) long shares,
-        @Min(0) @Max(1_000_000_000L) long saves) {}
+        @Min(1) @Max(1_000_000_000L) @JsonDeserialize(using=StrictMetricCountDeserializer.class) long views,
+        @Min(0) @Max(1_000_000_000L) @JsonDeserialize(using=StrictMetricCountDeserializer.class) long likes,
+        @Min(0) @Max(1_000_000_000L) @JsonDeserialize(using=StrictMetricCountDeserializer.class) long comments,
+        @Min(0) @Max(1_000_000_000L) @JsonDeserialize(using=StrictMetricCountDeserializer.class) long shares,
+        @Min(0) @Max(1_000_000_000L) @JsonDeserialize(using=StrictMetricCountDeserializer.class) long saves) {}
 }
