@@ -90,3 +90,8 @@ Limits (development, **per server instance only**): 5 requests per user/minute a
 - Every response says `mode: TEMPLATE_ONLY`; these are **deterministic writing outlines**, not LLM output, real performance trends, verified hashtags, licensed data, recommendations based on analytics or platform publishing actions. Unsupported OPTIMIZE requests reject with 400 rather than pretending to rewrite text.
 - If the actual `POST /api/v1/ai/generate` endpoint responds 503, the calendar can present the corresponding local idea/headline/hashtag template through a separate same-origin GET. It validates task/platform/language and uses a text-only textarea; copying into drafts still requires an explicit button followed by manual Save. No user credentials or OAuth secrets are involved.
 - Manual review must reject misleading health/finance/legal or other claims; generated templates do not imply factual verification.
+
+## Content workspace styling (PR #34)
+- `src/main/resources/static/content-workspace.css` is scoped under the calendar's `.content-workspace` container and does not modify the shared global stylesheet used by the other five workstreams.
+- White/orange cards and forms use existing CSS theme variables, responsive two-column/one-column layouts, horizontal table scrolling on small screens, readable status blocks, visible keyboard focus and reduced-motion support.
+- This is a code-level implementation only; manual Safari/iOS/Android layout and keyboard accessibility testing in staging is still required.
