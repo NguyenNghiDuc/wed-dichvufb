@@ -84,6 +84,22 @@ public class SupportController {
         return "support_detail";
     }
 
+    /**
+     * Owner-only reopening. The service locks a ticket with both its ID
+     * and authenticated owner; no user-supplied owner can override it.
+     */
+    @PostMapping("/{id}/reopen")
+    public String reopen(@PathVariable Long id, @RequestParam String reason,
+                         Principal principal, Model model) {
+        try {
+            service.reopenAsOwner(principal.getName(), id, reason);
+            return "redirect:/support/" + id;
+        } catch (IllegalArgumentException exception) {
+            model.addAttribute("error", exception.getMessage());
+            return details(id, 0, null, principal, model);
+        }
+    }
+
     @PostMapping("/{id}/reply")
     public String reply(@PathVariable Long id, @RequestParam String message,
                         Principal principal, Model model) {
