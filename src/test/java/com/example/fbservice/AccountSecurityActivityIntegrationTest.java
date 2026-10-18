@@ -48,19 +48,21 @@ class AccountSecurityActivityIntegrationTest {
     }
 
     @Test
-    void recordsOnlySuccessfulLoginsAndShowsPrivateAccountHistory() throws Exception {
+    void recordsLoginFailuresAndShowsPrivateAccountHistory() throws Exception {
         User alice=create("security-activity-alice");
         User bob=create("security-activity-bob");
 
         mvc.perform(post("/login").with(csrf()).param("username",alice.getUsername())
             .param("password","wrong-password")).andExpect(redirectedUrl("/login?error"));
-        assertThat(events.findTop20ByAccountIdOrderByCreatedAtDescIdDesc(alice.getId())).isEmpty();
+        assertThat(events.findTop20ByAccountIdOrderByCreatedAtDescIdDesc(alice.getId()))
+            .extracting(SecurityActivity::getKind)
+            .containsExactly(SecurityActivity.Kind.SIGN_IN_FAILED);
 
         MockHttpSession aliceSession=login(alice.getUsername());
         MockHttpSession bobSession=login(bob.getUsername());
         assertThat(events.findTop20ByAccountIdOrderByCreatedAtDescIdDesc(alice.getId()))
             .extracting(SecurityActivity::getKind)
-            .containsExactly(SecurityActivity.Kind.SIGN_IN);
+            .containsExactly(SecurityActivity.Kind.SIGN_IN, SecurityActivity.Kind.SIGN_IN_FAILED);
         assertThat(events.findTop20ByAccountIdOrderByCreatedAtDescIdDesc(bob.getId()))
             .extracting(SecurityActivity::getKind)
             .containsExactly(SecurityActivity.Kind.SIGN_IN);

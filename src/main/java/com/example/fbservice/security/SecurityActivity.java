@@ -9,7 +9,7 @@ import java.time.ZoneOffset;
 @Table(name="account_security_events",
     indexes=@Index(name="idx_security_account_date",columnList="account_id,created_at"))
 public class SecurityActivity {
-    public enum Kind { SIGN_IN, PASSWORD_CHANGED, SESSIONS_REVOKED }
+    public enum Kind { SIGN_IN, SIGN_IN_FAILED, PASSWORD_CHANGED, SESSIONS_REVOKED }
 
     @Id @GeneratedValue(strategy=GenerationType.IDENTITY)
     private Long id;
@@ -36,6 +36,7 @@ public class SecurityActivity {
     public String getTitle(){
         return switch(kind) {
             case SIGN_IN -> "Đăng nhập thành công";
+            case SIGN_IN_FAILED -> "Đăng nhập thất bại";
             case PASSWORD_CHANGED -> "Đã đổi mật khẩu";
             case SESSIONS_REVOKED -> "Đã đăng xuất tất cả thiết bị";
         };

@@ -14,5 +14,5 @@
 <td th:text="${#temporals.format(event.createdAt,'dd/MM/yyyy HH:mm:ss')}">--</td></tr>
 <tr th:if="${#lists.isEmpty(events)}"><td colspan="2">Chưa có hoạt động bảo mật.</td></tr>
 </tbody></table></div></section>
-<p class="muted">Các sự kiện đăng nhập thất bại chưa được lưu trong bản này. Nếu phát hiện hoạt động lạ, đổi mật khẩu hoặc đăng xuất mọi thiết bị.</p>
+<p class="muted">Những lần đăng nhập thất bại của tài khoản cũng được ghi nhận (không ghi mật khẩu, IP hoặc cookie). Nếu phát hiện hoạt động lạ, đổi mật khẩu hoặc đăng xuất mọi thiết bị.</p>
 </main></body></html>
