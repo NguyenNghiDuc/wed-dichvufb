@@ -62,7 +62,10 @@
 <span class="admin-trend-completed" th:text="|${p.completed()} hoàn thành|">0 hoàn thành</span>
 </div></div>
 <div class="admin-trend-foot"><strong th:text="|${trend.totalCreated()} đơn được tạo trong kỳ|">0 đơn</strong>
-<a th:href="@{/api/v1/admin/analytics/campaign-trend(period=${period.name()})}" class="table-link">Dữ liệu JSON →</a></div>
+<div class="admin-row-actions">
+<a th:href="@{/admin/reports/campaign-trend.csv(period=${period.name()})}" class="table-link">Tải CSV →</a>
+<a th:href="@{/api/v1/admin/analytics/campaign-trend(period=${period.name()})}" class="table-link">Dữ liệu JSON →</a>
+</div></div>
 </div></section>
 <section class="admin-operations-section" aria-labelledby="user-role-heading">
 <div class="admin-section-heading"><div><div class="eyebrow">Tài khoản</div>
