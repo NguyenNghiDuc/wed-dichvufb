@@ -218,14 +218,29 @@ public class CampaignOrderService {
 
     @Transactional
     public CampaignOrder cancelForOwner(String username, Long id) {
+        return cancelForOwner(username, id, null);
+    }
+
+    /**
+     * Owner can optionally explain a pending-order cancellation. The description
+     * is recorded in the private status history, not in the price or payment path.
+     */
+    @Transactional
+    public CampaignOrder cancelForOwner(String username, Long id, String reason) {
         CampaignOrder order = orders.lockByIdAndOwner(id, username)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         if (order.getStatus() != CampaignStatus.PENDING_REVIEW) {
             throw new IllegalArgumentException("Chỉ có thể hủy chiến dịch chưa được duyệt.");
         }
+        String explanation = reason == null ? "" : reason.strip();
+        if (explanation.length() > 200 || explanation.chars().anyMatch(Character::isISOControl))
+            throw new IllegalArgumentException("Lý do hủy tối đa 200 ký tự, không có ký tự điều khiển.");
         CampaignStatus previous = order.getStatus();
         order.changeStatus(CampaignStatus.CANCELLED);
-        events.save(new CampaignEvent(id, previous, order.getStatus(), username, "Khách hàng hủy yêu cầu"));
+        String description = explanation.isEmpty()
+            ? "Khách hàng hủy yêu cầu"
+            : "Khách hàng hủy yêu cầu: " + explanation;
+        events.save(new CampaignEvent(id, previous, order.getStatus(), username, description));
         notifications.save(new AccountNotification(username, "Đã hủy chiến dịch #" + id,
                 "Đơn đã hủy trước khi được duyệt; không phát sinh thanh toán."));
         return order;
