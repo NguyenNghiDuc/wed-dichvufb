@@ -95,3 +95,9 @@ Limits (development, **per server instance only**): 5 requests per user/minute a
 - `src/main/resources/static/content-workspace.css` is scoped under the calendar's `.content-workspace` container and does not modify the shared global stylesheet used by the other five workstreams.
 - White/orange cards and forms use existing CSS theme variables, responsive two-column/one-column layouts, horizontal table scrolling on small screens, readable status blocks, visible keyboard focus and reduced-motion support.
 - This is a code-level implementation only; manual Safari/iOS/Android layout and keyboard accessibility testing in staging is still required.
+
+## Official social API requirements endpoint
+- Authenticated `GET /api/v1/integrations/requirements` returns FOUR reference records (Facebook Pages, Instagram professional accounts, TikTok, YouTube): example minimal read permissions, distinct publishing permissions, official documentation links, and warnings. **All entries explicitly have accountConnected=false, publishingEnabled=false, ownerConsentRequired=true.**
+- This endpoint is an access/consent checklist, **not a connection status**, login flow, token minting endpoint, or authorisation to call a provider. Existing `GET /api/v1/integrations` continues to expose read-only YouTube key readiness separately.
+- Scope names and official rules change; verify chosen endpoints and granted app review permissions using current official documentation before enabling OAuth, analytics import, or publishing. No token storage, scheduled auto-posting, follower manipulation or credential collection was added.
+- MockMvc tests enforce authentication and never expose tokens/secrets or claim accounts connected.
