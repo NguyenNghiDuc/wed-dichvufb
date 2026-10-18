@@ -84,14 +84,15 @@ public class CampaignWebController {
     }
 
     /**
-     * An explicit, editable new request for a rejected order.
+     * An explicit, editable new request for a rejected or cancelled order.
      * Does not reopen, approve, pay for or mutate the original.
      */
     @GetMapping("/{id}/copy")
-    public String copyRejected(@PathVariable Long id, Principal principal, Model model) {
+    public String copyClosed(@PathVariable Long id, Principal principal, Model model) {
         CampaignOrder original = service.findMineById(principal.getName(), id);
-        if (original.getStatus() != CampaignStatus.REJECTED)
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Only rejected campaigns can be copied");
+        if (original.getStatus() != CampaignStatus.REJECTED &&
+            original.getStatus() != CampaignStatus.CANCELLED)
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Only closed campaigns can be copied");
         model.addAttribute("submittedPlatform", original.getPlatform());
         model.addAttribute("submittedServiceType", original.getServiceType());
         model.addAttribute("submittedTargetUrl", original.getTargetUrl());
