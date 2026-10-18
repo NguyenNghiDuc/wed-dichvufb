@@ -21,6 +21,15 @@ public interface CampaignOrderRepository extends JpaRepository<CampaignOrder, Lo
     @Query("select c.status as status, count(c.id) as total from CampaignOrder c " +
            "where c.ownerUsername = :username group by c.status")
     List<OwnerStatusCount> countStatusesForOwner(@Param("username") String username);
+
+    interface OwnerServiceCount {
+        CampaignServiceType getServiceType();
+        long getTotal();
+    }
+
+    @Query("select c.serviceType as serviceType, count(c.id) as total " +
+           "from CampaignOrder c where c.ownerUsername = :username group by c.serviceType")
+    List<OwnerServiceCount> countServicesForOwner(@Param("username") String username);
     Page<CampaignOrder> findByOwnerUsername(String username, Pageable pageable);
     Page<CampaignOrder> findByAssigneeUsername(String username, Pageable pageable);
     Optional<CampaignOrder> findByIdAndOwnerUsername(Long id, String username);

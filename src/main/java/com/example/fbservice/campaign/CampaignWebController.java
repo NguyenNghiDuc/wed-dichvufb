@@ -40,6 +40,7 @@ public class CampaignWebController {
         }
         // Aggregate across every page, including orders hidden by the current filter.
         model.addAttribute("summary", service.summaryForOwner(principal.getName()));
+        model.addAttribute("serviceBreakdown", service.serviceBreakdownForOwner(principal.getName()));
         model.addAttribute("orders", records.getContent());
         // Only current owner's 20 visible records; no additional database queries.
         model.addAttribute("attentionById", records.getContent().stream()

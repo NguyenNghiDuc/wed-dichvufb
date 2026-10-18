@@ -19,6 +19,17 @@
 <article class="card"><p class="muted">Đang xử lý</p><p class="metric" th:text="${summary.approved() + summary.inProgress()}">0</p><p class="footnote">Đã duyệt hoặc đang thực hiện</p></article>
 <article class="card"><p class="muted">Đã hoàn thành</p><p class="metric" th:text="${summary.completed()}">0</p><p class="footnote">Hoàn tất xử lý yêu cầu</p></article>
 </section>
+<section class="customer-service-breakdown" aria-label="Tổng số đơn theo dịch vụ">
+<h2>Đơn hàng theo dịch vụ</h2>
+<p class="footnote">Số đơn thuộc tài khoản của bạn, tính trên tất cả trạng thái và không phụ thuộc bộ lọc đang chọn.</p>
+<ul class="customer-service-counts" th:unless="${#lists.isEmpty(serviceBreakdown)}">
+<li th:each="item : ${serviceBreakdown}">
+<span th:text="${item.displayName()}">Dịch vụ</span>
+<strong th:text="${item.count()}">0</strong>
+</li>
+</ul>
+<p th:if="${#lists.isEmpty(serviceBreakdown)}" class="muted">Bạn chưa có đơn dịch vụ nào.</p>
+</section>
 
 <form method="get" th:action="@{/campaigns}" class="actions customer-filter-form" role="search" aria-label="Lọc chiến dịch">
 <label for="orderId">Mã đơn</label>

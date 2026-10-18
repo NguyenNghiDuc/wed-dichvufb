@@ -42,6 +42,12 @@ public class CampaignOrderApiController {
             .body(service.summaryForOwner(principal.getName()));
     }
 
+    @GetMapping("/summary/services")
+    public ResponseEntity<List<CampaignServiceCount>> services(Principal principal) {
+        return ResponseEntity.ok().cacheControl(CacheControl.noStore())
+            .body(service.serviceBreakdownForOwner(principal.getName()));
+    }
+
     @GetMapping("/page")
     public ResponseEntity<Page<CampaignOrder>> minePage(@RequestParam(defaultValue = "0") int page,
                                         @RequestParam(defaultValue = "20") int size,

@@ -33,3 +33,12 @@
 .legacy-customer-page .table-panel{max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
 .legacy-customer-page .data-table{min-width:710px}
 .legacy-customer-page .data-table td{overflow-wrap:anywhere}
+
+/* Account-only breakdown, white/orange consistent with customer cards. */
+.customer-service-breakdown{margin:18px 0 28px;padding:18px 22px;border:1px solid #f2dfd0;border-radius:16px;background:white}
+.customer-service-breakdown h2{font-size:18px;margin:0 0 6px}
+.customer-service-counts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;list-style:none;padding:0;margin:12px 0 0}
+.customer-service-counts li{padding:12px 14px;border-radius:12px;background:#fff7f1;display:flex;justify-content:space-between;align-items:center;gap:14px;min-width:0}
+.customer-service-counts strong{color:#bd4d12;font-size:18px;font-variant-numeric:tabular-nums}
+@media(max-width:900px){.customer-service-counts{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:500px){.customer-service-counts{grid-template-columns:1fr}.customer-service-breakdown{padding:16px}}

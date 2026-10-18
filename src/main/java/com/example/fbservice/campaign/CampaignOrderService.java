@@ -6,6 +6,9 @@ import java.net.URI;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.EnumMap;
+import java.util.Map;
+import java.util.Arrays;
 import java.util.List;
 import org.springframework.data.domain.*;
 import org.springframework.data.jpa.domain.Specification;
@@ -68,6 +71,21 @@ public class CampaignOrderService {
             counts[CampaignStatus.COMPLETED.ordinal()],
             counts[CampaignStatus.REJECTED.ordinal()],
             counts[CampaignStatus.CANCELLED.ordinal()]);
+    }
+
+    /** Database-grouped per-service breakdown; no other customer's row may contribute. */
+    @Transactional(readOnly = true)
+    public List<CampaignServiceCount> serviceBreakdownForOwner(String username) {
+        if (username == null || username.isBlank())
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+        Map<CampaignServiceType, Long> counts = new EnumMap<>(CampaignServiceType.class);
+        for (CampaignOrderRepository.OwnerServiceCount entry : orders.countServicesForOwner(username)) {
+            counts.put(entry.getServiceType(), entry.getTotal());
+        }
+        return Arrays.stream(CampaignServiceType.values())
+            .filter(type -> counts.getOrDefault(type, 0L) > 0)
+            .map(type -> new CampaignServiceCount(type, type.getDisplayName(), counts.get(type)))
+            .toList();
     }
 
     @Transactional(readOnly = true)
