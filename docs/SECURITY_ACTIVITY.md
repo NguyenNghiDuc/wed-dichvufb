@@ -7,3 +7,9 @@
 - Migration PostgreSQL/Flyway `V20__account_security_activity.sql` độc lập, không sửa migration của W2–W6. Thứ tự khi tích hợp phải kiểm tra phiên bản mới của main.
 - Log giới hạn 20 mục mỗi lần xem; chưa có quy trình lưu trữ/retention dài hạn và cần kế hoạch xóa theo chính sách doanh nghiệp trước khi production.
 - Không phải danh sách thiết bị đang online hay chứng nhận xác thực đa yếu tố.
+
+## Lưu giữ và xóa lịch sử
+
+- Lưu tối đa theo thời gian **90 ngày** (mặc định) bằng cấu hình `GROWTH_SECURITY_ACTIVITY_RETENTION_DAYS`. Chỉ cho 1–3650 ngày để tránh vô tình tắt retention.
+- Job UTC chạy 03:20 mỗi ngày khi `GROWTH_SECURITY_ACTIVITY_CLEANUP_ENABLED=true` (mặc định), xóa tối đa 500 sự kiện quá hạn mỗi lượt. Phần tồn đọng sẽ được xóa trong các lượt kế tiếp; nên theo dõi backlog trước khi production.
+- Xóa theo ID bằng truy vấn có tham số, không ghép SQL từ dữ liệu người dùng. Không xóa sự kiện còn trong hạn. Có test retention tự động.
