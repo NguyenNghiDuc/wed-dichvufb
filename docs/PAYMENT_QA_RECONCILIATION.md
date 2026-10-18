@@ -81,6 +81,16 @@ psql --dbname=growlab_restore -c 'SELECT COUNT(*) FROM payment_receipts'
 
 Flyway V12 adds `NOT VALID` PostgreSQL amount-range CHECK constraints. PostgreSQL enforces them on **new** writes while allowing preexisting out-of-range legacy rows to remain until the operator reviews, reconciles, and separately validates them. Run an approved query for violating historical rows before applying `VALIDATE CONSTRAINT`; do not auto-correct payment records. The CI test verifies a direct invalid deposit/receipt write is refused. No real wallet ledger or bank mapping exists.
 
+## Rollback on secondary storage failures
+
+`PaymentWebhookRollbackIntegrationTest` injects a failure when recording the
+internal notification **after** receipt insert. The enclosing transaction must
+roll back both the receipt and the deposit status transition to avoid a
+partially processed sandbox event. An operator may safely retry the signed
+event with the same `eventId` after the downstream storage issue is fixed.
+This test does not exercise a real payment provider or guarantee message
+delivery to an external queue.
+
 ## Bounded CI concurrency smoke (not an external load benchmark)
 
 `PostgresPaymentConcurrencyIntegrationTest` performs a bounded 8-worker,
