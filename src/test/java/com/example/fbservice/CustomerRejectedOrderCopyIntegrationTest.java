@@ -39,7 +39,7 @@ class CustomerRejectedOrderCopyIntegrationTest {
             .andExpect(content().string(containsString("yêu cầu mới")));
         mvc.perform(get("/campaigns/"+source.getId()))
             .andExpect(status().isOk())
-            .andExpect(content().string(containsString("Tạo yêu cầu mới từ đơn bị từ chối")));
+            .andExpect(content().string(containsString("Tạo yêu cầu mới từ đơn đã đóng")));
         org.junit.jupiter.api.Assertions.assertEquals(CampaignStatus.REJECTED,
             orders.findMineById("copy-owner",source.getId()).getStatus());
         mvc.perform(get("/campaigns/"+source.getId()+"/copy").with(user("copy-outsider")))
@@ -47,6 +47,26 @@ class CustomerRejectedOrderCopyIntegrationTest {
         CampaignOrder pending=create("copy-owner");
         mvc.perform(get("/campaigns/"+pending.getId()+"/copy"))
             .andExpect(status().isConflict());
+    }
+
+    @Test @WithMockUser(username="copy-cancelled-owner")
+    void cancelledOrderCanPrefillButCannotMutateOrRestoreOriginal() throws Exception {
+        CampaignOrder cancelled=create("copy-cancelled-owner");
+        orders.cancelForOwner("copy-cancelled-owner", cancelled.getId());
+        mvc.perform(get("/campaigns/" + cancelled.getId() + "/copy"))
+            .andExpect(status().isOk())
+            .andExpect(view().name("campaign_form"))
+            .andExpect(model().attribute("submittedServiceType", CampaignServiceType.CONTENT_PLAN))
+            .andExpect(model().attribute("submittedBrief",
+                "Kế hoạch nội dung hợp pháp cho tài khoản được cấp quyền."));
+        mvc.perform(get("/campaigns/" + cancelled.getId()))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString("Tạo yêu cầu mới từ đơn đã đóng")));
+        org.junit.jupiter.api.Assertions.assertEquals(CampaignStatus.CANCELLED,
+            orders.findMineById("copy-cancelled-owner", cancelled.getId()).getStatus());
+        mvc.perform(get("/campaigns/" + cancelled.getId() + "/copy")
+                .with(user("unrelated-account")))
+            .andExpect(status().isNotFound());
     }
 
     @Test void anonymousCannotAccessPreviousCustomerOrder() throws Exception {
