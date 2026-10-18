@@ -24,6 +24,18 @@ archive="$2"
 }
 folder="$(cd "$(dirname "$archive")" && pwd -P)"
 file="$(basename "$archive")"
+[[ "$file" =~ ^growlab_[0-9]{8}T[0-9]{6}Z_[A-Za-z0-9]+[.]dump$ ]] || {
+  echo 'Only W10-format backup names can be restored into sandbox' >&2
+  exit 2
+}
+for item in "$archive" "$archive.sha256"; do
+  mode="$(stat -c '%a' -- "$item")"
+  [[ "$mode" =~ ^[0-7]{3,4}$ ]] || exit 2
+  (( (8#$mode & 077) == 0 )) || {
+    echo 'Backup archive and checksum must not be readable by group/others' >&2
+    exit 2
+  }
+done
 # Check only the expected file, not arbitrary paths embedded in a checksum manifest.
 expected="$(cut -d ' ' -f1 < "$archive.sha256")"
 [[ "$expected" =~ ^[0-9a-fA-F]{64}$ ]] || {
