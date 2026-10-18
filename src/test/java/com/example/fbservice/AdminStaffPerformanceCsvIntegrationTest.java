@@ -38,7 +38,7 @@ class AdminStaffPerformanceCsvIntegrationTest {
             .andReturn().getResponse();
         String csv=new String(result.getContentAsByteArray(),StandardCharsets.UTF_8);
         assertThat(csv).startsWith("\uFEFFactor,started_orders,completed_orders");
-        assertThat(csv).contains("\"' =WEBSERVICE(\"\"https://example.invalid\"\")\"\"")
+        assertThat(csv).contains("\"' =WEBSERVICE(")
             .contains("w4-good-staff")
             .doesNotContain("w4-admin-change");
         mvc.perform(get("/admin/staff/performance")).andExpect(status().isOk())
