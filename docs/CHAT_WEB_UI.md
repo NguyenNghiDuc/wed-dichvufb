@@ -17,3 +17,7 @@ forged sender, CSRF and anonymous access.
 Tests also include `ChatConversationIndexIntegrationTest`, `ChatUnreadCountsIntegrationTest`, `ChatContactsApiIntegrationTest` and PostgreSQL query checks.
 Do not merge until Java CI, PostgreSQL/Flyway migrations V10–V15, CodeQL and
 mobile/staging UAT pass. No auth/payment/order code altered.
+
+## Browser chat loading failures (W3)
+
+The chat-only `ChatUiDataErrorHandler` catches repository `DataAccessException` without showing connection strings, internal errors, usernames or message bodies. `/chat/ui` and thread browser views return HTTP **503** with `Cache-Control: no-store` and a responsive, script-free `chat_error.html` fallback containing retry/support navigation. Invalid search/page input still returns 400; anonymous access still redirects. `ChatUiDataErrorIntegrationTest` injects a database failure and checks HTTP status, safe content, redaction and auth/validation behavior. Does not catch errors in unrelated W1/W6/W8 controllers.
