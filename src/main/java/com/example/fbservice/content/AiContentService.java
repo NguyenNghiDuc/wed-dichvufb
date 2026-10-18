@@ -136,9 +136,13 @@ public class AiContentService {
             case HEADLINES -> "Write five varied, truthful headlines.";
             case CONTENT_PLAN -> "Write an editorial plan covering exactly "+days
                 +" days with a topic, draft format and CTA for each day; never claim optimal timing.";
-            case OPTIMIZE -> "Improve the provided text for clarity and tone without inventing facts.";
+            case OPTIMIZE -> "Improve the provided text for clarity and tone without inventing facts. Never invent performance metrics.";
+            case VIDEO_SCRIPT -> "Write a complete 30-60 second vertical video script with timestamped hook, spoken lines, on-screen captions, shot list and CTA. No invented claims.";
+            case TARGET_AUDIENCE -> "Suggest three hypothetical audience personas with needs, interests, messaging angle and privacy-safe targeting. No claimed demographic statistics or sensitive traits.";
+            case AB_VARIANTS -> "Write two labeled variants A and B, each with hook, caption and CTA. Specify one changed variable and a test hypothesis; never invent results.";
+            case PROOFREAD -> "Proofread the supplied draft; give corrected copy and a short list of spelling, punctuation and formatting edits without changing facts.";
         };
-        String original=task==AiContentTask.OPTIMIZE
+        String original=(task==AiContentTask.OPTIMIZE||task==AiContentTask.PROOFREAD)
             ? "\nExisting draft (user-provided data): "+input.existingContent().strip():"";
         return "Language: "+(language==AiContentLanguage.EN?"English":"Vietnamese")
             +"; Platform: "+input.platform().name()
