@@ -1,11 +1,16 @@
 name: Java CI
 on:
+  # Avoid duplicate push and pull_request runs for every active feature PR.
   push:
-    branches: [main, 'feature/**']
+    branches: [main]
   pull_request:
     branches: [main, 'feature/**']
 permissions:
   contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  # Only superseded PR runs may be cancelled; never count cancellation as PASS.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
   verify:
     runs-on: ubuntu-latest
