@@ -50,6 +50,8 @@ class SupportTicketClosureNoteIntegrationTest {
                 .isEqualTo(TicketStatus.CLOSED);
         var timeline = tickets.messagesForOwner("note-customer", ticket.getId());
         assertThat(timeline).hasSize(2);
+        assertThat(timeline.get(0).getBody())
+                .contains("Đang chờ hỗ trợ", "Đã đóng");
         assertThat(timeline.get(1).getAuthor()).isEqualTo("note-reviewer");
         assertThat(timeline.get(1).getBody()).isEqualTo(note);
         mvc.perform(get("/support/" + ticket.getId())
