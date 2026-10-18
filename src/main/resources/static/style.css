@@ -47,3 +47,6 @@
 
 .review-stars{color:#ffd659;font-weight:700;white-space:nowrap}.review-comment{white-space:pre-wrap;overflow-wrap:anywhere}.account-page td.review-comment{min-width:240px;max-width:420px}
 .faq-list{display:grid;gap:12px}.faq-item{padding:20px}.faq-item summary{font-weight:700;cursor:pointer;overflow-wrap:anywhere}.faq-item p{color:var(--muted);margin-bottom:0}.faq-item[open]{border-color:#ff147266}.faq-item summary:focus-visible{outline:2px solid #4fdfda;outline-offset:6px}
+.broadcast-message{white-space:pre-wrap;overflow-wrap:anywhere}.account-page #recipient-count{font-weight:700;color:#4fdfda}
+
+.broadcast-preview-title{overflow-wrap:anywhere}.notification-message{white-space:pre-wrap;overflow-wrap:anywhere}

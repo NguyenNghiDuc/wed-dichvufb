@@ -196,3 +196,7 @@ Các checkbox trên là trạng thái nghiệm thu production/review, không ph�
 ### Đợt tiếp theo: đánh giá dịch vụ và FAQ có tìm kiếm
 
 Bổ sung code và kiểm thử cho 023/027: nhận xét riêng theo đơn đã hoàn thành, một lần mỗi đơn, quản trị đọc/lọc và tìm trợ giúp tiếng Việt không dấu. Chi tiết quyền, migration V13 và nghiệm thu xem `REVIEWS_AND_SEARCHABLE_HELP.md`. Không tự đánh dấu nghiệm thu production, không thay đổi trạng thái email/OAuth/thanh toán thật.
+
+### Đợt thông báo toàn hệ thống
+
+Bổ sung 086, phần website của 026 và audit 090: tạo bản nháp/xem trước, nhóm nhận theo quyền và tài khoản hoạt động, xác nhận gửi tối đa 5.000 người, chống gửi lặp và lịch sử thao tác. Tích hợp trung tâm thông báo hiện có; chưa gửi email. Xem `SYSTEM_BROADCASTS.md` để biết giới hạn, migration V14 và kiểm thử giao dịch/đồng thời PostgreSQL.
