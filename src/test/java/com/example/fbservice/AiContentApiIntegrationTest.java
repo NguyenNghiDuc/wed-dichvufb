@@ -53,6 +53,7 @@ class AiContentApiIntegrationTest {
             .andExpect(jsonPath("$.quotaScope").value("PER_INSTANCE_ONLY"))
             .andExpect(jsonPath("$.perUserPerMinute").value(5))
             .andExpect(jsonPath("$.perUserPer24Hours").value(25))
+            .andExpect(jsonPath("$.unconfiguredRequestsPerMinute").value(30))
             .andExpect(jsonPath("$.publishingEnabled").value(false))
             .andExpect(jsonPath("$.supportedTasks.length()").value(7));
     }
@@ -88,7 +89,7 @@ class AiContentApiIntegrationTest {
 
     @Test @WithMockUser(username="ai-api-rate-budget-29")
     void rateLimitStopsExcessCallsBeforeProvider() throws Exception {
-        for(int i=0;i<5;i++) {
+        for(int i=0;i<30;i++) {
             mvc.perform(post("/api/v1/ai/generate").with(csrf()).contentType("application/json")
                     .content(BASE_JSON))
                 .andExpect(status().isServiceUnavailable());
@@ -96,6 +97,20 @@ class AiContentApiIntegrationTest {
         mvc.perform(post("/api/v1/ai/generate").with(csrf()).contentType("application/json")
                 .content(BASE_JSON))
             .andExpect(status().isTooManyRequests());
+    }
+
+    @Test @WithMockUser(username="ai-no-key-budget-29")
+    void missingKeyDoesNotChargeTheActualPaidAiBudget() throws Exception {
+        mvc.perform(get("/api/v1/ai/capabilities"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.providerConfigured").value(false))
+            .andExpect(jsonPath("$.perUserPer24Hours").value(25))
+            .andExpect(jsonPath("$.unconfiguredRequestsPerMinute").value(30));
+        // More than five absent-key requests must remain 503 rather than falsely charging paid quota.
+        for (int i=0;i<6;i++)
+            mvc.perform(post("/api/v1/ai/caption").with(csrf())
+                    .contentType("application/json").content(BASE_JSON))
+                .andExpect(status().isServiceUnavailable());
     }
 
     @Test @WithMockUser(username="ai-api-csrf-29")
