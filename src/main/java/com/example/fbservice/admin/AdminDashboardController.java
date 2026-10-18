@@ -9,8 +9,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 public class AdminDashboardController {
     private final AdminDashboardService dashboard;
     private final AdminOrderTrendService trends;
-    public AdminDashboardController(AdminDashboardService dashboard, AdminOrderTrendService trends){
-        this.dashboard=dashboard;this.trends=trends;
+    private final AdminFirstOrderCustomerService firstOrders;
+    public AdminDashboardController(AdminDashboardService dashboard, AdminOrderTrendService trends,
+                                    AdminFirstOrderCustomerService firstOrders){
+        this.dashboard=dashboard;this.trends=trends;this.firstOrders=firstOrders;
     }
 
     @GetMapping({"/admin","/admin/dashboard"})
@@ -22,6 +24,7 @@ public class AdminDashboardController {
         model.addAttribute("userRoles",dashboard.userRoleBreakdown());
         model.addAttribute("trend",trends.find(period));
         model.addAttribute("period",period);
+        model.addAttribute("firstOrderCustomers",firstOrders.lastThirtyDays());
         return "admin_dashboard";
     }
 }

@@ -23,6 +23,9 @@
 <div class="metrics-grid admin-metrics-grid">
 <article class="card admin-metric-card"><span>Tổng tài khoản</span>
 <strong class="metric" th:text="${metrics.totalUsers}">0</strong><small th:text="|${metrics.enabledUsers} tài khoản hoạt động|"></small></article>
+<article class="card admin-metric-card"><span>Khách lần đầu có đơn (30 ngày)</span>
+<strong class="metric" th:text="${firstOrderCustomers}">0</strong>
+<small>Không phải số tài khoản mới đăng ký</small></article>
 <article class="card admin-metric-card"><span>Tổng chiến dịch</span>
 <strong class="metric" th:text="${metrics.totalCampaigns}">0</strong><small>Tổng đơn đã tạo</small></article>
 <article class="card admin-metric-card"><span>Đơn chờ duyệt</span>
