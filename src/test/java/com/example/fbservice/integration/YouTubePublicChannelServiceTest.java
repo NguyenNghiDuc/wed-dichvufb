@@ -102,4 +102,25 @@ class YouTubePublicChannelServiceTest {
         assertThatThrownBy(() -> missing.channelSummary(CHANNEL))
             .satisfies(ex -> assertHttpStatus(ex, HttpStatus.NOT_FOUND));
     }
+    @Test
+    void googleQuotaExceeded403IsNotMistakenForAuthorizationFailure() {
+        AtomicInteger attempts = new AtomicInteger();
+        YouTubePublicChannelService exhausted = new YouTubePublicChannelService(
+            "test-only-placeholder", new ObjectMapper(), request -> {
+                attempts.incrementAndGet();
+                return new YouTubePublicChannelService.ProviderResponse(403,
+                    "{\"error\":{\"code\":403,\"errors\":[{\"reason\":\"quotaExceeded\"}]}}");
+            });
+        assertThatThrownBy(() -> exhausted.channelSummary(CHANNEL))
+            .satisfies(ex -> assertHttpStatus(ex, HttpStatus.SERVICE_UNAVAILABLE));
+        assertThat(attempts.get()).isEqualTo(1);
+
+        YouTubePublicChannelService genericForbidden = new YouTubePublicChannelService(
+            "test-only-placeholder", new ObjectMapper(),
+            request -> new YouTubePublicChannelService.ProviderResponse(403,
+                "{\"error\":{\"code\":403,\"errors\":[{\"reason\":\"insufficientPermissions\"}]}}"));
+        assertThatThrownBy(() -> genericForbidden.channelSummary(CHANNEL))
+            .satisfies(ex -> assertHttpStatus(ex, HttpStatus.BAD_GATEWAY));
+    }
+
 }

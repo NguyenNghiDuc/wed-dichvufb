@@ -4,9 +4,12 @@
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Lịch nội dung · GrowLab</title>
 <link rel="stylesheet" th:href="@{/style.css}">
+<link rel="stylesheet" th:href="@{/content-workspace.css}">
+<script th:src="@{/content-assistant.js}" defer></script>
+<script th:src="@{/content-metrics.js}" defer></script>
 </head>
 <body>
-<main class="page container">
+<main class="page container content-workspace">
 <a th:href="@{/campaigns}" class="table-link">← Chiến dịch</a>
 <div class="page-header">
   <div><div class="eyebrow">Lịch nội dung</div><h1>Lên lịch bài viết</h1>
@@ -15,7 +18,7 @@
 <div class="form-panel">
   <h2>Tạo nội dung mới</h2>
   <p class="error" th:if="${error}" th:text="${error}"></p>
-  <form method="post" th:action="@{/content-calendar}">
+  <form id="create-content-form" method="post" th:action="@{/content-calendar}">
     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
     <div class="field"><label for="platform">Nền tảng</label><select id="platform" name="platform" required><option th:each="p : ${platforms}" th:value="${p.name()}" th:text="${p.displayName}"></option></select></div>
     <div class="field"><label for="title">Tiêu đề</label><input id="title" name="title" maxlength="120" required></div>
@@ -24,8 +27,101 @@
     <button class="btn" type="submit">Lưu nội dung</button>
   </form>
 </div>
+
+<section class="section" aria-labelledby="ai-draft-heading">
+  <div class="form-panel">
+    <div class="eyebrow">AI nội dung · Gợi ý có kiểm soát</div>
+    <h2 id="ai-draft-heading">Trợ lý viết nội dung</h2>
+    <p class="muted">Chỉ tạo bản gợi ý, không tự đăng. Nếu đã cấu hình AI, dữ liệu nhập sẽ gửi tới nhà cung cấp AI; không nhập dữ liệu cá nhân hoặc bí mật. Thiếu API key, tính năng sẽ thông báo chưa khả dụng.</p>
+    <form id="ai-content-form" th:attr="data-api-url=@{/api/v1/ai/generate},data-fallback-url=@{/api/v1/content-suggestions},data-plan-fallback-url=@{/api/v1/content-templates/plan},data-ideas-fallback-url=@{/api/v1/content-templates/ideas}">
+      <div class="field"><label for="ai-platform">Nền tảng</label>
+        <select id="ai-platform" name="platform" required><option th:each="p : ${platforms}" th:value="${p.name()}" th:text="${p.displayName}"></option></select></div>
+      <div class="field"><label for="ai-topic">Chủ đề</label><input id="ai-topic" name="topic" minlength="3" maxlength="150" required></div>
+      <div class="field"><label for="ai-audience">Đối tượng</label><input id="ai-audience" name="audience" minlength="3" maxlength="100" required></div>
+      <div class="field"><label for="ai-task">Loại nội dung</label><select id="ai-task" name="task">
+        <option value="CAPTION">Caption</option><option value="HASHTAGS">Hashtag</option>
+        <option value="TIKTOK_IDEAS">Ý tưởng TikTok</option><option value="YOUTUBE_SHORTS">YouTube Shorts</option>
+        <option value="HEADLINES">Tiêu đề</option><option value="CONTENT_PLAN">Kế hoạch nội dung</option>
+        <option value="OPTIMIZE">Tối ưu nội dung có sẵn</option>
+      </select></div>
+      <div class="field"><label for="ai-language">Ngôn ngữ</label><select id="ai-language" name="language">
+        <option value="VI">Tiếng Việt</option><option value="EN">English</option>
+      </select></div>
+      <div class="field"><label for="ai-days">Số ngày (chỉ dùng cho kế hoạch: 7–30)</label>
+        <input id="ai-days" name="days" type="number" min="7" max="30" value="7"></div>
+      <div class="field"><label for="ai-original">Nội dung gốc (chỉ dùng khi tối ưu)</label>
+        <textarea id="ai-original" name="existingContent" maxlength="3000" placeholder="Nhập văn bản cần cải thiện"></textarea></div>
+      <button class="btn" type="submit">Tạo bản gợi ý</button>
+    </form>
+    <p id="ai-content-status" class="muted" role="status" aria-live="polite"></p>
+    <div class="field"><label for="ai-content-result">Kết quả gợi ý (kiểm tra trước khi sử dụng)</label>
+      <textarea id="ai-content-result" rows="8" readonly></textarea></div>
+    <button id="copy-ai-to-draft" class="btn btn-outline" type="button" disabled>Đưa gợi ý vào form bản nháp (không tự lưu)</button>
+  </div>
+</section>
+
+
+<section class="section" aria-labelledby="metrics-preview-heading">
+  <div class="form-panel">
+    <div class="eyebrow">Phân tích nội dung · Không liên kết mạng xã hội</div>
+    <h2 id="metrics-preview-heading">Xem trước hiệu suất bài viết</h2>
+    <p class="muted">Nhập số liệu của 1 bài viết để tính tỷ lệ tương tác. Hệ thống không xác minh số liệu với Facebook, TikTok hoặc YouTube và không lưu kết quả. Một bài chưa đủ để đề xuất giờ đăng. Ngày giờ nhập theo UTC.</p>
+    <form id="content-metrics-form" th:attr="data-api-url=@{/api/v1/content-analytics/preview}">
+      <div class="field"><label for="metrics-platform">Nền tảng</label>
+        <select id="metrics-platform" name="platform" required><option th:each="p : ${platforms}" th:value="${p.name()}" th:text="${p.displayName}"></option></select></div>
+      <div class="field"><label for="metrics-date">Thời gian đã đăng (UTC)</label>
+        <input id="metrics-date" type="datetime-local" name="publishedAtUtc" required></div>
+      <div class="field"><label for="metrics-views">Lượt xem</label>
+        <input id="metrics-views" type="number" name="views" min="1" max="1000000000" value="100" required></div>
+      <div class="field"><label for="metrics-likes">Lượt thích</label>
+        <input id="metrics-likes" type="number" name="likes" min="0" max="1000000000" value="0" required></div>
+      <div class="field"><label for="metrics-comments">Bình luận</label>
+        <input id="metrics-comments" type="number" name="comments" min="0" max="1000000000" value="0" required></div>
+      <div class="field"><label for="metrics-shares">Lượt chia sẻ</label>
+        <input id="metrics-shares" type="number" name="shares" min="0" max="1000000000" value="0" required></div>
+      <div class="field"><label for="metrics-saves">Lượt lưu</label>
+        <input id="metrics-saves" type="number" name="saves" min="0" max="1000000000" value="0" required></div>
+      <button class="btn" type="submit">Phân tích số liệu đã nhập</button>
+    </form>
+    <p id="content-metrics-status" class="muted" role="status" aria-live="polite"></p>
+    <pre id="content-metrics-result" class="muted" aria-label="Kết quả phân tích dữ liệu do bạn cung cấp"></pre>
+    <details class="form-panel" id="metrics-batch-section">
+      <summary><strong>Phân tích tối đa 100 bài đã có dữ liệu</strong></summary>
+      <p class="muted">Dán một bài trên mỗi dòng, cách nhau bằng dấu phẩy: NỀN_TẢNG, NGÀY_GIỜ_UTC, LƯỢT_XEM, THÍCH, BÌNH_LUẬN, CHIA_SẺ, LƯU. Không nhập tên người, mật khẩu hoặc mã truy cập. Số liệu chưa được mạng xã hội xác minh.</p>
+      <form id="content-metrics-batch-form" th:attr="data-api-url=@{/api/v1/content-analytics/preview}">
+        <div class="field"><label for="metrics-batch-input">Dữ liệu tự nhập (1–100 dòng)</label>
+          <textarea id="metrics-batch-input" name="rows" maxlength="20000" rows="6" spellcheck="false"
+            placeholder="TIKTOK,2026-10-01T12:00,120,10,1,2,0" required></textarea></div>
+        <button type="submit" class="btn btn-outline">Phân tích nhóm bài đã nhập</button>
+      </form>
+      <p id="content-metrics-batch-status" class="muted" role="status" aria-live="polite"></p>
+      <pre id="content-metrics-batch-result" class="muted" aria-label="Kết quả tổng hợp số liệu tự nhập"></pre>
+    </details>
+  </div>
+</section>
+
 <section class="section">
 <h2>Danh sách nội dung</h2>
+<form method="get" th:action="@{/content-calendar}" class="form-panel" role="search" aria-label="Tìm kiếm nội dung đã lưu">
+  <h3>Tìm và lọc nội dung</h3>
+  <div class="field"><label for="content-query">Từ khóa (tiêu đề hoặc nội dung)</label>
+    <input id="content-query" type="search" name="q" maxlength="100" th:value="${searchQuery}" placeholder="Tìm bản nháp của bạn"></div>
+  <div class="field"><label for="filter-platform">Nền tảng</label>
+    <select id="filter-platform" name="platform"><option value="">Tất cả nền tảng</option>
+      <option th:each="p : ${platforms}" th:value="${p.name()}" th:text="${p.displayName}" th:selected="${p == selectedPlatform}"></option>
+    </select></div>
+  <div class="field"><label for="filter-status">Trạng thái</label>
+    <select id="filter-status" name="status"><option value="">Tất cả trạng thái</option>
+      <option th:each="s : ${statuses}" th:value="${s.name()}" th:text="${s.name()}" th:selected="${s == selectedStatus}"></option>
+    </select></div>
+  <div class="field"><label for="filter-from-utc">Lịch dự kiến từ (UTC)</label>
+    <input id="filter-from-utc" type="datetime-local" name="fromUtc" th:value="${fromUtc}"></div>
+  <div class="field"><label for="filter-to-utc">Lịch dự kiến đến (UTC)</label>
+    <input id="filter-to-utc" type="datetime-local" name="toUtc" th:value="${toUtc}"></div>
+  <div class="actions"><button type="submit" class="btn">Tìm kiếm</button>
+    <a class="btn btn-outline" th:href="@{/content-calendar}">Xóa bộ lọc</a></div>
+</form>
+
 <div class="table-panel">
 <table class="data-table">
 <thead><tr><th>Nền tảng</th><th>Tiêu đề</th><th>Trạng thái</th><th>Lịch UTC</th><th>Thao tác</th></tr></thead>
@@ -48,9 +144,9 @@
 </table>
 </div>
 <nav class="actions" aria-label="Phân trang nội dung">
-  <a class="btn btn-outline btn-small" th:if="${hasPrevious}" th:href="@{/content-calendar(page=${pageNumber - 1})}">← Trang trước</a>
+  <a class="btn btn-outline btn-small" th:if="${hasPrevious}" th:href="@{/content-calendar(page=${pageNumber - 1},platform=${selectedPlatform},status=${selectedStatus},q=${searchQuery},fromUtc=${fromUtc},toUtc=${toUtc})}">← Trang trước</a>
   <span class="muted" th:text="|Trang ${pageNumber + 1} / ${totalPages == 0 ? 1 : totalPages}|"></span>
-  <a class="btn btn-outline btn-small" th:if="${hasNext}" th:href="@{/content-calendar(page=${pageNumber + 1})}">Trang sau →</a>
+  <a class="btn btn-outline btn-small" th:if="${hasNext}" th:href="@{/content-calendar(page=${pageNumber + 1},platform=${selectedPlatform},status=${selectedStatus},q=${searchQuery},fromUtc=${fromUtc},toUtc=${toUtc})}">Trang sau →</a>
 </nav>
 </section>
 </main></body></html>
