@@ -91,6 +91,22 @@ focus outlines, a narrow-screen layout, `noindex` meta, and
 `unsafe-inline`. The existing `/admin/**` Spring Security rule requires
 ADMIN. Access-control and actual Thymeleaf render tests verify the route.
 
+## Bounded CSV export of internal daily totals
+
+On `/admin/payments/review`, the **Xuất CSV** link exports the selected
+7/14/31-day range from
+`GET /api/v1/admin/payments/reconciliation/daily.csv?days=7`.
+Only ADMIN may download it; the underlying service enforces **1–31 days**
+(HTTP 400 otherwise). The response uses `text/csv;charset=UTF-8`,
+`Content-Disposition: attachment` and `Cache-Control: no-store`, with
+columns `date,internal_receipts,internal_amount_vnd`. Values are only ISO
+dates and nonnegative server-computed numeric aggregates: no usernames,
+transaction references, bank details, signatures or untrusted string cells
+that could become formulas when opened in spreadsheet software. This is
+**not** proof of an external bank settlement or business revenue. The
+CSV route is checked in integration tests for authorization, bounds, schema
+and PII exclusion.
+
 ## Flyway / indexes / deployment
 Clean PostgreSQL schema is managed with versioned `src/main/resources/db/migration/V*.sql` (production `validate`; no production Hibernate auto-DDL). V3 has receipt uniqueness; V10 adds indexes `idx_deposit_owner_created` and `idx_payment_receipts_created_at`; additive V11 replaces the owner/time index with `idx_deposit_owner_created_id` to support deterministic `ORDER BY created_at DESC, id DESC` over bounded 20-row pages. V12 adds PostgreSQL `NOT VALID` CHECK constraints enforcing the amount range on **new writes** to `deposit_request` and `payment_receipts`, without rewriting historical records. Historical rows may still violate the constraints: investigate and reconcile those manually before separately executing `VALIDATE CONSTRAINT` after staging/UAT. NEVER edit checksums of applied Flyway scripts or run Flyway `repair` automatically. Inspect `flyway_schema_history` and review query plans on realistic staging data. For owner listing inspect `EXPLAIN (ANALYZE, BUFFERS)` with sampled but redacted data, not live personally identifying data in tickets.
 
