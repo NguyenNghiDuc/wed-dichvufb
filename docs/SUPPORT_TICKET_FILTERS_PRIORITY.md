@@ -1,7 +1,7 @@
 # Support ticket search and priority (#27)
 
 Ticket priority is staff-controlled and distinct from the status workflow:
-LOW, NORMAL (default), HIGH, URGENT. PostgreSQL Flyway V11 adds the column and
+LOW, NORMAL (default), HIGH, URGENT. PostgreSQL Flyway V21 adds the column and
 a supporting queue index, preserving existing ticket values.
 
 Customer `GET /support?subject=...&status=OPEN&page=0` queries exclusively their own rows.
@@ -14,5 +14,5 @@ STAFF and ADMIN only may `POST /admin/support/{id}/priority` with CSRF.
 Closed tickets cannot be reprioritized. No payment/order/auth code changed.
 
 Testing: `SupportTicketSearchPriorityIntegrationTest` plus existing support tests,
-Flyway PostgreSQL V1–V11 migration CI, manual staff/customer review.
+Flyway PostgreSQL V1–V21 migration CI, manual staff/customer review.
 These are prototypes until CI, staging UAT, security review and owner sign-off.
