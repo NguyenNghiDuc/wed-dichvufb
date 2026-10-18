@@ -78,7 +78,7 @@ unset GROWLAB_BACKUP_CONFIRM
 bash scripts/ops/backup_inventory.sh --check "/path/to/approved/restricted/backup-directory" 24
 ```
 
-- Checks every `growlab_*.dump` and its `.sha256` sidecar without reading/exposing actual SQL rows or deleting archives. Fails if any checksum is invalid, missing, symlinked or the most recent archive is older than the chosen 1–720-hour threshold. Its exit status is designed for a separately approved scheduler/monitor; W10 does not create an unattended cron job or external alert connector.
+- Checks every `growlab_*.dump` and its `.sha256` sidecar without reading/exposing actual SQL rows or deleting archives. Fails if any checksum is invalid, missing, symlinked, has a nonstandard UTC filename or the most recent archive's **embedded creation timestamp** is older than the chosen 1–720-hour threshold (filesystem mtime is not trusted). Its exit status is designed for a separately approved scheduler/monitor; W10 does not create an unattended cron job or external alert connector.
 - The Docker-free `test_guardrails.sh` checks a synthetic valid archive, then corrupts it and expects the inventory to fail. A passing checksum is **not** equivalent to successful recovery or secured encrypted off-site storage.
 - Run checks with an operator who has read access to the protected backup directory, never as an unauthenticated web endpoint.
 
