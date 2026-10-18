@@ -52,3 +52,7 @@ After every W7 code/test/commit turn, publish all 25 rows and status counts. VER
 ## W3 SQL dependency audit (18 October 2026)
 
 Inspected the six additive SQL patches in PR #35: V10 index on support_messages(ticket_id,created_at,id); V11 adds support_tickets.priority and queue index; V12 adds chat_messages.read_at and unread index; V13 adds support_tickets.assignee_username and index; V14 creates support_assignment_events with FK to support_tickets(id) and ticket/timestamp index; V15 adds support owner/status/pagination index. No destructive SQL appears in these six PR #35 patches. Verify underlying table/column names in main V1–V9 and compare PR #44 resulting SQL blobs before acceptance; #44 is a rename patch, not independent evidence of unchanged checksums. FK and index creation still require PostgreSQL 16 execution.
+
+## Mandatory three-metric reporting
+
+Report three distinct counts after every change: **fully coded** (complete executable implementation, even if CI pending), **at least partly coded** (full or partial executable implementation), and **accepted** (appropriate tests + successful exact-commit CI + acceptance criteria). Documentation-only analysis does NOT count as code for either of the first two metrics. Always show all 25 task statuses and separate documentation/static-audit progress from executable code. Never count blocked tasks as complete.
