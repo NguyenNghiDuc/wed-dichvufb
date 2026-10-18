@@ -53,6 +53,25 @@ class SupportTicketCountsIntegrationTest {
             .andExpect(status().isOk())
             .andExpect(model().attribute("ticketCounts",
                 new SupportTicketCounts(2, 1, 1)));
+        mvc.perform(get("/support/stats"))
+            .andExpect(status().isOk())
+            .andExpect(header().string("Cache-Control", "no-store"))
+            .andExpect(jsonPath("$.open").value(1))
+            .andExpect(jsonPath("$.answered").value(1))
+            .andExpect(jsonPath("$.closed").value(1));
+        mvc.perform(get("/support/stats").with(user("summary-customer-b")))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.open").value(1))
+            .andExpect(jsonPath("$.answered").value(0));
+        mvc.perform(get("/admin/support/stats")
+                .with(user("summary-active-staff").roles("STAFF")))
+            .andExpect(status().isOk())
+            .andExpect(header().string("Cache-Control", "no-store"))
+            .andExpect(jsonPath("$.open").value(2))
+            .andExpect(jsonPath("$.answered").value(1))
+            .andExpect(jsonPath("$.closed").value(1));
+        mvc.perform(get("/admin/support/stats"))
+            .andExpect(status().isForbidden());
         mvc.perform(get("/admin/support"))
             .andExpect(status().isForbidden());
         assertThat(open.getStatus()).isEqualTo(TicketStatus.OPEN);
