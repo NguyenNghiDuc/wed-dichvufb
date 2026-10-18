@@ -38,7 +38,7 @@
  th:href="@{/admin/staff(page=${pageNumber - 1},role=${roleFilter},username=${usernameFilter},enabled=${enabledFilter})}">← Trước</a>
 <span th:text="|Trang ${pageNumber + 1}|">Trang 1</span>
 <a th:if="${hasNext}" class="btn btn-outline btn-small"
- th:href="@{/admin/staff(page=${pageNumber + 1},role=${roleFilter},username=${usernameFilter})}">Sau →</a></nav>
+ th:href="@{/admin/staff(page=${pageNumber + 1},role=${roleFilter},username=${usernameFilter},enabled=${enabledFilter})}">Sau →</a></nav>
 <p class="admin-caption">Đơn đang phụ trách gồm trạng thái đã duyệt hoặc đang thực hiện, không tính đơn chờ duyệt/đã đóng.
 Nhân viên đã khóa vẫn hiển thị để Admin rà soát phân công.</p>
 </main></body></html>
