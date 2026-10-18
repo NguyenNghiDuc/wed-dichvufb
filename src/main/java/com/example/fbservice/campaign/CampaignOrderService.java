@@ -123,6 +123,14 @@ public class CampaignOrderService {
     public Page<CampaignOrder> pageMine(String username, int page, int size,
                                         Long orderId, CampaignStatus status,
                                         CampaignServiceType serviceType, LocalDate from, LocalDate to) {
+        return pageMine(username, page, size, orderId, status, serviceType, from, to, null);
+    }
+
+    /** Search is always combined with the authenticated customer's owner predicate. */
+    @Transactional(readOnly = true)
+    public Page<CampaignOrder> pageMine(String username, int page, int size,
+                                        Long orderId, CampaignStatus status,
+                                        CampaignServiceType serviceType, LocalDate from, LocalDate to, String q) {
         if (username == null || username.isBlank())
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
         if (page < 0 || page > 10000 || size < 1 || size > 50)
@@ -130,6 +138,9 @@ public class CampaignOrderService {
         if (orderId != null && orderId <= 0)
             throw new IllegalArgumentException("Mã đơn phải là số nguyên dương.");
         validateDateRange(from, to);
+        String search = q == null ? "" : q.strip().toLowerCase(java.util.Locale.ROOT);
+        if (search.length() > 80 || search.chars().anyMatch(Character::isISOControl))
+            throw new IllegalArgumentException("Từ khóa tìm kiếm không hợp lệ (tối đa 80 ký tự).");
         LocalDateTime lowerBound = from == null ? null : from.atStartOfDay();
         LocalDateTime upperBound = to == null ? null : to.plusDays(1).atStartOfDay();
 
@@ -141,6 +152,9 @@ public class CampaignOrderService {
             if (orderId != null) conditions.add(builder.equal(root.get("id"), orderId));
             if (status != null) conditions.add(builder.equal(root.get("status"), status));
             if (serviceType != null) conditions.add(builder.equal(root.get("serviceType"), serviceType));
+            if (!search.isEmpty()) conditions.add(builder.or(
+                builder.greaterThan(builder.locate(builder.lower(root.<String>get("brief")), search), 0),
+                builder.greaterThan(builder.locate(builder.lower(root.<String>get("targetUrl")), search), 0)));
             if (lowerBound != null) conditions.add(builder.greaterThanOrEqualTo(root.get("createdAt"), lowerBound));
             if (upperBound != null) conditions.add(builder.lessThan(root.get("createdAt"), upperBound));
             return builder.and(conditions.toArray(new Predicate[0]));
