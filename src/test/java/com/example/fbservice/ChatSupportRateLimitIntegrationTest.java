@@ -2,6 +2,8 @@ package com.example.fbservice;
 
 import com.example.fbservice.model.ChatMessage;
 import com.example.fbservice.service.ChatService;
+import com.example.fbservice.repository.UserRepository;
+import com.example.fbservice.model.User;
 import com.example.fbservice.support.SupportTicketService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,11 +22,18 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @TestPropertySource(properties="spring.datasource.url=jdbc:h2:mem:chatSupportLimit27;DB_CLOSE_DELAY=-1")
 class ChatSupportRateLimitIntegrationTest {
     @Autowired ChatService chat;
+    @Autowired UserRepository users;
     @Autowired SupportTicketService support;
     @Autowired MockMvc mvc;
 
     @Test @WithMockUser(username="limit-chat-sender")
     void excessChatSendReturns429WithoutSaving() throws Exception {
+        User receiver = new User();
+        receiver.setUsername("limit-chat-recipient");
+        receiver.setRole("USER");
+        receiver.setEnabled(true);
+        receiver.setPassword("$2a$10$testOnlyRateLimitPasswordHash");
+        users.save(receiver);
         for (int i=0;i<120;i++)
             chat.saveMessage(new ChatMessage("limit-chat-sender","limit-chat-recipient","Message "+i));
         mvc.perform(post("/chat/send").with(csrf()).contentType(MediaType.APPLICATION_JSON)
