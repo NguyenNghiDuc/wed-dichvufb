@@ -60,6 +60,8 @@
             <option value="31" th:selected="${days == 31}">31 ngày</option>
           </select>
           <button type="submit">Xem</button>
+          <a class="export-link" th:href="@{/api/v1/admin/payments/reconciliation/daily.csv(days=${days})}"
+             href="/api/v1/admin/payments/reconciliation/daily.csv">Xuất CSV</a>
         </form>
       </div>
       <div class="table-scroll">
