@@ -73,6 +73,10 @@ class SupportTicketClaimIntegrationTest {
             .andExpect(status().is3xxRedirection());
         assertThat(tickets.detailForAdmin(ticket.getId()).getStatus())
             .isEqualTo(TicketStatus.CLOSED);
+        // Same employee must not revive or acknowledge a claim on a closed ticket.
+        mvc.perform(post(claim).with(csrf())).andExpect(status().isOk());
+        assertThat(tickets.detailForAdmin(ticket.getId()).getStatus())
+            .isEqualTo(TicketStatus.CLOSED);
     }
 
     @Test @WithMockUser(username="claim-ordinary",roles="USER")
