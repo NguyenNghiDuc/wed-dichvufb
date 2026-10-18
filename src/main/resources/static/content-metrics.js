@@ -61,4 +61,82 @@ document.addEventListener("DOMContentLoaded", () => {
       button.disabled = false;
     }
   });
+
+  const batchForm = document.getElementById("content-metrics-batch-form");
+  if (batchForm) {
+    const batchStatus = document.getElementById("content-metrics-batch-status");
+    const batchResult = document.getElementById("content-metrics-batch-result");
+    const batchButton = batchForm.querySelector('button[type="submit"]');
+    batchForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (!batchForm.reportValidity() || !token || batchButton.disabled) return;
+      batchResult.textContent = "";
+      const raw = String(new FormData(batchForm).get("rows") || "");
+      const lines = raw.trim().split(/\r?\n/).map(line => line.trim());
+      if (lines.length < 1 || lines.length > 100 || raw.length > 20000) {
+        batchStatus.textContent = "Nhập từ 1 đến 100 dòng, tối đa 20.000 ký tự.";
+        return;
+      }
+      const posts = [];
+      for (const [index, line] of lines.entries()) {
+        const values = line.split(",").map(value => value.trim());
+        if (values.length !== 7 ||
+            !["FACEBOOK", "INSTAGRAM", "TIKTOK", "YOUTUBE"].includes(values[0]) ||
+            !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2})?$/.test(values[1])) {
+          batchStatus.textContent = "Dòng " + (index + 1) + " sai nền tảng, thời gian UTC hoặc số cột.";
+          return;
+        }
+        const counts = values.slice(2).map(value =>
+          /^\d{1,10}$/.test(value) ? Number(value) : NaN);
+        if (!counts.every(n => Number.isSafeInteger(n) && n >= 0 && n <= 1_000_000_000) ||
+            counts[0] < 1) {
+          batchStatus.textContent = "Dòng " + (index + 1) + " có số liệu không hợp lệ.";
+          return;
+        }
+        posts.push({
+          platform: values[0],
+          publishedAtUtc: values[1],
+          views: counts[0], likes: counts[1], comments: counts[2],
+          shares: counts[3], saves: counts[4]
+        });
+      }
+      batchButton.disabled = true;
+      batchStatus.textContent = "Đang tính toán trên " + posts.length + " bài do bạn nhập…";
+      try {
+        const response = await fetch(batchForm.dataset.apiUrl, {
+          method: "POST",
+          credentials: "same-origin",
+          headers: { "Content-Type": "application/json", "X-CSRF-TOKEN": token.value },
+          body: JSON.stringify({ posts })
+        });
+        if (!response.ok) {
+          batchStatus.textContent = response.status === 429 ? "Đã vượt giới hạn phân tích." :
+            "Dữ liệu không hợp lệ hoặc không thể phân tích lúc này.";
+          return;
+        }
+        const summary = await response.json();
+        if (summary.source !== "USER_SUPPLIED_UNVERIFIED") throw new Error("Unexpected provenance");
+        const hint = Number.isInteger(summary.candidateHourUtc) &&
+            Number.isInteger(summary.supportingPosts)
+          ? "Giờ UTC có tín hiệu từ mẫu: " + summary.candidateHourUtc +
+            ":00 (" + summary.supportingPosts + " bài), không bảo đảm hiệu quả."
+          : "Chưa đủ dữ liệu cùng một nền tảng để gợi ý giờ UTC.";
+        batchResult.textContent = [
+          "Nguồn: dữ liệu tự nhập, chưa xác minh",
+          "Số bài: " + summary.postCount,
+          "Lượt xem: " + summary.totalViews,
+          "Lượt tương tác: " + summary.totalInteractions,
+          "Tương tác / 100 lượt xem: " + summary.interactionsPer100Views,
+          hint,
+          String(summary.caveat || "")
+        ].join("\n");
+        batchStatus.textContent = "Đã tính xong. Đây chỉ là phân tích mô tả dữ liệu bạn nhập.";
+      } catch (_) {
+        batchStatus.textContent = "Không thể kết nối dịch vụ phân tích.";
+      } finally {
+        batchButton.disabled = false;
+      }
+    });
+  }
+
 });
