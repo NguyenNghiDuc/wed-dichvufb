@@ -25,6 +25,9 @@ h2 { font-size: 1.2rem; margin: 30px 0 12px; }
 select, button { font: inherit; padding: 9px 12px; border-radius: 10px; border: 1px solid #dfb995; }
 button { background: #d66e14; color: white; border-color: #d66e14; font-weight: 700; cursor: pointer; }
 button:hover { background: #a94c00; }
+.export-link { display: inline-block; text-decoration: none; border: 1px solid #a74f00; color: #a74f00; border-radius: 10px; padding: 9px 12px; font-weight: 700; background: #fff; }
+.export-link:hover { background: #fff2e2; }
+.export-link:focus-visible { outline: 3px solid #1266bd; outline-offset: 2px; }
 .table-scroll { overflow-x: auto; background: white; border: 1px solid #f2dfcc; border-radius: 14px; margin-top: 14px; }
 table { width: 100%; border-collapse: collapse; text-align: left; min-width: 520px; }
 caption { position: absolute; height: 1px; width: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
