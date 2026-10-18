@@ -23,6 +23,7 @@ public class SupportAdminController {
         Page<SupportTicket> records = service.searchForStaff(
             page, subject, status, priority, principal.getName(), assignment, customer);
         model.addAttribute("tickets", records.getContent());
+        model.addAttribute("ticketCounts", service.countsForStaff());
         model.addAttribute("pageNumber", page);
         model.addAttribute("subject", subject);
         model.addAttribute("customer", customer);

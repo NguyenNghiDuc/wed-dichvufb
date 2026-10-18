@@ -22,6 +22,7 @@ public class SupportController {
                        Principal principal, Model model) {
         Page<SupportTicket> records = service.searchMine(principal.getName(), page, subject, status);
         model.addAttribute("tickets", records.getContent());
+        model.addAttribute("ticketCounts", service.countsForOwner(principal.getName()));
         model.addAttribute("pageNumber", page);
         model.addAttribute("subject", subject);
         model.addAttribute("selectedStatus", status);

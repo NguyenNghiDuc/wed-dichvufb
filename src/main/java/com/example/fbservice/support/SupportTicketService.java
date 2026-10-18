@@ -47,6 +47,25 @@ public class SupportTicketService {
         return ticket;
     }
 
+    /** Constant-memory ticket status summary; each count is scoped in SQL. */
+    @Transactional(readOnly = true)
+    public SupportTicketCounts countsForOwner(String username) {
+        if (username == null || username.isBlank())
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+        return new SupportTicketCounts(
+            tickets.countByOwnerUsernameAndStatus(username, TicketStatus.OPEN),
+            tickets.countByOwnerUsernameAndStatus(username, TicketStatus.ANSWERED),
+            tickets.countByOwnerUsernameAndStatus(username, TicketStatus.CLOSED));
+    }
+
+    @Transactional(readOnly = true)
+    public SupportTicketCounts countsForStaff() {
+        return new SupportTicketCounts(
+            tickets.countByStatus(TicketStatus.OPEN),
+            tickets.countByStatus(TicketStatus.ANSWERED),
+            tickets.countByStatus(TicketStatus.CLOSED));
+    }
+
     @Transactional(readOnly = true)
     public Page<SupportTicket> listMine(String user, int page) {
         return tickets.findByOwnerUsername(user, paging(page));
