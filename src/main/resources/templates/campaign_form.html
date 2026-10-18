@@ -1,6 +1,18 @@
 <!doctype html><html lang="vi" xmlns:th="http://www.thymeleaf.org"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Tạo chiến dịch · GrowLab</title><link rel="stylesheet" th:href="@{/style.css}"><link rel="stylesheet" th:href="@{/customer.css}"><script defer th:src="@{/customer-quote.js}"></script></head><body>
 <header class="topbar"><nav class="nav container"><a class="brand" th:href="@{/}"><span class="brand-icon">↗</span>Grow<strong>Lab</strong></a><div class="nav-links"><a th:href="@{/campaigns}">Đơn của tôi</a><a th:href="@{/order/list}">Đơn cũ</a><form method="post" th:action="@{/logout}"><input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"><button class="logout" type="submit">Đăng xuất</button></form></div></nav></header>
 <main class="page container"><div class="page-header"><div><div class="eyebrow">Tạo chiến dịch</div><h1>Gửi yêu cầu phát triển kênh</h1><p class="muted">Lựa chọn gói tư vấn và nội dung; nhân viên sẽ xem xét trước khi triển khai.</p></div><a class="btn btn-outline" th:href="@{/campaigns}">Xem các đơn →</a></div>
+<section class="customer-plan-compare" aria-label="So sánh báo giá hiện hành">
+  <h2>So sánh các gói đang nhận yêu cầu</h2>
+  <p class="footnote">Giá tham khảo được lấy từ hệ thống ở thời điểm mở trang.
+    Khi gửi đơn, hệ thống xác định lại giá đang áp dụng; chưa phát sinh thanh toán.</p>
+  <ul>
+    <li th:each="plan : ${plans}">
+      <span th:text="${plan.title}">Tên gói</span>
+      <strong th:text="|${plan.priceVnd} đ|">0 đ</strong>
+    </li>
+  </ul>
+  <p th:if="${#lists.isEmpty(plans)}" class="muted">Hiện không có gói đang nhận yêu cầu.</p>
+</section>
 <div class="form-panel"><p class="notice" th:if="${notice}" th:text="${notice}"></p><p class="error" th:if="${error}" th:text="${error}"></p><form method="post" th:action="@{/campaigns}"><input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
 <div class="field"><label for="platform">Nền tảng</label><select id="platform" name="platform" required><option value="" disabled th:selected="${submittedPlatform == null}">Chọn nền tảng</option><option th:each="p : ${platforms}" th:value="${p.name()}" th:text="${p.displayName}" th:selected="${p == submittedPlatform}"></option></select></div>
 <div class="field"><label for="serviceType">Gói dịch vụ</label><select id="serviceType" name="serviceType" required><option value="" disabled th:selected="${submittedServiceType == null}">Chọn gói</option><option th:each="p : ${plans}" th:value="${p.code}" th:text="|${p.title} — ${p.priceVnd} VND|" th:selected="${p.code == (submittedServiceType == null ? null : submittedServiceType.name())}"></option></select></div>
