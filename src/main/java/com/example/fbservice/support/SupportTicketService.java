@@ -94,6 +94,34 @@ public class SupportTicketService {
         return tickets.findAll(filters, paging(page));
     }
 
+    /** Staff-only owner-username search combined with status and assignment filters. */
+    @Transactional(readOnly = true)
+    public Page<SupportTicket> searchForStaff(int page, String subject, TicketStatus status,
+                                               TicketPriority priority, String staff,
+                                               TicketAssignmentFilter assignment, String customer) {
+        if (customer == null || customer.isBlank())
+            return searchForStaff(page, subject, status, priority, staff, assignment);
+        String term = customer.strip().toLowerCase(Locale.ROOT);
+        if (term.length() > 80)
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Tên tài khoản tìm kiếm quá dài.");
+        String literal = term.replace("\\", "\\\\")
+                             .replace("%", "\\%")
+                             .replace("_", "\\_");
+        Specification<SupportTicket> filters = ticketFilters(null, subject, status, priority)
+                .and((root, query, cb) ->
+                    cb.like(cb.lower(root.get("ownerUsername")), "%" + literal + "%", '\\'));
+        if (assignment == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        if (assignment == TicketAssignmentFilter.MINE) {
+            if (staff == null || staff.isBlank())
+                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+            filters = filters.and((root, query, cb) ->
+                cb.equal(root.get("assigneeUsername"), staff));
+        } else if (assignment == TicketAssignmentFilter.UNASSIGNED) {
+            filters = filters.and((root, query, cb) -> cb.isNull(root.get("assigneeUsername")));
+        }
+        return tickets.findAll(filters, paging(page));
+    }
+
     private Specification<SupportTicket> ticketFilters(String owner, String subject,
                                                          TicketStatus status, TicketPriority priority) {
         String cleaned = subject == null ? "" : subject.strip();
