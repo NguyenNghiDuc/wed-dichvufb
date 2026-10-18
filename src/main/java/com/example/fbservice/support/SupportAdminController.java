@@ -50,8 +50,9 @@ public class SupportAdminController {
     /** Restricted to the existing STAFF/ADMIN route authorization. */
     @GetMapping("/{id}/messages")
     public org.springframework.http.ResponseEntity<Page<SupportMessageEntry>> messages(
-            @PathVariable Long id, @RequestParam(defaultValue = "0") int page) {
-        Page<SupportMessageEntry> result = service.pageMessagesForStaff(id, page)
+            @PathVariable Long id, @RequestParam(defaultValue = "0") int page,
+            @RequestParam(required = false) String q) {
+        Page<SupportMessageEntry> result = service.searchMessagesForStaff(id, page, q)
             .map(SupportMessageEntry::from);
         return org.springframework.http.ResponseEntity.ok()
             .header(org.springframework.http.HttpHeaders.CACHE_CONTROL, "no-store")
@@ -60,15 +61,17 @@ public class SupportAdminController {
 
     @GetMapping("/{id}")
     public String details(@PathVariable Long id, @RequestParam(defaultValue = "0") int page,
+                          @RequestParam(required = false) String q,
                           Model model, Principal principal) {
         var ticket = service.detailForAdmin(id);
-        var messages = service.pageMessagesForStaff(id, page);
+        var messages = service.searchMessagesForStaff(id, page, q);
         model.addAttribute("ticket", ticket);
         boolean admin = service.isActiveAdmin(principal.getName());
         model.addAttribute("canReassign", admin);
         if (admin) model.addAttribute("assignees", service.eligibleAssignees());
         model.addAttribute("assignmentHistory", service.assignmentHistory(id));
         model.addAttribute("messages", messages.getContent());
+        model.addAttribute("query", q);
         model.addAttribute("messagePage", page);
         model.addAttribute("hasPrevious", messages.hasPrevious());
         model.addAttribute("hasNext", messages.hasNext());
@@ -82,7 +85,7 @@ public class SupportAdminController {
             return "redirect:/admin/support/" + id;
         } catch (IllegalArgumentException exception) {
             model.addAttribute("error", exception.getMessage());
-            return details(id, 0, model, principal);
+            return details(id, 0, null, model, principal);
         }
     }
 
@@ -95,7 +98,7 @@ public class SupportAdminController {
             return "redirect:/admin/support/" + id;
         } catch (IllegalArgumentException exception) {
             model.addAttribute("error", exception.getMessage());
-            return details(id, 0, model, principal);
+            return details(id, 0, null, model, principal);
         }
     }
 
@@ -107,7 +110,7 @@ public class SupportAdminController {
             return "redirect:/admin/support/" + id;
         } catch (IllegalArgumentException exception) {
             model.addAttribute("error", exception.getMessage());
-            return details(id, 0, model, principal);
+            return details(id, 0, null, model, principal);
         }
     }
 
@@ -119,7 +122,7 @@ public class SupportAdminController {
             return "redirect:/admin/support/" + id;
         } catch (IllegalArgumentException exception) {
             model.addAttribute("error", exception.getMessage());
-            return details(id, 0, model, principal);
+            return details(id, 0, null, model, principal);
         }
     }
 
@@ -130,7 +133,7 @@ public class SupportAdminController {
             return "redirect:/admin/support/" + id;
         } catch (IllegalArgumentException exception) {
             model.addAttribute("error", exception.getMessage());
-            return details(id, 0, model, principal);
+            return details(id, 0, null, model, principal);
         }
     }
 }
