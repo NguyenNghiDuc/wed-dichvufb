@@ -33,12 +33,17 @@ public final class AccountStatusFilter extends OncePerRequestFilter {
     protected boolean shouldNotFilter(HttpServletRequest request) {
         if (request.getDispatcherType() == DispatcherType.ERROR) return true;
         String method = request.getMethod();
-        if (!"GET".equalsIgnoreCase(method) && !"HEAD".equalsIgnoreCase(method)) return false;
         // Servlet path can be empty under servlet forwarding/MockMvc; use the actual request URI.
         String uri = request.getRequestURI();
         String contextPath = request.getContextPath();
         String path = uri.startsWith(contextPath) ? uri.substring(contextPath.length()) : uri;
-        return PUBLIC_GET_PATHS.contains(path);
+        // A revoked cookie must not prevent re-authentication in the same browser.
+        // This filter runs AFTER CsrfFilter: both POST endpoints still require CSRF tokens.
+        // Other POST/PUT/PATCH/DELETE endpoints are ALWAYS subject to revocation checks.
+        if ("POST".equalsIgnoreCase(method) &&
+                ("/login".equals(path) || "/register".equals(path))) return true;
+        return ("GET".equalsIgnoreCase(method) || "HEAD".equalsIgnoreCase(method))
+            && PUBLIC_GET_PATHS.contains(path);
     }
 
     @Override
