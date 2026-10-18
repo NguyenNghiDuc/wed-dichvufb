@@ -30,9 +30,16 @@ for archive in "${archives[@]}"; do
   [[ "$actual" == "$expected" ]] || {
     echo 'CRITICAL: checksum mismatch' >&2; exit 1;
   }
-  timestamp="$(stat -c '%Y' -- "$archive")"
+  # Derive age from UTC backup filename, not mtime (copying an old archive resets mtime).
+  filename="$(basename "$archive")"
+  [[ "$filename" =~ ^growlab_([0-9]{4})([0-9]{2})([0-9]{2})T([0-9]{2})([0-9]{2})([0-9]{2})Z_[A-Za-z0-9]+[.]dump$ ]] || {
+    echo 'CRITICAL: nonstandard backup filename; cannot verify capture time' >&2; exit 1;
+  }
+  timestamp="$(date -u -d "${BASH_REMATCH[1]}-${BASH_REMATCH[2]}-${BASH_REMATCH[3]} ${BASH_REMATCH[4]}:${BASH_REMATCH[5]}:${BASH_REMATCH[6]} UTC" +%s)" || {
+    echo 'CRITICAL: invalid backup creation timestamp' >&2; exit 1;
+  }
   [[ "$timestamp" -le "$now" ]] || {
-    echo 'CRITICAL: backup timestamp lies in the future' >&2; exit 1;
+    echo 'CRITICAL: backup creation timestamp lies in the future' >&2; exit 1;
   }
   (( timestamp <= newest )) || newest="$timestamp"
 done
