@@ -24,15 +24,15 @@ public class PaymentWebhookController {
     public Map<String, Object> receive(HttpServletRequest request,
             @RequestHeader(value = "X-GrowLab-Signature", required = false) String signature,
             @RequestHeader(value = "X-GrowLab-Timestamp", required = false) String timestamp) {
+        if (request.getContentLengthLong() > MAX_WEBHOOK_BODY_BYTES) {
+            throw new ResponseStatusException(HttpStatus.PAYLOAD_TOO_LARGE, "Webhook payload too large");
+        }
         // Reject repeated authentication headers before reading even one byte.
         // A reverse proxy and application must never select different header
         // values for the same HMAC-authenticated request.
         if (java.util.Collections.list(request.getHeaders("X-GrowLab-Timestamp")).size() != 1
                 || java.util.Collections.list(request.getHeaders("X-GrowLab-Signature")).size() != 1) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Ambiguous webhook headers");
-        }
-        if (request.getContentLengthLong() > MAX_WEBHOOK_BODY_BYTES) {
-            throw new ResponseStatusException(HttpStatus.PAYLOAD_TOO_LARGE, "Webhook payload too large");
         }
         final byte[] body;
         try {
