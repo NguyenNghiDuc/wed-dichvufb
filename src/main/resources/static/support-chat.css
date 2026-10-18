@@ -25,3 +25,13 @@
 .support-status-summary span{color:#575757;font-size:.91rem}
 .support-status-summary a:focus-visible{outline:3px solid #f26922;outline-offset:2px}
 @media(max-width:540px){.support-status-summary{gap:6px}.support-status-summary a{padding:12px 9px}.support-status-summary strong{font-size:1.3rem}.support-status-summary span{font-size:.78rem}}
+
+/* Private unread badge and per-message controls; accessible on small screens. */
+.chat-unread-summary{display:inline-flex;align-items:center;padding:7px 12px;border-radius:999px;
+ background:#fff0e3;border:1px solid #e7b58d;color:#85350b;font-weight:750;
+ font-variant-numeric:tabular-nums;margin:14px 0}
+.chat-inline-read{display:flex;align-items:center;justify-content:flex-end;margin:8px 0 0}
+.chat-inline-read button{max-width:100%;white-space:normal}
+.chat-inline-read button:focus-visible{outline:3px solid #f26922;outline-offset:2px}
+@media(max-width:540px){.chat-unread-summary{display:flex;justify-content:center}
+ .chat-inline-read{justify-content:stretch}.chat-inline-read button{width:100%}}
