@@ -134,7 +134,7 @@ public class AiContentService {
             case CAPTION -> "Write a short caption, three hashtags and one CTA.";
             case HASHTAGS -> "Write 8-12 relevant and honest hashtags with brief explanations.";
             case TIKTOK_IDEAS -> "Suggest three original TikTok ideas with hooks, scenes and CTAs.";
-            case YOUTUBE_SHORTS -> "Write a concise YouTube Shorts script with hook, scenes and CTA.";
+            case YOUTUBE_SHORTS -> "Write a complete 30-60 second YouTube Shorts script with timestamped hook, spoken narration, on-screen captions, shot-by-shot scenes and CTA. Do not invent facts.";
             case HEADLINES -> "Write five varied, truthful headlines.";
             case CONTENT_PLAN -> "Write an editorial plan covering exactly "+days
                 +" days with a topic, draft format and CTA for each day; never claim optimal timing.";
