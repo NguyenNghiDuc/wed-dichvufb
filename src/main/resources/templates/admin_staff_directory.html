@@ -7,7 +7,10 @@
 <div class="page-header admin-page-header"><div><div class="eyebrow">Nhân sự vận hành</div>
 <h1>Danh bạ STAFF và ADMIN</h1>
 <p class="muted">Theo dõi quyền, trạng thái và số đơn đang xử lý. Thay đổi vai trò hoặc khóa tài khoản ở trang quản lý tài khoản có audit.</p></div>
-<a class="btn btn-outline" th:href="@{/admin/users(role='STAFF')}">Quản lý tài khoản ↗</a></div>
+<div class="admin-row-actions">
+<a class="btn btn-outline" th:href="@{/admin/staff/performance}">Hiệu suất 30 ngày →</a>
+<a class="btn btn-outline" th:href="@{/admin/users(role='STAFF')}">Quản lý tài khoản ↗</a>
+</div></div>
 <form method="get" th:action="@{/admin/staff}" class="admin-filterbar" role="search" aria-label="Lọc nhân viên">
 <div class="admin-filter-field"><label for="username">Tài khoản</label>
 <input id="username" type="search" name="username" maxlength="40" minlength="3"
