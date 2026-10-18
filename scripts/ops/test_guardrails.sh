@@ -41,6 +41,9 @@ expect_refused 'TLS smoke without host' env -u STAGING_HOST bash scripts/ops/smo
 export RESTORE_TEST_PASSWORD='fixture-test-only-not-a-real-secret'
 export BACKUP_DIR='./backups'
 expect_refused 'relative backup path' bash scripts/ops/backup.sh --fixture
+export BACKUP_DIR="$sandbox/must-not-create"
+expect_refused 'missing destination folder' bash scripts/ops/backup.sh --fixture
+[[ ! -e "$BACKUP_DIR" ]] || { echo 'FAIL: backup created an unapproved folder' >&2; exit 1; }
 export BACKUP_DIR="$(pwd -P)"
 expect_refused 'backup inside repository' bash scripts/ops/backup.sh --fixture
 mkdir -p "$sandbox/open"
@@ -50,9 +53,10 @@ expect_refused 'world-readable backup folder' bash scripts/ops/backup.sh --fixtu
 unset BACKUP_DIR
 
 expect_refused 'missing archive' bash scripts/ops/restore_sandbox.sh --sandbox "$sandbox/missing.dump"
-printf 'fake-archive' > "$sandbox/wrong.dump"
-printf '%064d  wrong.dump\n' 0 > "$sandbox/wrong.dump.sha256"
-expect_refused 'bad checksum' bash scripts/ops/restore_sandbox.sh --sandbox "$sandbox/wrong.dump"
+bad="growlab_$(date -u +%Y%m%dT%H%M%SZ)_badcheck.dump"
+printf 'fake-archive' > "$sandbox/$bad"
+printf '%064d  %s\n' 0 "$bad" > "$sandbox/$bad.sha256"
+expect_refused 'bad checksum' bash scripts/ops/restore_sandbox.sh --sandbox "$sandbox/$bad"
 ln -s "$sandbox/wrong.dump" "$sandbox/link.dump"
 expect_refused 'symlinked archive' bash scripts/ops/restore_sandbox.sh --sandbox "$sandbox/link.dump"
 # Read-only inventory detects healthy checksum, then a tampered archive.
