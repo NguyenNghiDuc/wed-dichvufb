@@ -90,8 +90,7 @@ class CustomerDiscoveryAndReceiptIntegrationTest {
         assertThat(campaigns.pageMine("receipt_owner", 0, 20).getTotalElements()).isEqualTo(before + 1);
         mvc.perform(get(redirect))
             .andExpect(status().isOk()).andExpect(view().name("campaign_created"))
-            .andExpect(content().string(containsString("149.000 đ")))
-            .andExpect(content().string(not(containsString("1 đ"))))
+            .andExpect(content().string(containsString("class=\"gl-receipt-price\">149.000 đ")))
             .andExpect(content().string(containsString("Chờ duyệt")));
         mvc.perform(get(redirect).with(user("another_owner"))).andExpect(status().isNotFound());
         mvc.perform(get(redirect).with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.anonymous()))
