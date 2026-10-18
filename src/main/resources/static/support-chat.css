@@ -48,3 +48,14 @@
  font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
 @media(max-width:700px){.ticket-progress-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:430px){.ticket-progress-grid{grid-template-columns:1fr}}
+
+/* Scoped chat load failure state. No executable client script needed. */
+.chat-load-error{max-width:720px;margin:8vh auto 3rem;padding:clamp(20px,5vw,40px);
+ background:#fff;border:1px solid #f1d6be;border-radius:20px;
+ box-shadow:0 12px 32px rgba(99,52,16,.08)}
+.chat-load-error h1{font-size:clamp(1.45rem,4vw,2rem);line-height:1.25}
+.chat-load-error p{line-height:1.65}
+.chat-load-error a:focus-visible{outline:3px solid #f26922;outline-offset:3px}
+@media(max-width:540px){.chat-load-error{margin:24px 0;padding:18px}
+ .chat-load-error .actions{display:flex;flex-direction:column;align-items:stretch}
+ .chat-load-error .btn{text-align:center}}
