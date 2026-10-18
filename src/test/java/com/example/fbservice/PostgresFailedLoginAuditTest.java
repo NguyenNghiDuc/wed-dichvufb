@@ -27,7 +27,7 @@ class PostgresFailedLoginAuditTest {
         var created=events.saveAndFlush(
             new SecurityActivity(accountId, SecurityActivity.Kind.SIGN_IN_FAILED));
         assertThat(events.findTop20ByAccountIdOrderByCreatedAtDescIdDesc(accountId))
-            .extracting(SecurityActivity::getKind))
+            .extracting(SecurityActivity::getKind)
             .contains(SecurityActivity.Kind.SIGN_IN_FAILED);
         assertThat(created.getCreatedAt()).isNotNull();
     }

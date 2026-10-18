@@ -53,7 +53,7 @@ class FailedLoginAuditIntegrationTest {
             .andExpect(header().string("Cache-Control", containsString("no-store")));
 
         assertThat(events.findTop20ByAccountIdOrderByCreatedAtDescIdDesc(alice.getId()))
-            .extracting(SecurityActivity::getKind))
+            .extracting(SecurityActivity::getKind)
             .containsExactly(SecurityActivity.Kind.SIGN_IN_FAILED);
         assertThat(events.findTop20ByAccountIdOrderByCreatedAtDescIdDesc(bob.getId()))
             .isEmpty();
@@ -71,7 +71,7 @@ class FailedLoginAuditIntegrationTest {
             .andExpect(status().isOk())
             .andExpect(content().string(containsString("Đăng nhập thất bại")));
         assertThat(events.findTop20ByAccountIdOrderByCreatedAtDescIdDesc(alice.getId()))
-            .extracting(SecurityActivity::getKind))
+            .extracting(SecurityActivity::getKind)
             .containsExactly(SecurityActivity.Kind.SIGN_IN, SecurityActivity.Kind.SIGN_IN_FAILED);
     }
 
@@ -113,7 +113,7 @@ class FailedLoginAuditIntegrationTest {
                 .andExpect(redirectedUrl("/login?error"));
         }
         assertThat(events.findTop200ByAccountIdOrderByCreatedAtDescIdDesc(targeted.getId()))
-            .extracting(SecurityActivity::getKind))
+            .extracting(SecurityActivity::getKind)
             .hasSize(10)
             .containsOnly(SecurityActivity.Kind.SIGN_IN_FAILED);
 
@@ -136,7 +136,7 @@ class FailedLoginAuditIntegrationTest {
             .andExpect(status().is3xxRedirection())
             .andExpect(redirectedUrl("/login?error"));
         assertThat(events.findTop200ByAccountIdOrderByCreatedAtDescIdDesc(unrelated.getId()))
-            .extracting(SecurityActivity::getKind))
+            .extracting(SecurityActivity::getKind)
             .containsExactly(SecurityActivity.Kind.SIGN_IN_FAILED);
     }
 
@@ -151,7 +151,7 @@ class FailedLoginAuditIntegrationTest {
             .andExpect(status().is3xxRedirection())
             .andExpect(redirectedUrl("/login?error"));
         assertThat(events.findTop20ByAccountIdOrderByCreatedAtDescIdDesc(blocked.getId()))
-            .extracting(SecurityActivity::getKind))
+            .extracting(SecurityActivity::getKind)
             .containsExactly(SecurityActivity.Kind.SIGN_IN_FAILED);
     }
 }
