@@ -43,7 +43,8 @@ class AccountSessionSecurityIntegrationTest {
   assertThat(anonymous.getAttribute("SPRING_SECURITY_SAVED_REQUEST")).isNotNull();
   var result=mvc.perform(post("/login").session(anonymous).with(csrf())
     .param("username",u.getUsername()).param("password","SessionPass123!"))
-    .andExpect(redirectedUrl("/")).andReturn();
+    .andExpect(status().isSeeOther()).andExpect(header().string("Location","/"))
+    .andExpect(header().string("Cache-Control","no-store")).andExpect(redirectedUrl("/")).andReturn();
   var loggedIn=(MockHttpSession)result.getRequest().getSession(false);
   assertThat(loggedIn.getAttribute("SPRING_SECURITY_SAVED_REQUEST")).isNull();
   mvc.perform(get("/").session(loggedIn)).andExpect(status().isOk());

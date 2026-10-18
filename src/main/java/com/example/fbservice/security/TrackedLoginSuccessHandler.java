@@ -10,7 +10,16 @@ import org.springframework.stereotype.Component;
 @Component
 public class TrackedLoginSuccessHandler extends SavedRequestAwareAuthenticationSuccessHandler {
  private final AccountSessionService sessions;
- public TrackedLoginSuccessHandler(AccountSessionService sessions){this.sessions=sessions;setDefaultTargetUrl("/");setAlwaysUseDefaultTargetUrl(true);}
+ public TrackedLoginSuccessHandler(AccountSessionService sessions){
+  this.sessions=sessions;setDefaultTargetUrl("/");setAlwaysUseDefaultTargetUrl(true);
+  // Keep the external HTTPS origin when Tomcat is behind a Codespaces proxy.
+  // sendRedirect would expand the URL using the internal HTTP connection.
+  setRedirectStrategy((request,response,url)->{
+   response.setStatus(HttpServletResponse.SC_SEE_OTHER);
+   response.setHeader("Location",request.getContextPath()+"/");
+   response.setHeader("Cache-Control","no-store");
+  });
+ }
  @Override public void onAuthenticationSuccess(HttpServletRequest request,HttpServletResponse response,Authentication authentication)
      throws IOException,ServletException{
   try{sessions.register((AccountPrincipal)authentication.getPrincipal(),request,
