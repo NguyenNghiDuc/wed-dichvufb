@@ -5,8 +5,10 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Chi tiết chiến dịch · GrowLab</title>
 <link rel="stylesheet" th:href="@{/style.css}">
+<script defer th:src="@{/campaign.js}"></script>
 </head>
-<body>
+<body class="account-page">
+<header class="topbar"><nav class="nav container"><a class="brand" th:href="@{/}"><span class="brand-icon">✦</span>Grow<strong>Lab</strong></a><div class="nav-links"><a th:href="@{/campaigns}">Chiến dịch của tôi</a><a th:href="@{/notifications}">Thông báo</a><a th:href="@{/support}">Hỗ trợ</a></div></nav></header>
 <main class="page container">
   <a class="table-link" th:href="@{/campaigns}">← Các chiến dịch</a>
   <div class="page-header">
@@ -14,14 +16,15 @@
       <div class="eyebrow">Chi tiết chiến dịch</div>
       <h1 th:text="|Chiến dịch #${order.id}|">Chiến dịch</h1>
       <p class="muted" th:text="${order.brief}">Mô tả</p>
-      <span class="status" th:text="${order.status.displayName}">Trạng thái</span>
+      <span class="status" th:attr="data-status=${order.status.name()}" th:text="${order.status.displayName}">Trạng thái</span>
     </div>
   </div>
   <div class="steps" aria-label="Thông tin yêu cầu">
     <div class="step"><strong>Nền tảng</strong><p th:text="${order.platform.displayName}"></p></div>
     <div class="step"><strong>Dịch vụ</strong><p th:text="${order.serviceType.displayName}"></p></div>
-    <div class="step"><strong>Báo giá dự kiến</strong><p th:text="|${order.quotedPriceVnd} đ|"></p></div>
+    <div class="step"><strong>Báo giá dự kiến</strong><p th:text="|${#numbers.formatInteger(order.quotedPriceVnd, 0, 'POINT')} đ|"></p></div>
   </div>
+  <section class="campaign-channel card"><strong>Kênh cần tư vấn</strong><p class="channel-url" th:text="${order.targetUrl}"></p><p class="footnote">Báo giá được ghi nhận khi tạo đơn; đây chưa phải xác nhận thanh toán.</p><form th:if="${order.status.name() == 'PENDING_REVIEW'}" th:attr="data-cancel-order=${order.id}" method="post" th:action="@{/campaigns/{id}/cancel(id=${order.id})}"><button class="btn btn-outline btn-small" type="submit">Hủy yêu cầu</button></form></section>
   <h2>Lịch sử xử lý</h2>
   <div class="table-panel">
     <table class="data-table">
@@ -46,6 +49,7 @@
        th:href="@{/campaigns/{id}(id=${order.id},page=${pageNumber + 1})}">Trang sau →</a>
   </nav>
   <p class="footnote">Trạng thái là tiến độ xử lý nội bộ; không xác nhận thanh toán hoặc kết quả quảng cáo.</p>
+<div th:replace="~{fragments/campaign_controls :: cancelDialog}"></div>
 </main>
 </body>
 </html>

@@ -4,12 +4,15 @@
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Chiến dịch của tôi · GrowLab</title>
 <link rel="stylesheet" th:href="@{/style.css}">
+<script defer th:src="@{/campaign.js}"></script>
 </head>
-<body>
-<header class="topbar"><nav class="nav container"><a class="brand" th:href="@{/}"><span class="brand-icon">↗</span>Grow<strong>Lab</strong></a><div class="nav-links"><a th:href="@{/}">Trang chủ</a><a th:href="@{/deposit/new}">Yêu cầu nạp tiền</a><a th:href="@{/support}">Hỗ trợ</a><a th:href="@{/profile}">Tài khoản</a><a th:href="@{/content-calendar}">Lịch nội dung</a><form method="post" th:action="@{/logout}"><input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"><button class="logout" type="submit">Đăng xuất</button></form></div></nav></header>
+<body class="account-page">
+<header class="topbar"><nav class="nav container"><a class="brand" th:href="@{/}"><span class="brand-icon">↗</span>Grow<strong>Lab</strong></a><div class="nav-links"><a th:href="@{/}">Trang chủ</a><a th:href="@{/notifications}">Thông báo</a><a th:href="@{/support}">Hỗ trợ</a><a th:href="@{/profile}">Tài khoản</a><a th:href="@{/content-calendar}">Lịch nội dung</a><form method="post" th:action="@{/logout}"><input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"><button class="logout" type="submit">Đăng xuất</button></form></div></nav></header>
 <main class="page container">
 <div class="page-header"><div><div class="eyebrow">Dashboard</div><h1>Chiến dịch của tôi</h1><p class="muted">Theo dõi quá trình xét duyệt và xử lý yêu cầu.</p></div><a class="btn" th:href="@{/campaigns/new}">+ Tạo chiến dịch</a></div>
 
+<div class="success-message" role="status" th:if="${success}"><span th:text="${success}"></span> <a th:if="${createdOrderId}" th:href="@{/campaigns/{id}(id=${createdOrderId})}">Xem chi tiết đơn →</a></div>
+<p class="error" role="alert" th:if="${error}" th:text="${error}"></p>
 <section class="customer-metrics" aria-label="Thống kê chiến dịch của tôi">
 <article class="card"><p class="muted">Tổng chiến dịch</p><p class="metric" th:text="${summary.total()}">0</p><p class="footnote">Tất cả trạng thái</p></article>
 <article class="card"><p class="muted">Chờ duyệt</p><p class="metric" th:text="${summary.pendingReview()}">0</p><p class="footnote">Đang chờ nhân viên xem xét</p></article>
@@ -17,7 +20,7 @@
 <article class="card"><p class="muted">Đã hoàn thành</p><p class="metric" th:text="${summary.completed()}">0</p><p class="footnote">Hoàn tất xử lý yêu cầu</p></article>
 </section>
 
-<form method="get" th:action="@{/campaigns}" class="actions" role="search" aria-label="Lọc chiến dịch">
+<form method="get" th:action="@{/campaigns}" class="actions campaign-filters" role="search" aria-label="Lọc chiến dịch">
 <label for="orderId">Mã đơn</label>
 <input id="orderId" name="orderId" type="number" min="1" step="1" placeholder="VD: 123" th:value="${orderId}">
 <label for="status">Trạng thái</label>
@@ -29,7 +32,7 @@
 </form>
 
 <div class="table-panel"><table class="data-table"><thead><tr><th>Mã đơn</th><th>Nền tảng</th><th>Gói dịch vụ</th><th>Báo giá</th><th>Ngày tạo</th><th>Trạng thái</th><th>Thao tác</th></tr></thead><tbody>
-<tr th:each="o : ${orders}"><td><a th:href="@{/campaigns/{id}(id=${o.id})}" th:text="|#${o.id}|"></a></td><td th:text="${o.platform.displayName}"></td><td th:text="${o.serviceType.displayName}"></td><td th:text="|${o.quotedPriceVnd} đ|"></td><td th:text="${#temporals.format(o.createdAt, 'dd/MM/yyyy HH:mm')}"></td><td><span class="status" th:text="${o.status.displayName}"></span></td><td><form th:if="${o.status.name() == 'PENDING_REVIEW'}" method="post" th:action="@{/campaigns/{id}/cancel(id=${o.id})}"><input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"><button type="submit" class="btn btn-outline btn-small">Hủy yêu cầu</button></form></td></tr>
+<tr th:each="o : ${orders}"><td><a th:href="@{/campaigns/{id}(id=${o.id})}" th:text="|#${o.id}|"></a></td><td th:text="${o.platform.displayName}"></td><td th:text="${o.serviceType.displayName}"></td><td th:text="|${#numbers.formatInteger(o.quotedPriceVnd, 0, 'POINT')} đ|"></td><td th:text="${#temporals.format(o.createdAt, 'dd/MM/yyyy HH:mm')}"></td><td><span class="status" th:attr="data-status=${o.status.name()}" th:text="${o.status.displayName}"></span></td><td><a class="table-link order-detail-link" th:href="@{/campaigns/{id}(id=${o.id})}">Chi tiết</a><form th:attr="data-cancel-order=${o.id}" th:if="${o.status.name() == 'PENDING_REVIEW'}" method="post" th:action="@{/campaigns/{id}/cancel(id=${o.id})}"><input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"><button type="submit" class="btn btn-outline btn-small">Hủy yêu cầu</button></form></td></tr>
 <tr th:if="${#lists.isEmpty(orders)}"><td colspan="7" class="muted">Không tìm thấy chiến dịch phù hợp.</td></tr>
 </tbody></table></div>
 <nav class="actions" aria-label="Phân trang">
@@ -38,4 +41,4 @@
 <a class="btn btn-outline btn-small" th:if="${hasNext}" th:href="@{/campaigns(page=${pageNumber + 1},orderId=${orderId},status=${selectedStatus})}">Trang sau →</a>
 </nav>
 <p class="footnote">Bản thử nghiệm: dịch vụ cần xét duyệt thủ công; báo giá chưa phải khoản thu hoặc thanh toán đã hoàn tất.</p>
-</main></body></html>
+<div th:replace="~{fragments/campaign_controls :: cancelDialog}"></div></main></body></html>

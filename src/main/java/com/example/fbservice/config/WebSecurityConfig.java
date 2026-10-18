@@ -19,7 +19,7 @@ public class WebSecurityConfig {
                 // Restrict it to POST; all other state-changing methods remain protected.
                 new AntPathRequestMatcher("/api/v1/payments/webhooks/internal", "POST")))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/", "/login", "/register", "/help", "/style.css", "/favicon.ico",
+                .requestMatchers("/", "/login", "/register", "/help", "/style.css", "/landing.js", "/favicon.ico",
                     "/actuator/health", "/actuator/health/**").permitAll()
                 .requestMatchers("/api/v1/payments/webhooks/internal").permitAll()
                 .requestMatchers("/admin/support/**", "/staff/**").hasAnyRole("ADMIN", "STAFF")

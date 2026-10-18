@@ -7,6 +7,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 @RequestMapping("/campaigns")
@@ -43,6 +44,18 @@ public class CampaignWebController {
     }
 
     @GetMapping("/new")
+    public String selectedForm(@RequestParam(required = false) SocialPlatform platform,
+                               @RequestParam(required = false) CampaignServiceType serviceType,
+                               @RequestParam(required = false) String targetUrl,
+                               @RequestParam(required = false) String brief,
+                               Model model) {
+        model.addAttribute("selectedPlatform", platform);
+        model.addAttribute("selectedService", serviceType == null ? null : serviceType.name());
+        model.addAttribute("targetUrl", targetUrl);
+        model.addAttribute("brief", brief);
+        return form(model);
+    }
+
     public String form(Model model) {
         model.addAttribute("platforms", SocialPlatform.values());
         model.addAttribute("plans", catalog.available());
@@ -52,20 +65,23 @@ public class CampaignWebController {
     @PostMapping
     public String create(@RequestParam SocialPlatform platform, @RequestParam CampaignServiceType serviceType,
                          @RequestParam String targetUrl, @RequestParam String brief,
-                         Principal principal, Model model) {
+                         Principal principal, Model model, RedirectAttributes redirect) {
         try {
-            service.create(principal.getName(), new CampaignOrderRequest(platform, serviceType, targetUrl, brief));
+            CampaignOrder created = service.create(principal.getName(), new CampaignOrderRequest(platform, serviceType, targetUrl, brief));
+            redirect.addFlashAttribute("success", "Đã nhận yêu cầu #" + created.getId() + ". Chiến dịch đang chờ duyệt.");
+            redirect.addFlashAttribute("createdOrderId", created.getId());
             return "redirect:/campaigns";
         } catch (IllegalArgumentException exception) {
             model.addAttribute("error", exception.getMessage());
-            return form(model);
+            return selectedForm(platform, serviceType, targetUrl, brief, model);
         }
     }
 
     @PostMapping("/{id}/cancel")
-    public String cancel(@PathVariable Long id, Principal principal, Model model) {
+    public String cancel(@PathVariable Long id, Principal principal, Model model, RedirectAttributes redirect) {
         try {
             service.cancelForOwner(principal.getName(), id);
+            redirect.addFlashAttribute("success", "Đã hủy yêu cầu #" + id + ". Không phát sinh thanh toán.");
             return "redirect:/campaigns";
         } catch (IllegalArgumentException exception) {
             model.addAttribute("error", exception.getMessage());
