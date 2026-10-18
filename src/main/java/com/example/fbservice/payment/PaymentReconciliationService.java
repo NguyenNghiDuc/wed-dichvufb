@@ -31,12 +31,20 @@ public class PaymentReconciliationService {
                      LEFT JOIN deposit_request d ON d.id = r.deposit_request_id
                      WHERE d.id IS NULL OR d.amount <> r.amount_vnd
                         OR d.status <> 'APPROVED') AS inconsistent_receipts,
-                  (SELECT COUNT(*) FROM payment_receipts) AS internal_receipts
+                  (SELECT COUNT(*) FROM payment_receipts) AS internal_receipts,
+                  (SELECT COUNT(*) FROM payment_receipts
+                     WHERE created_at >= CURRENT_TIMESTAMP - INTERVAL '1 day') AS receipts_last_24h,
+                  (SELECT COALESCE(SUM(amount_vnd), 0) FROM payment_receipts
+                     WHERE created_at >= CURRENT_TIMESTAMP - INTERVAL '1 day') AS internal_vnd_last_24h
                 """);
         long missing = ((Number) counts.get("approved_without_receipt")).longValue();
         long mismatch = ((Number) counts.get("inconsistent_receipts")).longValue();
         long total = ((Number) counts.get("internal_receipts")).longValue();
+        long recentCount = ((Number) counts.get("receipts_last_24h")).longValue();
+        long recentAmount = ((Number) counts.get("internal_vnd_last_24h")).longValue();
         return Map.of(
+                "receiptsLast24Hours", recentCount,
+                "internalVndLast24Hours", recentAmount,
                 "source", "SIGNED_INTERNAL_TEST_EVENTS_ONLY",
                 "notFinancialReconciliation", true,
                 "internalReceipts", total,
