@@ -28,8 +28,8 @@
   if (contentField && stats) {
     const updateStats = () => {
       const content = contentField.value.trim();
-      const words = content ? content.split(/\\s+/u).length : 0;
-      const hashtags = (content.match(/#[\\p{L}\\p{N}_]+/gu) || []).length;
+      const words = content ? content.split(/\s+/u).length : 0;
+      const hashtags = (content.match(/#[\p{L}\p{N}_]+/gu) || []).length;
       stats.textContent = words + ' từ · ' + hashtags + ' hashtag';
     };
     contentField.addEventListener('input', updateStats);
