@@ -1,6 +1,6 @@
 <!doctype html><html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Hỗ trợ khách hàng · GrowLab Admin</title><link rel="stylesheet" th:href="@{/style.css}"></head>
-<body><main class="page container"><a th:href="@{/admin/campaign-orders}" class="table-link">← Quản lý đơn</a>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Hỗ trợ khách hàng · GrowLab Admin</title><link rel="stylesheet" th:href="@{/style.css}"><link rel="stylesheet" th:href="@{/admin.css}"></head>
+<body class="admin-body"><main class="page container admin-page"><a th:href="@{/admin/campaign-orders}" class="table-link">← Quản lý đơn</a>
 <div class="page-header"><div><div class="eyebrow">Admin</div><h1>Yêu cầu hỗ trợ</h1></div></div>
 <div class="table-panel"><table class="data-table"><thead><tr><th>Mã</th><th>Khách hàng</th><th>Tiêu đề</th><th>Trạng thái</th></tr></thead><tbody>
 <tr th:each="t : ${tickets}"><td th:text="${t.id}"></td><td th:text="${t.ownerUsername}"></td><td><a class="table-link" th:href="@{/admin/support/{id}(id=${t.id})}" th:text="${t.subject}"></a></td><td th:text="${t.status.title}"></td></tr><tr th:if="${#lists.isEmpty(tickets)}"><td colspan="4">Không có yêu cầu.</td></tr></tbody></table></div>

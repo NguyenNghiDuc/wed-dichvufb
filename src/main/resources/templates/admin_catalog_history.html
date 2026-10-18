@@ -1,0 +1,37 @@
+<!doctype html><html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GrowLab · Audit bảng giá</title><link rel="stylesheet" th:href="@{/style.css}">
+<link rel="stylesheet" th:href="@{/admin.css}"></head><body class="admin-body">
+<main class="page container admin-page">
+<nav class="admin-breadcrumb"><a th:href="@{/admin/catalog}">← Bảng giá</a><span>/</span><strong>Lịch sử</strong></nav>
+<div class="page-header admin-page-header"><div><div class="eyebrow">Kiểm soát giá</div>
+<h1>Lịch sử điều chỉnh bảng giá</h1>
+<p class="muted">Chỉ đọc. Các thay đổi được lưu trong database, không phải sổ nhật ký bất biến.</p></div></div>
+<form method="get" th:action="@{/admin/catalog/history}" class="admin-filterbar" role="search" aria-label="Lọc giá">
+<div class="admin-filter-field"><label for="type">Dịch vụ</label><select id="type" name="type">
+<option value="">Tất cả</option><option th:each="t : ${types}" th:value="${t.name()}"
+th:text="${t.displayName}" th:selected="${t == type}"></option></select></div>
+<div class="admin-filter-field"><label for="actor">Admin</label>
+<input id="actor" name="actor" type="search" th:value="${actor}" minlength="3" maxlength="100"
+pattern="[A-Za-z0-9._-]{3,100}" placeholder="Tên chính xác"></div>
+<div class="admin-filter-actions"><button type="submit" class="btn btn-small">Lọc</button>
+<a class="btn btn-outline btn-small" th:href="@{/admin/catalog/history}">Xóa lọc</a></div></form>
+<div class="admin-table-heading"><strong>Sự kiện điều chỉnh</strong>
+<div class="admin-row-actions"><span>20 mục mỗi trang</span>
+<a class="btn btn-outline btn-small"
+th:href="@{/admin/catalog/history/export.csv(page=${page},type=${type},actor=${actor})}">Xuất CSV trang này ↗</a></div></div>
+<div class="table-panel admin-table-scroll"><table class="data-table admin-table">
+<thead><tr><th>Thời gian</th><th>Admin</th><th>Dịch vụ</th><th>Giá cũ</th><th>Giá mới</th><th>Mở bán trước</th><th>Mở bán sau</th></tr></thead>
+<tbody><tr th:each="e : ${events}">
+<td th:text="${#temporals.format(e.createdAt,'dd/MM/yyyy HH:mm')}"></td>
+<td th:text="${e.actor}"></td><td th:text="${e.serviceCode}"></td>
+<td th:text="${e.oldPrice}"></td><td th:text="${e.newPrice}"></td>
+<td th:text="${e.oldEnabled ? 'Có' : 'Không'}"></td>
+<td th:text="${e.newEnabled ? 'Có' : 'Không'}"></td></tr>
+<tr th:if="${#lists.isEmpty(events)}"><td colspan="7" class="admin-empty">Không có bản ghi phù hợp.</td></tr>
+</tbody></table></div>
+<nav class="admin-pager" aria-label="Phân trang"><a class="btn btn-outline btn-small" th:if="${hasPrevious}"
+th:href="@{/admin/catalog/history(page=${page - 1},type=${type},actor=${actor})}">← Trước</a>
+<span th:text="|Trang ${page + 1}|">Trang 1</span><a class="btn btn-outline btn-small" th:if="${hasNext}"
+th:href="@{/admin/catalog/history(page=${page + 1},type=${type},actor=${actor})}">Sau →</a></nav>
+</main></body></html>

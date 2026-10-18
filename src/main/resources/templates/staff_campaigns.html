@@ -1,12 +1,27 @@
 <!doctype html><html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Công việc của tôi · GrowLab</title><link rel="stylesheet" th:href="@{/style.css}"></head><body>
-<main class="page container"><a class="table-link" th:href="@{/campaigns}">← Trang chủ tài khoản</a>
+<title>Công việc của tôi · GrowLab</title><link rel="stylesheet" th:href="@{/style.css}"><link rel="stylesheet" th:href="@{/admin.css}"></head><body class="admin-body">
+<main class="page container admin-page"><nav class="admin-breadcrumb">
+<a th:href="@{/staff/overview}">← Tổng quan nhân viên</a>
+<span>/</span><strong>Chiến dịch được phân công</strong></nav>
 <div class="page-header"><div><div class="eyebrow">Nhân viên</div><h1>Chiến dịch được phân công</h1>
 <p class="muted">Chỉ nhìn thấy các đơn do Admin giao cho tài khoản của bạn.</p></div><a class="btn btn-outline" th:href="@{/admin/support}">Hỗ trợ khách hàng</a></div>
 <p class="notice" th:if="${notice}" th:text="${notice}"></p>
 <p class="error" th:if="${error}" th:text="${error}"></p>
-<div class="table-panel"><table class="data-table"><thead><tr><th>Mã</th><th>Nền tảng</th><th>Dịch vụ</th><th>Khách hàng</th><th>Trạng thái</th><th>Xử lý</th></tr></thead>
+<form class="admin-filterbar" role="search" method="get" th:action="@{/staff/campaign-orders}" aria-label="Lọc công việc của tôi">
+<div class="admin-filter-field"><label for="assignedOrderId">Mã chiến dịch</label>
+<input id="assignedOrderId" name="orderId" type="number" min="1" step="1"
+       placeholder="VD: 125" th:value="${orderId}"></div>
+<div class="admin-filter-field"><label for="assignedStatus">Lọc trạng thái</label>
+<select id="assignedStatus" name="status"><option value="">Tất cả trạng thái</option>
+<option th:each="state : ${statuses}" th:value="${state.name()}" th:text="${state.displayName}"
+th:selected="${state == selectedStatus}"></option></select></div>
+<div class="admin-filter-actions"><button class="btn btn-small" type="submit">Lọc công việc</button>
+<a class="btn btn-outline btn-small" th:href="@{/staff/campaign-orders}">Xóa lọc</a></div>
+</form>
+<div class="admin-table-heading"><strong th:text="|${totalRecords} đơn được phân công|">0 đơn</strong>
+<span>Chỉ hiển thị công việc của tài khoản đăng nhập</span></div>
+<div class="table-panel admin-table-scroll"><table class="data-table admin-table"><thead><tr><th>Mã</th><th>Nền tảng</th><th>Dịch vụ</th><th>Khách hàng</th><th>Trạng thái</th><th>Xử lý</th></tr></thead>
 <tbody><tr th:each="o : ${orders}"><td th:text="${o.id}"></td><td th:text="${o.platform.displayName}"></td><td th:text="${o.serviceType.displayName}"></td>
 <td th:text="${o.ownerUsername}"></td><td><span class="status" th:text="${o.status.displayName}"></span></td>
 <td><form th:if="${o.status.name() == 'APPROVED' or o.status.name() == 'IN_PROGRESS'}"
@@ -16,6 +31,6 @@
 <button class="btn btn-small" th:text="${o.status.name() == 'APPROVED' ? 'Bắt đầu' : 'Hoàn thành'}"></button></form>
 <span th:if="${o.status.name() == 'PENDING_REVIEW'}" class="muted">Chờ Admin duyệt</span></td></tr>
 <tr th:if="${#lists.isEmpty(orders)}"><td colspan="6">Chưa có chiến dịch được giao.</td></tr></tbody></table></div>
-<nav class="actions"><a th:if="${hasPrevious}" th:href="@{/staff/campaign-orders(page=${page - 1})}" class="btn btn-outline btn-small">← Trước</a>
-<a th:if="${hasNext}" th:href="@{/staff/campaign-orders(page=${page + 1})}" class="btn btn-outline btn-small">Sau →</a></nav>
+<nav class="actions"><a th:if="${hasPrevious}" th:href="@{/staff/campaign-orders(page=${page - 1},status=${selectedStatus},orderId=${orderId})}" class="btn btn-outline btn-small">← Trước</a>
+<a th:if="${hasNext}" th:href="@{/staff/campaign-orders(page=${page + 1},status=${selectedStatus},orderId=${orderId})}" class="btn btn-outline btn-small">Sau →</a></nav>
 </main></body></html>

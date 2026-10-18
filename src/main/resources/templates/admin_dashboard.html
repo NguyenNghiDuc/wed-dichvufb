@@ -1,23 +1,130 @@
 <!doctype html><html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>GrowLab · Quản trị tổng quan</title><link rel="stylesheet" th:href="@{/style.css}"></head>
-<body><header class="topbar"><nav class="nav container"><a class="brand" th:href="@{/}"><span class="brand-icon">↗</span>Grow<strong>Lab</strong></a>
-<div class="nav-links"><a th:href="@{/admin/campaign-orders}">Đơn hàng</a><a th:href="@{/admin/users}">Tài khoản</a><a th:href="@{/admin/catalog}">Dịch vụ</a><a th:href="@{/admin/support}">Hỗ trợ</a><a th:href="@{/staff/campaign-orders}">Đơn được giao</a>
-<form method="post" th:action="@{/logout}"><input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"><button type="submit" class="logout">Đăng xuất</button></form></div></nav></header>
-<main class="page container"><div class="page-header"><div><div class="eyebrow">Dashboard Admin</div><h1>Tổng quan vận hành GrowLab</h1><p class="muted">Số liệu được lấy từ database, không mô phỏng doanh thu.</p></div></div>
-<div class="metrics-grid">
-<article class="card"><div class="muted">Tổng tài khoản</div><div class="metric" th:text="${metrics.totalUsers}">0</div><span class="muted" th:text="|${metrics.enabledUsers} đang hoạt động|"></span></article>
-<article class="card"><div class="muted">Tổng chiến dịch</div><div class="metric" th:text="${metrics.totalCampaigns}">0</div></article>
-<article class="card"><div class="muted">Chiến dịch cần duyệt</div><div class="metric" th:text="${metrics.pendingCampaigns}">0</div></article>
-<article class="card"><div class="muted">Phiếu hỗ trợ cần xử lý</div><div class="metric" th:text="${metrics.openTickets}">0</div></article>
-<article class="card"><div class="muted">Yêu cầu nạp đang chờ</div><div class="metric" th:text="${metrics.pendingDepositRequests}">0</div></article>
-<article class="card"><div class="muted">Dịch vụ đang mở</div><div class="metric" th:text="${metrics.activeServices}">0</div></article>
-<article class="card"><div class="muted">Chờ duyệt trên 48 giờ</div><div class="metric" th:text="${metrics.pendingNeedsReview}">0</div><a th:href="@{/admin/campaign-orders(status='PENDING_REVIEW')}">Rà soát đơn chờ duyệt →</a></article>
-<article class="card"><div class="muted">Đang xử lý trên 7 ngày từ cập nhật gần nhất</div><div class="metric" th:text="${metrics.progressingNeedsReview}">0</div><a th:href="@{/admin/campaign-orders(status='IN_PROGRESS')}">Rà soát đơn đang xử lý →</a></article>
+<title>GrowLab · Trung tâm điều hành</title>
+<link rel="stylesheet" th:href="@{/style.css}"><link rel="stylesheet" th:href="@{/admin.css}"></head>
+<body class="admin-body">
+<header class="topbar admin-topbar"><nav class="nav container">
+<a class="brand" th:href="@{/admin/dashboard}"><span class="brand-icon">↗</span>Grow<strong>Lab</strong><small class="admin-brand-tag">ADMIN</small></a>
+<div class="nav-links admin-nav"><a th:href="@{/admin/campaign-orders}">Đơn hàng</a>
+<a th:href="@{/admin/attention}">Hàng đợi</a>
+<a th:href="@{/admin/users}">Tài khoản</a><a th:href="@{/admin/staff}">Nhân viên</a><a th:href="@{/admin/catalog}">Dịch vụ</a>
+<a th:href="@{/admin/support}">Hỗ trợ</a><a th:href="@{/admin/activity}">Nhật ký</a><a th:href="@{/staff/campaign-orders}">Công việc</a>
+<form method="post" th:action="@{/logout}"><input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+<button type="submit" class="logout">Đăng xuất</button></form></div></nav></header>
+<main class="page container admin-page">
+<div class="admin-hero"><div><div class="eyebrow">GrowLab Control Center</div>
+<h1>Tổng quan vận hành</h1><p>Theo dõi hoạt động, tình trạng đơn và công việc đội ngũ từ database.</p></div>
+<div class="admin-hero-actions">
+<a th:href="@{/admin/reports/overview.csv}" class="btn">Xuất báo cáo CSV ↗</a>
+<a th:href="@{/admin/campaign-orders}" class="btn btn-outline">Quản lý đơn</a></div></div>
+<section aria-labelledby="overview-heading"><div class="admin-section-heading"><div>
+<div class="eyebrow">Tổng quan</div><h2 id="overview-heading">Chỉ số vận hành</h2></div>
+<span class="admin-section-hint">Dữ liệu cập nhật theo lần mở trang</span></div>
+<div class="metrics-grid admin-metrics-grid">
+<article class="card admin-metric-card"><span>Tổng tài khoản</span>
+<strong class="metric" th:text="${metrics.totalUsers}">0</strong><small th:text="|${metrics.enabledUsers} tài khoản hoạt động|"></small></article>
+<article class="card admin-metric-card"><span>Khách lần đầu có đơn (30 ngày)</span>
+<strong class="metric" th:text="${firstOrderCustomers}">0</strong>
+<small>Không phải số tài khoản mới đăng ký</small></article>
+<article class="card admin-metric-card"><span>Tổng chiến dịch</span>
+<strong class="metric" th:text="${metrics.totalCampaigns}">0</strong><small>Tổng đơn đã tạo</small></article>
+<article class="card admin-metric-card"><span>Đơn chờ duyệt</span>
+<strong class="metric" th:text="${metrics.pendingCampaigns}">0</strong>
+<a th:href="@{/admin/campaign-orders(status='PENDING_REVIEW')}">Xem đơn →</a></article>
+<article class="card admin-metric-card"><span>Hỗ trợ đang mở</span>
+<strong class="metric" th:text="${metrics.openTickets}">0</strong>
+<a th:href="@{/admin/support}">Xem yêu cầu →</a></article>
+<article class="card admin-metric-card"><span>Nạp tiền chờ xử lý</span>
+<strong class="metric" th:text="${metrics.pendingDepositRequests}">0</strong><small>Chưa xác minh giao dịch</small></article>
+<article class="card admin-metric-card"><span>Dịch vụ đang mở</span>
+<strong class="metric" th:text="${metrics.activeServices}">0</strong>
+<a th:href="@{/admin/catalog}">Xem bảng giá →</a></article>
+<article class="card admin-metric-card admin-attention"><span>Chờ duyệt trên 48 giờ</span>
+<strong class="metric" th:text="${metrics.pendingNeedsReview}">0</strong>
+<a th:href="@{/admin/campaign-orders(status='PENDING_REVIEW')}">Rà soát →</a></article>
+<article class="card admin-metric-card admin-attention"><span>Đang xử lý trên 7 ngày</span>
+<strong class="metric" th:text="${metrics.progressingNeedsReview}">0</strong>
+<a th:href="@{/admin/campaign-orders(status='IN_PROGRESS')}">Rà soát →</a></article>
+</div></section>
+<section class="admin-operations-section" aria-labelledby="trend-heading">
+<div class="admin-section-heading"><div>
+<div class="eyebrow">Xu hướng hoạt động</div><h2 id="trend-heading">Đơn hàng theo thời gian</h2></div>
+<nav class="admin-trend-options" aria-label="Chọn khoảng thời gian">
+<a th:href="@{/admin/dashboard(period='DAY')}" th:classappend="${period.name() == 'DAY' ? 'is-selected' : ''}">14 ngày</a>
+<a th:href="@{/admin/dashboard(period='WEEK')}" th:classappend="${period.name() == 'WEEK' ? 'is-selected' : ''}">12 tuần</a>
+<a th:href="@{/admin/dashboard(period='MONTH')}" th:classappend="${period.name() == 'MONTH' ? 'is-selected' : ''}">12 tháng</a>
+</nav></div>
+<div class="card admin-trend-panel">
+<p class="admin-caption">Thanh biểu đồ: số đơn được tạo trong kỳ. Cột hoàn thành là số đơn tạo trong kỳ hiện có trạng thái hoàn thành, không phải doanh thu đã thu.</p>
+<div class="admin-trend-rows" role="list" aria-label="Thống kê đơn theo kỳ">
+<div class="admin-trend-row" role="listitem" th:each="p : ${trend.buckets()}">
+<span class="admin-trend-label" th:text="${p.label()}">Kỳ</span>
+<progress th:value="${p.created()}" th:max="${trend.maximum()}"
+          th:aria-label="|${p.label()}: ${p.created()} đơn|">0</progress>
+<span class="admin-trend-value" th:text="|${p.created()} đơn|">0 đơn</span>
+<span class="admin-trend-completed" th:text="|${p.completed()} hoàn thành|">0 hoàn thành</span>
+</div></div>
+<div class="admin-trend-foot"><strong th:text="|${trend.totalCreated()} đơn được tạo trong kỳ|">0 đơn</strong>
+<div class="admin-row-actions">
+<a th:href="@{/admin/reports/campaign-trend.csv(period=${period.name()})}" class="table-link">Tải CSV →</a>
+<a th:href="@{/api/v1/admin/analytics/campaign-trend(period=${period.name()})}" class="table-link">Dữ liệu JSON →</a>
+</div></div>
+</div></section>
+<section class="admin-operations-section" aria-labelledby="user-role-heading">
+<div class="admin-section-heading"><div><div class="eyebrow">Tài khoản</div>
+<h2 id="user-role-heading">Phân bổ vai trò</h2></div>
+<a class="btn btn-outline btn-small" th:href="@{/admin/users}">Quản lý tài khoản →</a></div>
+<div class="table-panel admin-table-scroll"><table class="data-table admin-table">
+<thead><tr><th>Vai trò</th><th>Tổng tài khoản</th><th>Đang hoạt động</th><th>Bị khóa</th></tr></thead>
+<tbody>
+<tr th:each="r : ${userRoles}">
+<td><span class="admin-role" th:text="${r.role()}">USER</span></td>
+<td th:text="${r.total()}">0</td><td th:text="${r.enabled()}">0</td>
+<td th:text="${r.locked()}">0</td>
+</tr>
+<tr th:if="${#lists.isEmpty(userRoles)}"><td class="admin-empty" colspan="4">Chưa có tài khoản.</td></tr>
+</tbody></table></div>
+<p class="admin-caption">Số tài khoản đang hoạt động hoặc bị khóa; không phải số phiên đăng nhập hiện tại.</p>
+</section>
+<section class="admin-operations-section" aria-labelledby="pipeline-heading">
+<div class="admin-section-heading"><div><div class="eyebrow">Vận hành</div>
+<h2 id="pipeline-heading">Đơn theo trạng thái</h2></div></div>
+<div class="admin-summary-grid">
+<div class="card admin-summary-panel">
+<div class="admin-panel-head"><h3>Phân bổ chiến dịch</h3><span class="muted">Thống kê theo dữ liệu đơn</span></div>
+<div th:if="${#lists.isEmpty(operations.statuses)}" class="admin-empty">Chưa có chiến dịch.</div>
+<div th:each="s : ${operations.statuses}" class="admin-status-row">
+<div><span class="admin-status-dot"></span><span th:text="${s.status.displayName}">Trạng thái</span></div>
+<strong th:text="${s.orderCount}">0</strong></div>
 </div>
-<section class="section"><div class="page-header"><h2>Mười chiến dịch mới nhất</h2><a class="btn btn-outline btn-small" th:href="@{/admin/campaign-orders}">Tất cả chiến dịch →</a></div>
-<div class="table-panel"><table class="data-table"><thead><tr><th>Mã</th><th>Người dùng</th><th>Dịch vụ</th><th>Báo giá</th><th>Trạng thái</th></tr></thead>
-<tbody><tr th:each="c : ${latest}"><td th:text="${c.id}"></td><td th:text="${c.ownerUsername}"></td><td th:text="${c.serviceType.displayName}"></td><td th:text="|${c.quotedPriceVnd} đ|"></td><td><span class="status" th:text="${c.status.displayName}"></span></td></tr>
-<tr th:if="${#lists.isEmpty(latest)}"><td colspan="5">Chưa có chiến dịch nào.</td></tr></tbody></table></div></section>
-<p class="muted">Các ngưỡng rà soát 48 giờ và 7 ngày chỉ là gợi ý vận hành, chưa phải cam kết thời hạn dịch vụ (SLA). Danh sách liên kết hiển thị toàn bộ đơn theo trạng thái để Admin rà soát; không có tự động thay đổi trạng thái hay gửi cảnh báo.</p>
-<p class="notice">Chưa có thanh toán thật hoặc báo cáo doanh thu đã đối soát. Các yêu cầu nạp tiền chỉ là dữ liệu thử nghiệm.</p></main></body></html>
+<div class="card admin-summary-panel admin-quote-panel">
+<div class="eyebrow">Giá trị báo giá dự kiến</div>
+<div class="admin-quote-value" th:text="|${#numbers.formatDecimal(operations.pipelineQuotedValueVnd, 1, 'COMMA', 0, 'POINT')} ₫|">0 ₫</div>
+<p>Chỉ cộng báo giá của đơn chờ duyệt, đã duyệt và đang xử lý. <strong>Không phải doanh thu đã thu hoặc đối soát.</strong></p>
+<div class="admin-inline-note">Chưa tích hợp sổ cái, quyết toán hoặc cổng thanh toán thật.</div>
+</div></div>
+</section>
+<section class="admin-operations-section" aria-labelledby="staff-heading">
+<div class="admin-section-heading"><div><div class="eyebrow">Nhân viên</div>
+<h2 id="staff-heading">Khối lượng công việc</h2></div>
+<a class="btn btn-outline btn-small" th:href="@{/admin/campaign-orders}">Phân công đơn →</a></div>
+<div class="table-panel admin-table-scroll"><table class="data-table admin-table">
+<thead><tr><th>Nhân viên phụ trách</th><th>Đơn đã duyệt / đang xử lý</th></tr></thead>
+<tbody><tr th:each="staff : ${operations.staffLoad}"><td th:text="${staff.username}"></td>
+<td><span class="admin-role" th:text="${staff.activeOrders}">0</span></td></tr>
+<tr th:if="${#lists.isEmpty(operations.staffLoad)}"><td colspan="2" class="admin-empty">Chưa có đơn đang xử lý được phân công.</td></tr>
+</tbody></table></div><p class="admin-caption">Tối đa 8 nhân viên có nhiều đơn đang xử lý nhất, không phải bảng chấm công.</p>
+</section>
+<section class="admin-operations-section" aria-labelledby="latest-heading">
+<div class="admin-section-heading"><div><div class="eyebrow">Gần đây</div><h2 id="latest-heading">10 chiến dịch mới nhất</h2></div>
+<a class="btn btn-outline btn-small" th:href="@{/admin/campaign-orders}">Tất cả đơn →</a></div>
+<div class="table-panel admin-table-scroll"><table class="data-table admin-table">
+<thead><tr><th>Mã đơn</th><th>Khách hàng</th><th>Dịch vụ</th><th>Báo giá</th><th>Trạng thái</th></tr></thead>
+<tbody><tr th:each="c : ${latest}"><td class="admin-id" th:text="|#${c.id}|"></td>
+<td th:text="${c.ownerUsername}"></td><td th:text="${c.serviceType.displayName}"></td>
+<td th:text="|${c.quotedPriceVnd} đ|"></td>
+<td><span class="admin-status is-active" th:text="${c.status.displayName}"></span></td></tr>
+<tr th:if="${#lists.isEmpty(latest)}"><td colspan="5" class="admin-empty">Chưa có đơn.</td></tr>
+</tbody></table></div></section>
+<div class="admin-inline-note admin-bottom-note">Các ngưỡng 48 giờ và 7 ngày là chỉ báo để rà soát, không phải cam kết SLA. Báo cáo CSV chỉ gồm số lượng và báo giá chưa đối soát, không chứa dữ liệu cá nhân.</div>
+</main></body></html>

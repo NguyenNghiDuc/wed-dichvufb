@@ -1,0 +1,33 @@
+<!doctype html><html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tiến độ nhân viên · GrowLab Admin</title>
+<link rel="stylesheet" th:href="@{/style.css}"><link rel="stylesheet" th:href="@{/admin.css}"></head>
+<body class="admin-body"><main class="page container admin-page">
+<nav class="admin-breadcrumb"><a th:href="@{/admin/staff}">← Danh bạ nhân viên</a><span>/</span>
+<strong>Thống kê công việc</strong></nav>
+<div class="page-header admin-page-header"><div>
+<div class="eyebrow">Theo dõi công việc</div><h1>Hoạt động STAFF trong 30 ngày</h1>
+<p class="muted">Thống kê số lần bắt đầu và hoàn thành đơn dựa trên lịch sử cập nhật của nhân viên; không phản ánh giờ làm việc, chất lượng hay lương thưởng.</p></div>
+<a class="btn btn-outline" th:href="@{/admin/staff/performance.csv(actor=${selectedActor})}">↓ Tải CSV</a></div>
+<form method="get" th:action="@{/admin/staff/performance}" class="admin-filterbar" role="search" aria-label="Lọc hoạt động nhân viên">
+<div class="admin-filter-field">
+<label for="performanceActor">Tên nhân viên</label>
+<input type="search" id="performanceActor" name="actor" maxlength="100" minlength="3"
+ pattern="[a-zA-Z0-9._-]{3,100}" th:value="${selectedActor}"
+ placeholder="Nhập tên tài khoản chính xác"></div>
+<div class="admin-filter-actions"><button class="btn btn-small" type="submit">Lọc</button>
+<a class="btn btn-outline btn-small" th:href="@{/admin/staff/performance}">Xóa lọc</a></div>
+</form>
+<div class="table-panel admin-table-scroll"><table class="data-table admin-table">
+<thead><tr><th>Người thực hiện</th><th>Bắt đầu đơn</th><th>Hoàn thành đơn</th><th>Nhật ký</th></tr></thead>
+<tbody>
+<tr th:each="staff : ${performance}">
+<td><strong th:text="${staff.actor()}">Nhân viên</strong></td>
+<td th:text="${staff.started()}">0</td>
+<td th:text="${staff.completed()}">0</td>
+<td><a class="table-link" th:href="@{/admin/activity(area='STAFF_STATUS',actor=${staff.actor()})}">Xem audit →</a></td>
+</tr>
+<tr th:if="${#lists.isEmpty(performance)}"><td colspan="4" class="admin-empty">Chưa có bản ghi tiến độ STAFF trong 30 ngày qua.</td></tr>
+</tbody></table></div>
+<p class="admin-caption">Tối đa 20 người thực hiện có hoạt động gần đây. Nhân viên đã đổi quyền hoặc bị khóa có thể vẫn xuất hiện vì đây là sự kiện lịch sử. Không phải xếp hạng hiệu suất chính thức.</p>
+</main></body></html>

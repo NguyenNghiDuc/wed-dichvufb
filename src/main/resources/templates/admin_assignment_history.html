@@ -1,10 +1,18 @@
 <!doctype html><html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Lịch sử phân công · GrowLab</title><link rel="stylesheet" th:href="@{/style.css}"></head><body>
-<main class="page container"><a th:href="@{/admin/campaign-orders}" class="table-link">← Quản lý chiến dịch</a>
+<title>Lịch sử phân công · GrowLab</title><link rel="stylesheet" th:href="@{/style.css}"><link rel="stylesheet" th:href="@{/admin.css}"></head><body class="admin-body">
+<main class="page container admin-page"><a th:href="@{/admin/campaign-orders}" class="table-link">← Quản lý chiến dịch</a>
 <div class="page-header"><div><div class="eyebrow">Nhật ký</div><h1 th:text="|Phân công chiến dịch #${order.id}|"></h1></div></div>
-<div class="table-panel"><table class="data-table"><thead><tr><th>Ngày</th><th>Admin</th><th>Trước</th><th>Sau</th></tr></thead>
+<div class="table-panel admin-table-scroll"><table class="data-table admin-table"><thead><tr><th>Ngày</th><th>Admin</th><th>Trước</th><th>Sau</th></tr></thead>
 <tbody><tr th:each="e : ${events}"><td th:text="${#temporals.format(e.createdAt,'dd/MM/yyyy HH:mm')}"></td>
 <td th:text="${e.actor}"></td><td th:text="${e.oldAssignee != null ? e.oldAssignee : 'Chưa phân công'}"></td>
 <td th:text="${e.newAssignee != null ? e.newAssignee : 'Chưa phân công'}"></td></tr>
-<tr th:if="${#lists.isEmpty(events)}"><td colspan="4">Chưa có lịch sử phân công.</td></tr></tbody></table></div></main></body></html>
+<tr th:if="${#lists.isEmpty(events)}"><td colspan="4">Chưa có lịch sử phân công.</td></tr></tbody></table></div>
+<nav class="admin-pager" aria-label="Phân trang lịch sử phân công">
+<a class="btn btn-outline btn-small" th:if="${hasPrevious}"
+th:href="@{/admin/campaign-orders/{id}/assignment-history(id=${order.id},page=${pageNumber - 1})}">← Trước</a>
+<span th:text="|Trang ${pageNumber + 1} / ${totalPages == 0 ? 1 : totalPages}|">Trang 1</span>
+<a class="btn btn-outline btn-small" th:if="${hasNext}"
+th:href="@{/admin/campaign-orders/{id}/assignment-history(id=${order.id},page=${pageNumber + 1})}">Sau →</a>
+</nav><p class="admin-caption">Lịch sử tối đa 20 sự kiện trên mỗi trang; chỉ Admin được xem.</p>
+</main></body></html>

@@ -1,6 +1,6 @@
 <!doctype html><html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Admin hỗ trợ · GrowLab</title><link rel="stylesheet" th:href="@{/style.css}"></head>
-<body><main class="page container"><a th:href="@{/admin/support}" class="table-link">← Tất cả yêu cầu</a>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Admin hỗ trợ · GrowLab</title><link rel="stylesheet" th:href="@{/style.css}"><link rel="stylesheet" th:href="@{/admin.css}"></head>
+<body class="admin-body"><main class="page container admin-page"><a th:href="@{/admin/support}" class="table-link">← Tất cả yêu cầu</a>
 <div class="page-header"><div><div class="eyebrow">Admin</div><h1 th:text="${ticket.subject}"></h1><p class="muted" th:text="|Tài khoản: ${ticket.ownerUsername}|"></p><span class="status" th:text="${ticket.status.title}"></span></div></div>
 <article class="card"><p th:text="${ticket.description}"></p></article>
 <section class="section"><h2>Lịch sử phản hồi</h2><article class="card" th:each="m : ${messages}"><b th:text="${m.author}"></b><p th:text="${m.body}"></p></article>

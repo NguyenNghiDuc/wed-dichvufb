@@ -17,15 +17,18 @@ public class CampaignAssignmentService {
     private final CampaignAssignmentEventRepository assignmentEvents;
     private final CampaignEventRepository campaignEvents;
     private final AccountNotificationRepository notifications;
+    private final com.example.fbservice.admin.AdminStaffQueueRepository staffQueue;
 
     public CampaignAssignmentService(CampaignOrderRepository orders, UserRepository users,
             CampaignAssignmentEventRepository assignmentEvents,
-            CampaignEventRepository campaignEvents, AccountNotificationRepository notifications) {
+            CampaignEventRepository campaignEvents, AccountNotificationRepository notifications,
+            com.example.fbservice.admin.AdminStaffQueueRepository staffQueue) {
         this.orders = orders;
         this.users = users;
         this.assignmentEvents = assignmentEvents;
         this.campaignEvents = campaignEvents;
         this.notifications = notifications;
+        this.staffQueue = staffQueue;
     }
 
     @Transactional
@@ -77,11 +80,34 @@ public class CampaignAssignmentService {
 
     @Transactional(readOnly = true)
     public Page<CampaignOrder> assignedTo(String staffUsername, int page) {
+        return assignedTo(staffUsername, page, null);
+    }
+
+    /** Always scope to the authenticated employee before applying an optional status filter. */
+    @Transactional(readOnly = true)
+    public Page<CampaignOrder> assignedTo(String staffUsername, int page, CampaignStatus status) {
+        return assignedTo(staffUsername, page, status, null);
+    }
+
+    /** Both assigned employee and order ID must match in SQL before paging. */
+    @Transactional(readOnly = true)
+    public Page<CampaignOrder> assignedTo(String staffUsername, int page,
+                                          CampaignStatus status, Long orderId) {
         ensureStaff(staffUsername);
         if (page < 0 || page > 10000)
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
-        return orders.findByAssigneeUsername(staffUsername,
-                PageRequest.of(page, 20, Sort.by(Sort.Order.desc("updatedAt"), Sort.Order.desc("id"))));
+        if (orderId != null && orderId <= 0)
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid campaign ID");
+        PageRequest request = PageRequest.of(page, 20,
+            Sort.by(Sort.Order.desc("updatedAt"), Sort.Order.desc("id")));
+        if (orderId != null) {
+            return status == null
+                ? staffQueue.findByAssigneeUsernameAndId(staffUsername, orderId, request)
+                : staffQueue.findByAssigneeUsernameAndIdAndStatus(staffUsername, orderId, status, request);
+        }
+        return status == null
+            ? orders.findByAssigneeUsername(staffUsername, request)
+            : staffQueue.findByAssigneeUsernameAndStatus(staffUsername, status, request);
     }
 
     @Transactional
@@ -101,6 +127,23 @@ public class CampaignAssignmentService {
                 "Tiến độ chiến dịch #" + campaignId,
                 "Trạng thái mới: " + next.getDisplayName()));
         return order;
+    }
+
+    /** Admin-authorized, bounded history lookup for the management UI. */
+    @Transactional(readOnly = true)
+    public Page<CampaignAssignmentEvent> pageAssignmentHistory(String adminUsername,
+                                                                Long campaignId, int page) {
+        if (page < 0 || page > 10000 || campaignId == null || campaignId <= 0)
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid history pagination");
+        User admin = users.findByUsername(adminUsername)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN));
+        if (!admin.isEnabled() || !"ADMIN".equals(admin.getRole()))
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        if (!orders.existsById(campaignId))
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        return assignmentEvents.findByCampaignId(campaignId,
+            PageRequest.of(page, 20,
+                Sort.by(Sort.Order.desc("createdAt"), Sort.Order.desc("id"))));
     }
 
     @Transactional(readOnly = true)

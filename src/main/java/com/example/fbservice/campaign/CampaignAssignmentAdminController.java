@@ -30,11 +30,17 @@ public class CampaignAssignmentAdminController {
     }
 
     @GetMapping("/{id}/assignment-history")
-    public String history(@PathVariable Long id, Principal principal, Model model) {
+    public String history(@PathVariable Long id, @RequestParam(defaultValue = "0") int page,
+                          Principal principal, Model model) {
+        var history = assignments.pageAssignmentHistory(principal.getName(), id, page);
+        model.addAttribute("pageNumber", page);
+        model.addAttribute("totalPages", history.getTotalPages());
+        model.addAttribute("hasNext", history.hasNext());
+        model.addAttribute("hasPrevious", history.hasPrevious());
         model.addAttribute("order", orders.findById(id)
                 .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(
                         org.springframework.http.HttpStatus.NOT_FOUND)));
-        model.addAttribute("events", assignments.assignmentHistory(principal.getName(), id));
+        model.addAttribute("events", history.getContent());
         return "admin_assignment_history";
     }
 }

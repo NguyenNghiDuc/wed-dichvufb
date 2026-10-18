@@ -16,10 +16,18 @@ public class StaffCampaignController {
     }
 
     @GetMapping
-    public String list(@RequestParam(defaultValue = "0") int page, Principal principal, Model model) {
-        Page<CampaignOrder> records = assignments.assignedTo(principal.getName(), page);
+    public String list(@RequestParam(defaultValue = "0") int page,
+                       @RequestParam(required = false) CampaignStatus status,
+                       @RequestParam(required = false) Long orderId,
+                       Principal principal, Model model) {
+        Page<CampaignOrder> records = assignments.assignedTo(principal.getName(), page, status, orderId);
         model.addAttribute("orders", records.getContent());
         model.addAttribute("page", page);
+        model.addAttribute("totalPages", records.getTotalPages());
+        model.addAttribute("totalRecords", records.getTotalElements());
+        model.addAttribute("selectedStatus", status);
+        model.addAttribute("orderId", orderId);
+        model.addAttribute("statuses", CampaignStatus.values());
         model.addAttribute("hasPrevious", records.hasPrevious());
         model.addAttribute("hasNext", records.hasNext());
         return "staff_campaigns";

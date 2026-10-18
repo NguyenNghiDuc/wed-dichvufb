@@ -1,4 +1,35 @@
-<!doctype html><html lang="vi" xmlns:th="http://www.thymeleaf.org"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Admin · Nhật ký tài khoản</title><link rel="stylesheet" th:href="@{/style.css}"></head><body><main class="page container"><a class="table-link" th:href="@{/admin/users}">← Tài khoản</a><h1>Nhật ký quản trị tài khoản</h1>
-<div class="table-panel"><table class="data-table"><thead><tr><th>Thời gian</th><th>Admin</th><th>ID người dùng</th><th>Hành động</th><th>Trước</th><th>Sau</th></tr></thead><tbody>
-<tr th:each="e : ${events}"><td th:text="${#temporals.format(e.createdAt,'dd/MM/yyyy HH:mm')}"></td><td th:text="${e.actor}"></td><td th:text="${e.targetUserId}"></td><td th:text="${e.operation}"></td><td th:text="${e.beforeValue}"></td><td th:text="${e.afterValue}"></td></tr>
-<tr th:if="${#lists.isEmpty(events)}"><td colspan="6">Chưa có hành động được ghi nhận.</td></tr></tbody></table></div></main></body></html>
+<!doctype html><html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Admin · Nhật ký tài khoản</title><link rel="stylesheet" th:href="@{/style.css}">
+<link rel="stylesheet" th:href="@{/admin.css}"></head><body class="admin-body">
+<main class="page container admin-page">
+<nav class="admin-breadcrumb" aria-label="Điều hướng"><a th:href="@{/admin/users}">← Quản lý tài khoản</a><span>/</span><strong>Nhật ký</strong></nav>
+<div class="page-header admin-page-header"><div><div class="eyebrow">Kiểm soát thay đổi</div>
+<h1>Nhật ký quản trị tài khoản</h1><p class="muted">Lịch sử khóa và cấp quyền, 20 sự kiện mỗi trang. Không thể sửa/xóa từ giao diện.</p></div></div>
+<form method="get" th:action="@{/admin/users/audit}" class="admin-filterbar"
+  role="search" aria-label="Lọc lịch sử quản trị">
+<div class="admin-filter-field"><label for="actor">Admin thực hiện</label>
+<input id="actor" name="actor" type="search" minlength="3" maxlength="100"
+ pattern="[a-zA-Z0-9._-]{3,100}" th:value="${filterActor}" placeholder="Tên chính xác"></div>
+<div class="admin-filter-field"><label for="targetId">ID tài khoản</label>
+<input id="targetId" name="targetId" type="number" min="1" step="1"
+ th:value="${filterTargetId}"></div>
+<div class="admin-filter-field"><label for="operation">Hành động</label>
+<select id="operation" name="operation"><option value="">Tất cả</option>
+<option value="ACCOUNT_ROLE" th:selected="${filterOperation == 'ACCOUNT_ROLE'}">Thay đổi vai trò</option>
+<option value="ACCOUNT_ENABLED" th:selected="${filterOperation == 'ACCOUNT_ENABLED'}">Khóa/mở khóa</option></select></div>
+<div class="admin-filter-actions"><button type="submit" class="btn btn-small">Lọc nhật ký</button>
+<a class="btn btn-outline btn-small" th:href="@{/admin/users/audit}">Xóa lọc</a></div>
+</form>
+<div class="table-panel admin-table-scroll"><table class="data-table admin-table">
+<thead><tr><th>Thời gian</th><th>Admin</th><th>ID tài khoản</th><th>Hành động</th><th>Trước</th><th>Sau</th></tr></thead>
+<tbody><tr th:each="e : ${events}"><td th:text="${#temporals.format(e.createdAt,'dd/MM/yyyy HH:mm')}"></td>
+<td th:text="${e.actor}"></td><td th:text="${e.targetUserId}"></td>
+<td><span class="admin-role" th:text="${e.operation}"></span></td>
+<td th:text="${e.beforeValue}"></td><td th:text="${e.afterValue}"></td></tr>
+<tr th:if="${#lists.isEmpty(events)}"><td colspan="6" class="admin-empty">Chưa có hành động được ghi nhận.</td></tr></tbody>
+</table></div>
+<nav class="admin-pager" aria-label="Phân trang audit"><a th:if="${hasPrevious}" th:href="@{/admin/users/audit(page=${auditPage - 1},actor=${filterActor},targetId=${filterTargetId},operation=${filterOperation})}" class="btn btn-outline btn-small">← Trước</a>
+<span th:text="|Trang ${auditPage + 1} / ${totalAuditPages == 0 ? 1 : totalAuditPages}|"></span>
+<a th:if="${hasNext}" th:href="@{/admin/users/audit(page=${auditPage + 1},actor=${filterActor},targetId=${filterTargetId},operation=${filterOperation})}" class="btn btn-outline btn-small">Sau →</a></nav>
+</main></body></html>
