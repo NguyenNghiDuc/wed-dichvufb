@@ -40,6 +40,32 @@ class ContentMetricsApiIntegrationTest {
             .andExpect(jsonPath("$.caveat").isString());
     }
 
+    @Test @WithMockUser(username="metric-batch-hours-29")
+    void sufficientSamePlatformSamplesExposeOnlyAnUnverifiedUtcCandidate() throws Exception {
+        String date=LocalDateTime.now(ZoneOffset.UTC).minusDays(30)
+            .toLocalDate().toString();
+        StringBuilder json=new StringBuilder("{\"posts\":[");
+        int count=0;
+        for(int hour:new int[]{8,12,19}) {
+            for(int index=0;index<4;index++) {
+                if(count++>0)json.append(",");
+                json.append("{\"platform\":\"TIKTOK\",\"publishedAtUtc\":\"")
+                    .append(date).append("T").append(String.format("%02d",hour)).append(":00")
+                    .append("\",\"views\":100,\"likes\":")
+                    .append(hour==8?20:hour==12?10:5)
+                    .append(",\"comments\":0,\"shares\":0,\"saves\":0}");
+            }
+        }
+        json.append("]}");
+        mvc.perform(post("/api/v1/content-analytics/preview").with(csrf())
+                .contentType("application/json").content(json.toString()))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.source").value("USER_SUPPLIED_UNVERIFIED"))
+            .andExpect(jsonPath("$.postCount").value(12))
+            .andExpect(jsonPath("$.candidateHourUtc").value(8))
+            .andExpect(jsonPath("$.supportingPosts").value(4));
+    }
+
     @Test @WithMockUser(username="metric-invalid-29")
     void rejectsInvalidAndUnboundedInputs() throws Exception {
         mvc.perform(post("/api/v1/content-analytics/preview").with(csrf())
