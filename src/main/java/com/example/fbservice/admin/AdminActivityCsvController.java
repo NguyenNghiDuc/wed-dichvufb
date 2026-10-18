@@ -19,10 +19,11 @@ public class AdminActivityCsvController {
 
     @GetMapping(value = "/admin/activity/export.csv", produces = "text/csv;charset=UTF-8")
     public ResponseEntity<byte[]> download(@RequestParam(defaultValue = "ALL")
-                                             AdminActivityService.Area area) {
+                                             AdminActivityService.Area area,
+                                             @RequestParam(required = false) String actor) {
         StringBuilder csv = new StringBuilder("\uFEFF");
         csv.append("timestamp,area,actor,target,details\r\n");
-        for (AdminActivityService.Entry e : activities.recent(area)) {
+        for (AdminActivityService.Entry e : activities.recent(area, actor)) {
             csv.append(cell(e.createdAt().toString())).append(',')
                .append(cell(e.area().name())).append(',')
                .append(cell(e.actor())).append(',')

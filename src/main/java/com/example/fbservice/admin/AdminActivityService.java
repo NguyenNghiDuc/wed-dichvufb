@@ -4,6 +4,9 @@ import com.example.fbservice.campaign.CampaignAssignmentEvent;
 import com.example.fbservice.campaign.CampaignEvent;
 import com.example.fbservice.catalog.ServiceCatalogAudit;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.TypedQuery;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -32,33 +35,36 @@ public class AdminActivityService {
 
     @Transactional(readOnly = true)
     public List<Entry> recent(Area area) {
+        return recent(area, null);
+    }
+
+    /**
+     * Actor filter runs in the database before the per-source 50-row cap.
+     * No user-controlled JPQL, source names or sort columns.
+     */
+    @Transactional(readOnly = true)
+    public List<Entry> recent(Area area, String actor) {
         if (area == null) throw new IllegalArgumentException("Invalid activity category");
+        String exactActor = actor == null || actor.isBlank() ? null : actor.trim();
+        if (exactActor != null && !exactActor.matches("[a-zA-Z0-9._-]{3,100}"))
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid audit actor");
         List<Entry> entries = new ArrayList<>();
         if (area == Area.ALL || area == Area.ACCOUNTS) {
-            entityManager.createQuery(
-                "select e from AdminAccountAudit e order by e.createdAt desc, e.id desc",
-                AdminAccountAudit.class)
-                .setMaxResults(LIMIT_PER_SOURCE).getResultList().forEach(e ->
+            readSource(AdminAccountAudit.class, exactActor).forEach(e ->
                     entries.add(new Entry(Area.ACCOUNTS, e.getActor(),
                         "Tài khoản #" + e.getTargetUserId(),
                         e.getOperation() + ": " + e.getBeforeValue() + " → " + e.getAfterValue(),
                         e.getCreatedAt(), e.getId())));
         }
         if (area == Area.ALL || area == Area.CATALOG) {
-            entityManager.createQuery(
-                "select e from ServiceCatalogAudit e order by e.createdAt desc, e.id desc",
-                ServiceCatalogAudit.class)
-                .setMaxResults(LIMIT_PER_SOURCE).getResultList().forEach(e ->
+            readSource(ServiceCatalogAudit.class, exactActor).forEach(e ->
                     entries.add(new Entry(Area.CATALOG, e.getActor(), "Dịch vụ " + e.getServiceCode(),
                         "Báo giá: " + e.getOldPrice() + " → " + e.getNewPrice() + " VND; mở bán: " +
                             e.isOldEnabled() + " → " + e.isNewEnabled(),
                         e.getCreatedAt(), e.getId())));
         }
         if (area == Area.ALL || area == Area.ASSIGNMENTS) {
-            entityManager.createQuery(
-                "select e from CampaignAssignmentEvent e order by e.createdAt desc, e.id desc",
-                CampaignAssignmentEvent.class)
-                .setMaxResults(LIMIT_PER_SOURCE).getResultList().forEach(e ->
+            readSource(CampaignAssignmentEvent.class, exactActor).forEach(e ->
                     entries.add(new Entry(Area.ASSIGNMENTS, e.getActor(),
                         "Chiến dịch #" + e.getCampaignId(),
                         "Phân công: " + (e.getOldAssignee() == null ? "Chưa giao" : e.getOldAssignee()) +
@@ -67,12 +73,7 @@ public class AdminActivityService {
         }
         if (area == Area.ALL || area == Area.ORDER_STATUS) {
             // Customer-initiated and staff-initiated campaign events are not Admin actions.
-            entityManager.createQuery(
-                "select e from CampaignEvent e " +
-                "where e.description = :adminDescription order by e.createdAt desc, e.id desc",
-                CampaignEvent.class)
-                .setParameter("adminDescription", "Quản trị viên cập nhật trạng thái")
-                .setMaxResults(LIMIT_PER_SOURCE).getResultList().forEach(e ->
+            readAdminStatusSource(exactActor).forEach(e ->
                     entries.add(new Entry(Area.ORDER_STATUS, e.getActor(),
                         "Chiến dịch #" + e.getCampaignId(),
                         "Trạng thái: " + (e.getOldStatus() == null ? "—" : e.getOldStatus().name()) +
@@ -84,5 +85,25 @@ public class AdminActivityService {
                 .thenComparing(Entry::area)
                 .thenComparing(Comparator.comparingLong(Entry::sourceId).reversed()))
             .limit(DISPLAY_LIMIT).toList();
+    }
+
+    private <T> List<T> readSource(Class<T> type, String actor) {
+        String query = "select e from " + type.getSimpleName() + " e" +
+            (actor == null ? "" : " where e.actor = :actor") +
+            " order by e.createdAt desc, e.id desc";
+        TypedQuery<T> typed = entityManager.createQuery(query, type);
+        if (actor != null) typed.setParameter("actor", actor);
+        return typed.setMaxResults(LIMIT_PER_SOURCE).getResultList();
+    }
+
+    private List<CampaignEvent> readAdminStatusSource(String actor) {
+        String query = "select e from CampaignEvent e " +
+            "where e.description = :adminDescription" +
+            (actor == null ? "" : " and e.actor = :actor") +
+            " order by e.createdAt desc, e.id desc";
+        TypedQuery<CampaignEvent> typed = entityManager.createQuery(query, CampaignEvent.class)
+            .setParameter("adminDescription", "Quản trị viên cập nhật trạng thái");
+        if (actor != null) typed.setParameter("actor", actor);
+        return typed.setMaxResults(LIMIT_PER_SOURCE).getResultList();
     }
 }

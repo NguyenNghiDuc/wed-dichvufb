@@ -15,8 +15,10 @@ public class AdminActivityController {
 
     @GetMapping("/admin/activity")
     public String index(@RequestParam(defaultValue = "ALL") AdminActivityService.Area area,
+                        @RequestParam(required = false) String actor,
                         Model model) {
-        model.addAttribute("entries", activities.recent(area));
+        model.addAttribute("entries", activities.recent(area, actor));
+        model.addAttribute("actorFilter", actor == null ? "" : actor.trim());
         model.addAttribute("selectedArea", area);
         model.addAttribute("areas", AdminActivityService.Area.values());
         return "admin_activity";
