@@ -77,6 +77,20 @@ plus at most 31 in-memory date buckets. H2 and PostgreSQL integration tests
 cover the response shape and the existing PostgreSQL index. A real staging
 load test is still required to assess runtime/latency at scale.
 
+## Mobile-friendly ADMIN sandbox review page
+
+`GET /admin/payments/review` is a server-rendered, responsive white/orange
+read-only operations view. It combines the integrity anomaly counts with the
+ADMIN daily sandbox receipt trend (7/14/31 days). It does not display bank
+account numbers, usernames, event identifiers, signatures or wallet balances,
+and it does **not** provide an action to confirm deposits or credit funds.
+The page includes a prominent sandbox warning, accessible table headers and
+focus outlines, a narrow-screen layout, `noindex` meta, and
+`Cache-Control: no-store`. CSS is kept separately at
+`src/main/resources/static/payment-review.css` so strict CSP does not require
+`unsafe-inline`. The existing `/admin/**` Spring Security rule requires
+ADMIN. Access-control and actual Thymeleaf render tests verify the route.
+
 ## Flyway / indexes / deployment
 Clean PostgreSQL schema is managed with versioned `src/main/resources/db/migration/V*.sql` (production `validate`; no production Hibernate auto-DDL). V3 has receipt uniqueness; V10 adds indexes `idx_deposit_owner_created` and `idx_payment_receipts_created_at`; additive V11 replaces the owner/time index with `idx_deposit_owner_created_id` to support deterministic `ORDER BY created_at DESC, id DESC` over bounded 20-row pages. V12 adds PostgreSQL `NOT VALID` CHECK constraints enforcing the amount range on **new writes** to `deposit_request` and `payment_receipts`, without rewriting historical records. Historical rows may still violate the constraints: investigate and reconcile those manually before separately executing `VALIDATE CONSTRAINT` after staging/UAT. NEVER edit checksums of applied Flyway scripts or run Flyway `repair` automatically. Inspect `flyway_schema_history` and review query plans on realistic staging data. For owner listing inspect `EXPLAIN (ANALYZE, BUFFERS)` with sampled but redacted data, not live personally identifying data in tickets.
 
