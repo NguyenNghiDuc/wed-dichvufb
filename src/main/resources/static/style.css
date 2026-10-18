@@ -26,3 +26,132 @@
 /* Account workflow uses the same pink/cyan palette as the public landing. */
 .account-page{--bg:#100d20;--panel:#191428;--ink:#f0eaf8;--muted:#aaa0b9;--line:#ffffff17;--accent:#ff1472;--accent-dark:#d70059;--pale:#30182e;--shadow:0 18px 45px #0002;background:radial-gradient(ellipse at 85% 20%,#38203d44,transparent 60%),var(--bg);min-height:100vh}.account-page .topbar{background:#151225ed;border-color:var(--line)}.account-page .nav{height:auto;min-height:78px;padding-block:15px}.account-page .nav-links a,.account-page .logout{color:#c7bdd4}.account-page .brand-icon{background:linear-gradient(135deg,#ff1472,#00cbc7)}.account-page .btn-outline{background:transparent}.account-page .notice{background:#302035;border-color:#64304f;color:#e6b4cd}.account-page .error{background:#3c192c;border-color:#8a3251;color:#ffc2d6}.account-page .field :is(input,select,textarea),.account-page .campaign-filters :is(input,select){background:#231c32;color:var(--ink);border:1px solid #ffffff26;border-radius:10px;padding:12px;font:inherit;color-scheme:dark;max-width:100%;min-width:0}.account-page .field :is(input,select,textarea):focus{border-color:#00dcd5;box-shadow:0 0 0 3px #00dcd51a}.account-page .field input::placeholder,.account-page .field textarea::placeholder{color:#90829f}.account-page .btn{border-radius:10px}.account-page .page{padding-top:32px}.account-page .page-header h1{font-size:34px}.account-page .data-table th{background:#241a31;color:#c5b4d0}.account-page .data-table td{color:#dfd5e9}.account-page .data-table a:not(.btn){color:#4fdfda}.account-page .data-table td:has(.order-detail-link){min-width:150px}.order-detail-link{display:block;margin-bottom:9px;font-size:12px}.account-page .status{background:#4a2637;color:#ffb4cf}.account-page .status[data-status="COMPLETED"]{background:#163d36;color:#65e3bd}.account-page .status[data-status="IN_PROGRESS"],.account-page .status[data-status="APPROVED"]{background:#1b334c;color:#8bcfff}.account-page .status[data-status="CANCELLED"],.account-page .status[data-status="REJECTED"]{background:#302739;color:#bfb0cd}.account-page .success-message{display:flex;gap:12px;align-items:center;flex-wrap:wrap;background:#123d35;border:1px solid #2d7561;border-radius:12px;color:#a4efcb;padding:17px;margin-bottom:24px}.success-message a{font-weight:700;text-decoration:underline}.account-page .campaign-filters{gap:12px;align-items:center;padding:20px;background:var(--panel);border:1px solid var(--line);border-radius:16px;margin-bottom:22px}.campaign-filters label{font-size:12px;font-weight:700}.campaign-filters input{width:120px}.account-page .checkout-grid{display:grid;grid-template-columns:1.55fr 1fr;gap:25px;align-items:start}.account-page .checkout-grid .form-panel{max-width:none}.checkout-summary{position:sticky;top:25px}.checkout-summary h2{font-size:23px}.checkout-summary dl,.confirm-dialog dl{margin:22px 0}.checkout-summary dt,.confirm-dialog dt{font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:#a99bb8;margin-top:17px}.checkout-summary dd,.confirm-dialog dd{margin:5px 0 0;font-weight:650;overflow-wrap:anywhere;white-space:pre-wrap}.checkout-summary .checkout-price,.confirm-dialog .checkout-price{font-size:29px;color:#31ddd5}.checkout-summary>p{font-size:12px;line-height:1.85}.checkout-benefits{list-style:none;padding:18px 0;border-top:1px solid #ffffff12;font-size:12px;line-height:2.3;color:#bfb2ce}.checkout-benefits li:before{content:'✓';color:#00dcd5;margin-right:10px}.account-page .confirm-dialog{color:#f1eafa;background:#1b152b;border:1px solid #66445f;border-radius:20px;width:min(540px,calc(100% - 32px));max-height:85vh;padding:27px;box-shadow:0 20px 100px #0009;overflow-y:auto}.confirm-dialog::backdrop{background:#080512bd;backdrop-filter:blur(5px)}.confirm-dialog h2{margin:0}.confirm-dialog .actions{justify-content:flex-end}.account-page .campaign-channel{margin-top:22px}.channel-url{color:#40d8d3;overflow-wrap:anywhere}.account-page .step{min-width:0}.account-page .form-panel:focus-within{border-color:#644159}.account-page .confirm-dialog [data-close-dialog]{color:#dfc9e8!important}.account-page .btn:disabled{opacity:.55;cursor:not-allowed;transform:none}.account-page :is(a,button):focus-visible{outline:2px solid #00dcd5;outline-offset:4px}.account-page .customer-metrics .metric{color:#f577a6}@media(max-width:800px){.account-page .checkout-grid{grid-template-columns:1fr}.checkout-summary{position:static}.account-page .checkout-grid .form-panel{padding:24px}.account-page .nav-links{gap:13px;font-size:12px}.account-page .campaign-filters :is(input,select){flex:1;min-width:100px}.account-page .steps{display:grid;grid-template-columns:1fr}.account-page .campaign-filters{padding:15px}.account-page .page-header h1{font-size:29px}}@media(max-width:450px){.account-page .nav-links{gap:10px}.account-page .nav-links a{font-size:11px}.account-page .page{padding-top:25px}.account-page .campaign-filters{gap:9px}.account-page .campaign-filters label{flex-basis:100%}.account-page .campaign-filters :is(input,select){width:100%;flex-basis:100%}.confirm-dialog .actions .btn{flex:1}.account-page .confirm-dialog{padding:22px}}
 .account-page .checkout-grid > *{min-width:0}
+
+/* GrowLab CSS synchronization (2026-10-18)
+   Shared brand tokens across the public landing, light utility pages and
+   authenticated pages. Keep the existing boost-/account-page layouts intact. */
+:root{
+  --gl-brand-primary:#ed2774;
+  --gl-brand-primary-hover:#cd195e;
+  --gl-brand-cyan:#16c7c5;
+  --gl-brand-cyan-hover:#13a6a5;
+  --gl-brand-focus:#20d5d0;
+  --gl-radius-card:20px;
+  --gl-radius-control:11px;
+  --gl-shadow-card:0 18px 43px #1d133323;
+}
+/* Legacy/light pages (login, register, admin, help, support, notifications).
+   Preserve legibility and distinguish light surface from dark dashboard. */
+body:not(.boost-page):not(.account-page){
+  --bg:#fbf9fc;
+  --line:#eee5ef;
+  --accent:var(--gl-brand-primary);
+  --accent-dark:var(--gl-brand-primary-hover);
+  --pale:#fff0f7;
+  --shadow:0 15px 40px #42244712;
+}
+body:not(.boost-page):not(.account-page) .brand-icon{
+  background:linear-gradient(135deg,var(--gl-brand-primary),var(--gl-brand-cyan));
+}
+body:not(.boost-page):not(.account-page) .mini-card,
+body:not(.boost-page):not(.account-page) .data-table th{
+  background:#fff1f7;
+}
+body:not(.boost-page):not(.account-page) .tag,
+body:not(.boost-page):not(.account-page) .status{
+  background:#ffedf5;color:#a62660;
+}
+body:not(.boost-page):not(.account-page) .notice{
+  background:#fff3f8;border-color:#f2d0e2;color:#85365c;
+}
+body:not(.boost-page):not(.account-page) .field :is(input,select,textarea):focus-visible{
+  outline:2px solid var(--gl-brand-cyan);
+  outline-offset:2px;
+}
+/* Public landing and customer workspace share the same interactive brand. */
+.boost-page{
+  --hot:var(--gl-brand-primary);
+  --aqua:var(--gl-brand-cyan);
+}
+.boost-page .boost-register{
+  background:linear-gradient(115deg,var(--gl-brand-primary),#bd276d);
+  border-color:#ff80b1;
+  box-shadow:0 5px 21px #ed27744d;
+}
+.boost-page .boost-register:hover{background:var(--gl-brand-primary-hover);color:#fff!important}
+.account-page{
+  --accent:var(--gl-brand-primary);
+  --accent-dark:var(--gl-brand-primary-hover);
+}
+.account-page .brand strong{color:var(--gl-brand-primary)}
+.account-page .brand-icon{
+  background:linear-gradient(135deg,var(--gl-brand-primary),var(--gl-brand-cyan));
+}
+.account-page .page-header .eyebrow{color:var(--gl-brand-primary)}
+.account-page .checkout-summary .checkout-price,
+.account-page .confirm-dialog .checkout-price{
+  color:var(--gl-brand-cyan);
+}
+.account-page .checkout-summary,.account-page .card,.account-page .form-panel{
+  border-radius:var(--gl-radius-card);
+}
+.account-page .checkout-summary{border-color:#ffffff25}
+.account-page .card h2,.account-page .checkout-summary h2{line-height:1.3}
+.account-page .boost-faq{
+  display:grid;
+  grid-template-columns:minmax(0,220px) minmax(0,1fr);
+  gap:24px;
+  padding:27px 24px;
+  border:1px solid var(--line);
+  border-radius:var(--gl-radius-card);
+  background:var(--panel);
+  margin-top:22px;
+}
+.account-page .boost-faq .faq-heading h2{margin-top:8px}
+.account-page .boost-faq details{border-bottom:1px solid var(--line)}
+.account-page .boost-faq details:last-child{border-bottom:0}
+.account-page .boost-faq details p{color:var(--muted);font-size:13px}
+.account-page .boost-faq summary:after{color:var(--gl-brand-cyan)}
+/* Shared keyboard navigation and accessible control states. */
+.boost-page :is(a,button,summary,input,select,textarea):focus-visible,
+.account-page :is(a,button,summary,input,select,textarea):focus-visible,
+body:not(.boost-page):not(.account-page) :is(a,button,summary,input,select,textarea):focus-visible{
+  outline:2px solid var(--gl-brand-focus);
+  outline-offset:3px;
+}
+.account-page :is(button,.btn):disabled,
+.boost-page :is(button,.boost-submit):disabled{
+  opacity:.55;cursor:not-allowed;box-shadow:none;transform:none;
+}
+/* Let panels, text and tables shrink safely without horizontal overflow. */
+.boost-page .boost-layout > *, .account-page .checkout-grid > *{min-width:0}
+.account-page .table-panel{max-width:100%;overflow-x:auto}
+.account-page .data-table{min-width:650px}
+.account-page .form-panel{min-width:0}
+/* Tablet: eliminate squeezed two-column checkout cards, keep reading order. */
+@media(max-width:980px){
+  .boost-page .boost-layout{grid-template-columns:minmax(0,1fr)}
+  .boost-page .intro-column{grid-row:1}
+  .boost-page .order-panel{grid-row:2}
+  .boost-page .boost-faq{grid-column:1;grid-row:3}
+  .account-page .boost-faq{grid-template-columns:minmax(0,1fr)}
+}
+/* Mobile: prevent navigation links, form fields and price tables from clipping. */
+@media(max-width:600px){
+  .account-page .nav{align-items:flex-start}
+  .account-page .nav-links{
+    width:100%;max-width:100%;gap:10px;overflow-x:auto;
+    flex-wrap:nowrap;padding-bottom:5px;scrollbar-width:thin;
+  }
+  .account-page .nav-links > *{flex-shrink:0}
+  .account-page .checkout-grid{grid-template-columns:minmax(0,1fr)}
+  .account-page .checkout-summary{position:static}
+  .account-page .boost-faq{padding:20px 17px}
+  .boost-page .boost-layout{margin-inline:16px}
+  .boost-page .order-panel{min-width:0}
+  body:not(.boost-page):not(.account-page) .nav-links{row-gap:10px}
+}
+@media(prefers-reduced-motion:reduce){
+  .boost-page,.account-page,body:not(.boost-page):not(.account-page){scroll-behavior:auto}
+  .boost-page :is(a,button),.account-page :is(a,button){transition:none!important}
+}
