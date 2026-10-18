@@ -371,12 +371,22 @@ public class SupportTicketService {
 
     @Transactional
     public void closeAsAdmin(String admin, Long id) {
+        closeAsAdmin(admin, id, null);
+    }
+
+    /** Optional closing note is private to this ticket and HTML-escaped by the view. */
+    @Transactional
+    public void closeAsAdmin(String admin, Long id, String resolutionNote) {
+        if (resolutionNote != null && !resolutionNote.isBlank())
+            validate(resolutionNote, 10, 500);
         SupportTicket ticket = tickets.lockForAdmin(id)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         ticket.ensureAssignedStaff(admin);
         ticket.close();
         messages.save(new SupportMessage(id, "HỆ THỐNG",
             "Trạng thái thay đổi: ĐANG XỬ LÝ → ĐÃ ĐÓNG (bởi nhân viên hỗ trợ)."));
+        if (resolutionNote != null && !resolutionNote.isBlank())
+            messages.save(new SupportMessage(id, admin, resolutionNote.strip()));
         notices.save(new AccountNotification(ticket.getOwnerUsername(),
             "Hỗ trợ #" + id + " đã đóng", "Yêu cầu đã được đóng bởi nhân viên " + admin + "."));
     }
