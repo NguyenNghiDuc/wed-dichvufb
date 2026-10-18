@@ -32,8 +32,8 @@ class LegacyOrderFormPreservationIntegrationTest {
             .andExpect(status().isOk())
             .andExpect(view().name("order_form"))
             .andExpect(content().string(containsString("https://example.com/test")))
-            .andExpect(content().string(containsString("Hỗ trợ kênh")))
-            .andExpect(content().string(containsString("&lt;b&gt;Ghi chú riêng&lt;/b&gt;")))
+            .andExpect(content().string(containsString("Hỗ trợ k&ecirc;nh")))
+            .andExpect(content().string(containsString("&lt;b&gt;Ghi ch&uacute; ri&ecirc;ng&lt;/b&gt;")))
             .andExpect(content().string(not(containsString("<b>Ghi chú riêng</b>"))));
         mvc.perform(post("/order/save").with(csrf())
                 .param("linkOrder", "https://example.com/test")
