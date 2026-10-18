@@ -26,11 +26,13 @@
 </div>
 <section class="section">
 <h2>Danh sách nội dung</h2>
+<div class="field"><label for="draft-search">Tìm nhanh trong trang hiện tại</label><input id="draft-search" type="search" placeholder="Tìm tiêu đề hoặc nền tảng" aria-controls="draft-table"><small>Chỉ lọc các bản nháp đang hiển thị; không tìm trên toàn bộ dữ liệu.</small></div>
+<p id="draft-search-empty" class="muted" hidden>Không tìm thấy bản nháp phù hợp trong trang này.</p>
 <div class="table-panel">
-<table class="data-table">
+<table class="data-table" id="draft-table">
 <thead><tr><th>Nền tảng</th><th>Tiêu đề</th><th>Trạng thái</th><th>Lịch UTC</th><th>Thao tác</th></tr></thead>
 <tbody>
-<tr th:each="d : ${drafts}">
+<tr th:each="d : ${drafts}" class="draft-record">
   <td th:text="${d.platform.displayName}"></td>
   <td th:text="${d.title}"></td>
   <td><span class="status" th:text="${d.status}"></span></td>
@@ -56,6 +58,23 @@
 </main>
 <script>
   // Counters use textContent only; never render user input as HTML.
+  const search = document.getElementById('draft-search');
+  const records = Array.from(document.querySelectorAll('#draft-table tbody tr.draft-record'));
+  const empty = document.getElementById('draft-search-empty');
+  if (search && empty) {
+    const filter = () => {
+      const query = search.value.trim().toLocaleLowerCase('vi');
+      let visible = 0;
+      for (const row of records) {
+        const match = row.cells[0].textContent.toLocaleLowerCase('vi').includes(query)
+          || row.cells[1].textContent.toLocaleLowerCase('vi').includes(query);
+        row.hidden = !match;
+        if (match) visible++;
+      }
+      empty.hidden = !query || visible > 0 || records.length === 0;
+    };
+    search.addEventListener('input', filter);
+  }
   for (const [fieldId, counterId, limit] of [['title', 'title-count', 120], ['body', 'body-count', 3000]]) {
     const field = document.getElementById(fieldId);
     const counter = document.getElementById(counterId);
