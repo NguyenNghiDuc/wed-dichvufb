@@ -64,6 +64,15 @@ public class SupportTicket {
     public void close() {
         ensureOpen();
         status = TicketStatus.CLOSED;
+        recordReplyActivity();
+    }
+
+    /** Only the ticket owner may request reopening a CLOSED ticket. */
+    public void reopen() {
+        if (status != TicketStatus.CLOSED)
+            throw new IllegalArgumentException("Chỉ được mở lại yêu cầu đã đóng.");
+        status = TicketStatus.OPEN;
+        recordReplyActivity();
     }
     public void ensureOpen() {
         if (status == TicketStatus.CLOSED) throw new IllegalArgumentException("Yêu cầu đã đóng.");
