@@ -138,6 +138,29 @@ class AdminAttentionQueueIntegrationTest {
     }
 
     @Test
+    @WithMockUser(roles="ADMIN")
+    void overdueUnassignedQueueOnlyShowsApprovedUnassignedBeyond24Hours() throws Exception {
+        var now = LocalDateTime.now();
+        CampaignOrder overdue = create("w4-unassigned-overdue", CampaignStatus.APPROVED,
+            now.minusDays(3), now.minusHours(30));
+        create("w4-unassigned-recent", CampaignStatus.APPROVED,
+            now.minusHours(3), now.minusHours(2));
+        CampaignOrder assigned = create("w4-assigned-overdue", CampaignStatus.APPROVED,
+            now.minusDays(3), now.minusHours(30));
+        assigned.assignTo("w4-available-staff");
+        orders.save(assigned);
+        create("w4-pending-overdue", CampaignStatus.PENDING_REVIEW,
+            now.minusDays(3), now.minusHours(30));
+
+        assertThat(queue.find(AdminAttentionQueueService.Queue.OVERDUE_UNASSIGNED, 0).rows())
+            .extracting(CampaignOrder::getId).containsExactly(overdue.getId());
+        mvc.perform(get("/admin/attention").param("queue", "OVERDUE_UNASSIGNED"))
+            .andExpect(status().isOk())
+            .andExpect(model().attribute("orders", hasSize(1)))
+            .andExpect(content().string(containsString("w4-unassigned-overdue")));
+    }
+
+    @Test
     void onlyAdminCanViewPriorityQueue() throws Exception {
         mvc.perform(get("/admin/attention")).andExpect(status().is3xxRedirection());
         mvc.perform(get("/admin/attention").with(user("w4-staff").roles("STAFF")))
