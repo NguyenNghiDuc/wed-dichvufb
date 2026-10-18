@@ -181,6 +181,19 @@ public class SupportTicketService {
         return tickets.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
     }
 
+    /** Progress is always loaded through the existing ticket access checks. */
+    @Transactional(readOnly = true)
+    public SupportTicketProgress progressForOwner(String owner, Long id) {
+        return SupportTicketProgress.from(detailForOwner(owner, id),
+                java.time.LocalDateTime.now());
+    }
+
+    @Transactional(readOnly = true)
+    public SupportTicketProgress progressForStaff(Long id) {
+        return SupportTicketProgress.from(detailForAdmin(id),
+                java.time.LocalDateTime.now());
+    }
+
     @Transactional(readOnly = true)
     public List<SupportMessage> messagesForOwner(String user, Long id) {
         detailForOwner(user, id);
