@@ -55,7 +55,7 @@ public class PaymentWebhookService {
         if (body == null || body.length == 0 || body.length > 4096) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid webhook size");
         }
-        if (timestamp == null || !timestamp.matches("[0-9]{10,12}")
+        if (timestamp == null || !timestamp.matches("[1-9][0-9]{9,11}")
                 || providedSignature == null || !providedSignature.matches("[a-fA-F0-9]{64}")) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
         }
