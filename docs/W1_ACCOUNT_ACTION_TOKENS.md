@@ -10,3 +10,9 @@
 - JUnit tests cover expiry at the exact boundary, purpose/account separation, reissue, token redaction and concurrent one-time redemption.
 
 Do not mark roadmap email verification (#2) or password reset (#3) complete until all external and security gates are met.
+
+## Complement existing HMAC token codec (no duplicate reset endpoint)
+
+The parallel W1 branch has `PasswordRecoveryTokenCodec`, which HMAC-signs a reset claim but deliberately does **not** enforce one-time use. `AccountActionTokenStore.rememberSigned(...)` now accepts that codec's signed URL-safe bearer and retains only its SHA-256 digest; `consume(...)` prevents a second redemption in the same JVM. A composition regression test covers HMAC signature validation, password-revision binding, purpose and account isolation, reissue, and one-time use.
+
+This still does **not** create a safe production reset flow: verify HMAC and current DB password revision under a transaction, atomically consume a **durable/shared** token record and update BCrypt hash, deliver only via verified SMTP/authorized provider, rate limit, audit, and revoke sessions. No Spring bean/HTTP endpoint is activated in this PR.

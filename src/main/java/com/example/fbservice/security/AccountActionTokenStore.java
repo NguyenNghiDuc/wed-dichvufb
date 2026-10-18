@@ -60,19 +60,39 @@ public final class AccountActionTokenStore {
         if (accountId <= 0 || purpose == null)
             throw new IllegalArgumentException("Valid account and purpose required");
         long time = now.getAsLong();
-        entries.entrySet().removeIf(e -> e.getValue().expiresAtMillis <= time);
-        if (entries.size() >= MAX_ENTRIES)
-            throw new IllegalStateException("Challenge store is at capacity");
-        // Reissuing a challenge for the same purpose invalidates the old one.
-        entries.entrySet().removeIf(e ->
-            e.getValue().accountId == accountId && e.getValue().purpose == purpose);
-
         byte[] bytes = new byte[TOKEN_BYTES];
         random.nextBytes(bytes);
         String raw = Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+        long expiration = rememberInternal(accountId, purpose, raw, time);
+        return new IssuedToken(raw, expiration);
+    }
+
+    /**
+     * Registers an independently signed bearer (for example from
+     * PasswordRecoveryTokenCodec) so it can also be consumed only once.
+     * The caller MUST validate its cryptographic signature and DB revision
+     * before using consume to authorize an account mutation.
+     */
+    public synchronized void rememberSigned(long accountId, Purpose purpose, String signedToken) {
+        if (accountId <= 0 || purpose == null || !validTokenSyntax(signedToken))
+            throw new IllegalArgumentException("Valid account, purpose and signed bearer required");
+        rememberInternal(accountId, purpose, signedToken, now.getAsLong());
+    }
+
+    private long rememberInternal(long accountId, Purpose purpose, String raw, long time) {
+        entries.entrySet().removeIf(e -> e.getValue().expiresAtMillis <= time);
+        // Reissue can replace its own token even while the store is at capacity.
+        entries.entrySet().removeIf(e ->
+            e.getValue().accountId == accountId && e.getValue().purpose == purpose);
+        if (entries.size() >= MAX_ENTRIES)
+            throw new IllegalStateException("Challenge store is at capacity");
         long expiration = Math.addExact(time, TTL_MILLIS);
         entries.put(digest(raw), new Challenge(accountId, purpose, expiration));
-        return new IssuedToken(raw, expiration);
+        return expiration;
+    }
+
+    private static boolean validTokenSyntax(String raw) {
+        return raw != null && raw.matches("[A-Za-z0-9_-]{43,128}");
     }
 
     /**
@@ -80,8 +100,7 @@ public final class AccountActionTokenStore {
      * wrong-purpose values never grant a valid action.
      */
     public synchronized boolean consume(long accountId, Purpose purpose, String raw) {
-        if (accountId <= 0 || purpose == null || raw == null ||
-                !raw.matches("[A-Za-z0-9_-]{43}"))
+        if (accountId <= 0 || purpose == null || !validTokenSyntax(raw))
             return false;
         String key = digest(raw);
         Challenge challenge = entries.get(key);
