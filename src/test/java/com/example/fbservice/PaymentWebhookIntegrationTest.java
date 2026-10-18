@@ -196,6 +196,32 @@ class PaymentWebhookIntegrationTest {
     }
 
     @Test
+    void duplicateEventCannotAcknowledgeTamperedDepositState() throws Exception {
+        DepositRequest deposit = newDeposit("webhook-owner-state-check", 78000);
+        String body = event("stateTamperEvent123", deposit.getId(), 78000, "SETTLED");
+        mvc.perform(request(body, now())).andExpect(status().isOk());
+        long receiptCount = receipts.count();
+        long notificationCount = notifications.count();
+
+        DepositRequest modified = deposits.findById(deposit.getId()).orElseThrow();
+        modified.setStatus("PENDING");
+        deposits.saveAndFlush(modified);
+        mvc.perform(request(body, now())).andExpect(status().isConflict());
+
+        modified.setStatus("APPROVED");
+        modified.setAmount(78100);
+        deposits.saveAndFlush(modified);
+        mvc.perform(request(body, now())).andExpect(status().isConflict());
+
+        modified.setAmount(78000);
+        deposits.saveAndFlush(modified);
+        mvc.perform(request(body, now())).andExpect(status().isOk())
+                .andExpect(jsonPath("$.duplicate").value(true));
+        assertThat(receipts.count()).isEqualTo(receiptCount);
+        assertThat(notifications.count()).isEqualTo(notificationCount);
+    }
+
+    @Test
     void rejectsRepeatedAuthenticationHeadersEvenWithValidSignature() throws Exception {
         DepositRequest deposit = newDeposit("webhook-owner-ambiguous-headers", 68000);
         String body = event("repeatHeaderEvt123", deposit.getId(), 68000, "SETTLED");
