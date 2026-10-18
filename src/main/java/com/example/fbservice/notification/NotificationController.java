@@ -107,9 +107,11 @@ public class NotificationController {
                            Principal principal, RedirectAttributes redirect) {
         validateFilters(page, days);
         String term = search.validate(q);
-        var notification = notifications.findByIdAndOwnerUsername(id, principal.getName())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-        notification.markRead();
+        String owner = principal.getName();
+        int changed = notifications.markOneUnreadAsRead(id, owner, LocalDateTime.now());
+        if (changed == 0 && !notifications.existsByIdAndOwnerUsername(id, owner)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        }
         return listRedirect(redirect, page, unreadOnly, days, term);
     }
 

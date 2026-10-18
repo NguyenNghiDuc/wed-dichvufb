@@ -15,6 +15,13 @@ public interface AccountNotificationRepository extends JpaRepository<AccountNoti
     // Retained for existing consumers while the inbox uses bounded page queries.
     List<AccountNotification> findTop100ByOwnerUsernameOrderByCreatedAtDesc(String username);
     Optional<AccountNotification> findByIdAndOwnerUsername(Long id, String username);
+    boolean existsByIdAndOwnerUsername(Long id, String username);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("update AccountNotification n set n.readAt = :readAt " +
+           "where n.id = :id and n.ownerUsername = :username and n.readAt is null")
+    int markOneUnreadAsRead(@Param("id") Long id, @Param("username") String username,
+                            @Param("readAt") LocalDateTime readAt);
     long countByOwnerUsernameAndReadAtIsNull(String username);
 
     Page<AccountNotification> findByOwnerUsername(String username, Pageable pageable);

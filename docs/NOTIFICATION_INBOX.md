@@ -29,3 +29,8 @@ No production deployment or roadmap acceptance without CI and staging UAT.
 ## Phân loại thông báo hiển thị
 - Với dữ liệu hiện có chưa có cột loại, giao diện phân loại **tạm theo tiền tố tiêu đề**: hỗ trợ/ticket, chiến dịch/đơn hàng, tài khoản/bảo mật; không khớp ghi “Khác”. Không suy đoán từ nội dung tin nhắn.
 - Không sửa nguồn phát thông báo ở W2/W3/W4 hoặc Flyway W7. Khi W7 cấp migration và các nhóm nguồn cập nhật type rõ ràng, thay cơ chế phân loại legacy này bằng loại đã xác định tại lúc tạo.
+
+## Cập nhật đọc một thông báo an toàn khi đồng thời
+- POST `/{id}/read` giờ dùng một UPDATE nguyên tử `WHERE id = ? AND owner = ? AND read_at IS NULL`; tránh việc request trùng ghi đè thời gian đọc.
+- Nếu update 0 bản ghi, kiểm tra `existsByIdAndOwnerUsername` để phân biệt lần đọc lại hợp lệ (idempotent) với ID của người khác (404). Không tiết lộ owner.
+- Xác minh trên PostgreSQL 16 trước merge; H2 test không thay thế kiểm thử concurrency nhiều kết nối.
