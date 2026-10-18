@@ -83,4 +83,19 @@ class PaymentReconciliationServiceTest {
         assertEquals(1L, result.get("approvedWithoutReceipt"));
     }
 
+    @Test
+    void reconciliationTotalsRemainNumbersWhenJdbcReturnsIntegers() {
+        JdbcTemplate jdbc = mock(JdbcTemplate.class);
+        Map<String, Object> row = new HashMap<>();
+        row.put("approved_without_receipt", 0);
+        row.put("inconsistent_receipts", 0);
+        row.put("internal_receipts", 2);
+        row.put("receipts_last_24h", 1);
+        row.put("internal_vnd_last_24h", 5000);
+        when(jdbc.queryForMap(anyString())).thenReturn(row);
+        Map<String, Object> result = new PaymentReconciliationService(jdbc).summary();
+        assertEquals(2L, result.get("internalReceipts"));
+        assertEquals(5000L, result.get("internalVndLast24Hours"));
+    }
+
 }
