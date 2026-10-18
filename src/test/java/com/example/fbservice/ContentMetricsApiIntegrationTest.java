@@ -82,6 +82,22 @@ class ContentMetricsApiIntegrationTest {
             .andExpect(status().isBadRequest());
     }
 
+    @Test @WithMockUser(username="metric-strict-counts-29")
+    void decimalOrStringMetricsMustNotBeSilentlyCoerced() throws Exception {
+        mvc.perform(post("/api/v1/content-analytics/preview").with(csrf())
+                .contentType("application/json").content(sampleJson(100,10)
+                    .replace("\"views\":100", "\"views\":100.5")))
+            .andExpect(status().isBadRequest());
+        mvc.perform(post("/api/v1/content-analytics/preview").with(csrf())
+                .contentType("application/json").content(sampleJson(100,10)
+                    .replace("\"likes\":10", "\"likes\":\"10\"")))
+            .andExpect(status().isBadRequest());
+        mvc.perform(post("/api/v1/content-analytics/preview").with(csrf())
+                .contentType("application/json").content(sampleJson(100,10)
+                    .replace("\"views\":100", "\"views\":9999999999999999999999")))
+            .andExpect(status().isBadRequest());
+    }
+
     @Test @WithMockUser(username="metric-csrf-29")
     void rejectsStateChangingPostWithoutCsrfEvenThoughNoDataIsStored() throws Exception {
         mvc.perform(post("/api/v1/content-analytics/preview")
