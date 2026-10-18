@@ -5,7 +5,7 @@ Do not mark a task complete without its exact commit, CI run and (where relevant
 | # | Acceptance criterion | Status |
 |---|---|---|
 | 1 | Resolve W2/W3/W6 migration collisions in combined tree | BLOCKED |
-| 2 | Validate stacked W3 PR #44 V20–V25 SQL equivalence | PENDING |
+| 2 | Validate stacked W3 PR #44 V20–V25 SQL equivalence | PARTIAL: original SQL inspected; #44 patches are renames, exact content/hash not verified |
 | 3 | Approve nonoverlapping versions after DB history check | BLOCKED |
 | 4 | Verify checksums of applied migrations | BLOCKED: shared history unavailable |
 | 5 | Review flyway_schema_history for each environment | BLOCKED: read-only DB access needed |
@@ -48,3 +48,7 @@ W1 authentication, W2 customer, W3 support, W4 admin, W5 AI, W6 payment, W7 data
 ## Reporting contract
 
 After every W7 code/test/commit turn, publish all 25 rows and status counts. VERIFIED means working code, relevant passing tests, successful exact-HEAD CI, and acceptance evidence; documentation or a draft PR alone never qualifies. Status legend: VERIFIED, CODED_UNVERIFIED, PARTIAL, NOT_STARTED, BLOCKED.
+
+## W3 SQL dependency audit (18 October 2026)
+
+Inspected the six additive SQL patches in PR #35: V10 index on support_messages(ticket_id,created_at,id); V11 adds support_tickets.priority and queue index; V12 adds chat_messages.read_at and unread index; V13 adds support_tickets.assignee_username and index; V14 creates support_assignment_events with FK to support_tickets(id) and ticket/timestamp index; V15 adds support owner/status/pagination index. No destructive SQL appears in these six PR #35 patches. Verify underlying table/column names in main V1–V9 and compare PR #44 resulting SQL blobs before acceptance; #44 is a rename patch, not independent evidence of unchanged checksums. FK and index creation still require PostgreSQL 16 execution.
