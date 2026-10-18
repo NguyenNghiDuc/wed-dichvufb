@@ -44,6 +44,21 @@ public class CampaignOrderService {
         return order;
     }
 
+    /**
+     * Current server-controlled quotes for enabled packages only. No customer
+     * supplied amount or order ID can affect this read-only comparison.
+     */
+    @Transactional(readOnly = true)
+    public List<CampaignQuote> quotesForCustomer(String username) {
+        if (username == null || username.isBlank())
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+        return catalog.available().stream().map(offering -> {
+            CampaignServiceType type = CampaignServiceType.valueOf(offering.getCode());
+            return new CampaignQuote(type, offering.getTitle(), offering.getPriceVnd(),
+                "VND", true);
+        }).toList();
+    }
+
     /** Provisional quote from the live enabled service catalog; never accept a client-provided amount. */
     @Transactional(readOnly = true)
     public CampaignQuote quoteForCustomer(String username, CampaignServiceType serviceType) {
