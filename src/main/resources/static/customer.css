@@ -42,3 +42,12 @@
 .customer-service-counts strong{color:#bd4d12;font-size:18px;font-variant-numeric:tabular-nums}
 @media(max-width:900px){.customer-service-counts{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:500px){.customer-service-counts{grid-template-columns:1fr}.customer-service-breakdown{padding:16px}}
+
+/* Legacy order detail — private read-only fields. */
+.legacy-detail{padding:22px;margin:22px 0}
+.legacy-detail-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin:0}
+.legacy-detail-grid div{min-width:0}
+.legacy-detail-grid .wide{grid-column:1/-1}
+.legacy-detail-grid dt{font-size:13px;font-weight:700;color:#826a5c;margin-bottom:5px}
+.legacy-detail-grid dd{margin:0;overflow-wrap:anywhere}
+@media(max-width:560px){.legacy-detail-grid{grid-template-columns:1fr}.legacy-detail{padding:16px}}

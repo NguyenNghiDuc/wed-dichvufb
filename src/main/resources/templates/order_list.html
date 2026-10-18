@@ -18,7 +18,8 @@
 <article class="card"><p class="muted">Tổng số đơn</p><p class="metric" th:text="${summary.orderCount()}">0</p></article>
 <article class="card"><p class="muted">Tổng giá trị dự kiến</p><p class="metric" th:text="|${summary.amountVnd()} đ|">0 đ</p><p class="footnote">Chưa xác nhận thanh toán hoặc giao dịch</p></article>
 </section>
-<div class="table-panel"><table class="data-table"><thead><tr><th>Mã</th><th>Dịch vụ</th><th>Link</th><th>Ghi chú</th><th>Số lượng</th><th>Tổng tiền</th></tr></thead><tbody><tr th:each="o : ${orders}"><td th:text="${o.id}"></td><td th:text="${o.serverName}"></td><td th:text="${o.linkOrder}"></td><td th:text="${o.note}"></td><td th:text="${o.quantity}"></td><td th:text="${o.totalPrice}"></td></tr><tr th:if="${#lists.isEmpty(orders)}"><td colspan="6">Chưa có đơn nào.</td></tr></tbody></table></div>
+<div class="table-panel"><table class="data-table"><thead><tr><th>Mã</th><th>Dịch vụ</th><th>Link</th><th>Ghi chú</th><th>Số lượng</th><th>Tổng tiền</th></tr></thead><tbody><tr th:each="o : ${orders}"><td><a class="table-link" th:href="@{/order/{id}(id=${o.id})}"
+           th:text="|${o.id}|">ID</a></td><td th:text="${o.serverName}"></td><td th:text="${o.linkOrder}"></td><td th:text="${o.note}"></td><td th:text="${o.quantity}"></td><td th:text="${o.totalPrice}"></td></tr><tr th:if="${#lists.isEmpty(orders)}"><td colspan="6">Chưa có đơn nào.</td></tr></tbody></table></div>
 <nav class="actions" aria-label="Phân trang đơn cũ">
 <a th:if="${hasPrevious}" class="btn btn-outline btn-small" th:href="@{/order/list(page=${pageNumber - 1},orderId=${orderId},service=${selectedService},from=${from},to=${to})}">← Trang trước</a>
 <span class="muted" th:text="|Trang ${pageNumber + 1} / ${totalPages == 0 ? 1 : totalPages}|">Trang 1</span>

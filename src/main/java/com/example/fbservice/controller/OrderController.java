@@ -41,6 +41,12 @@ public class OrderController {
         }
     }
 
+    @GetMapping("/{id}")
+    public String details(@PathVariable Long id, Principal principal, Model model) {
+        model.addAttribute("order", orders.findMineById(principal.getName(), id));
+        return "legacy_order_detail";
+    }
+
     @GetMapping("/list")
     public String list(@RequestParam(defaultValue = "0") int page,
                        @RequestParam(required = false) Long orderId,

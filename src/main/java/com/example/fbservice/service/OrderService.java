@@ -10,6 +10,8 @@ import org.springframework.data.jpa.domain.Specification;
 import jakarta.persistence.criteria.Predicate;
 import java.util.ArrayList;
 import org.springframework.data.domain.*;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class OrderService {
@@ -34,6 +36,16 @@ public class OrderService {
         return orders.save(o);
     }
     public List<Order> list(String username){return orders.findByOwnerUsernameOrderByCreatedAtDesc(username);}
+
+    /** Return the same 404 for a foreign or nonexistent order ID. */
+    public Order findMineById(String username, Long id) {
+        if (username == null || username.isBlank())
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+        if (id == null || id <= 0)
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        return orders.findByIdAndOwnerUsername(id, username)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+    }
 
     /** Customer-scoped, bounded replacement for the legacy unlimited web list. */
     public Page<Order> pageMine(String username, int page, int size) {
