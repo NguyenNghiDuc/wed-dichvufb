@@ -161,6 +161,26 @@ class AdminAttentionQueueIntegrationTest {
     }
 
     @Test
+    @WithMockUser(roles="ADMIN")
+    void newPendingQueueSeparatesRecentFromOverdueReviewOrders() throws Exception {
+        var now = LocalDateTime.now();
+        CampaignOrder recent = create("w4-recent-review", CampaignStatus.PENDING_REVIEW,
+            now.minusHours(5), now.minusHours(5));
+        CampaignOrder overdue = create("w4-overdue-review", CampaignStatus.PENDING_REVIEW,
+            now.minusHours(70), now.minusHours(70));
+        create("w4-approved-not-review", CampaignStatus.APPROVED,
+            now.minusHours(3), now.minusHours(3));
+
+        assertThat(queue.find(AdminAttentionQueueService.Queue.NEW_PENDING, 0).rows())
+            .extracting(CampaignOrder::getId).containsExactly(recent.getId());
+        assertThat(queue.find(AdminAttentionQueueService.Queue.OVERDUE_PENDING, 0).rows())
+            .extracting(CampaignOrder::getId).containsExactly(overdue.getId());
+        mvc.perform(get("/admin/attention").param("queue", "NEW_PENDING"))
+            .andExpect(status().isOk()).andExpect(model().attribute("orders", hasSize(1)))
+            .andExpect(content().string(containsString("w4-recent-review")));
+    }
+
+    @Test
     void onlyAdminCanViewPriorityQueue() throws Exception {
         mvc.perform(get("/admin/attention")).andExpect(status().is3xxRedirection());
         mvc.perform(get("/admin/attention").with(user("w4-staff").roles("STAFF")))
