@@ -61,11 +61,12 @@ public class CampaignOrderApiController {
                                         @RequestParam(required = false) Long orderId,
                                         @RequestParam(required = false) CampaignStatus status,
                                         @RequestParam(required = false) CampaignServiceType serviceType,
+                                        @RequestParam(required = false) String q,
                                         @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
                                         @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
                                         Principal principal) {
         return ResponseEntity.ok().cacheControl(CacheControl.noStore())
-            .body(service.pageMine(principal.getName(), page, size, orderId, status, serviceType, from, to));
+            .body(service.pageMine(principal.getName(), page, size, orderId, status, serviceType, from, to, q));
     }
 
     /** Paginated order progress; does not reveal internal actors or staff usernames. */
