@@ -17,6 +17,7 @@ public class AdminAttentionQueueService {
     public enum Queue {
         OVERDUE_PENDING("Chờ duyệt trên 48 giờ"),
         OVERDUE_IN_PROGRESS("Đang xử lý quá 7 ngày"),
+        RECENT_IN_PROGRESS("Đang xử lý, cập nhật trong 7 ngày"),
         READY_TO_ASSIGN("Đã duyệt, chưa phân công"),
         OVERDUE_UNASSIGNED("Đã duyệt, chưa phân công trên 24 giờ"),
         NEW_PENDING("Chờ duyệt trong 48 giờ gần đây"),
@@ -44,6 +45,7 @@ public class AdminAttentionQueueService {
             case OVERDUE_PENDING -> "c.status = :status and c.createdAt < :cutoff";
             case NEW_PENDING -> "c.status = :status and c.createdAt >= :cutoff";
             case OVERDUE_IN_PROGRESS -> "c.status = :status and c.updatedAt < :cutoff";
+            case RECENT_IN_PROGRESS -> "c.status = :status and c.updatedAt >= :cutoff";
             case READY_TO_ASSIGN -> "c.status = :status and c.assigneeUsername is null";
             case OVERDUE_UNASSIGNED -> "c.status = :status and c.assigneeUsername is null and c.updatedAt < :cutoff";
             case STALE_ASSIGNED_APPROVED -> "c.status = :status and c.assigneeUsername is not null and c.updatedAt < :cutoff";
@@ -55,7 +57,7 @@ public class AdminAttentionQueueService {
             " order by c.createdAt asc, c.id asc", CampaignOrder.class);
         CampaignStatus status = switch (queue) {
             case OVERDUE_PENDING, NEW_PENDING -> CampaignStatus.PENDING_REVIEW;
-            case OVERDUE_IN_PROGRESS -> CampaignStatus.IN_PROGRESS;
+            case OVERDUE_IN_PROGRESS, RECENT_IN_PROGRESS -> CampaignStatus.IN_PROGRESS;
             case READY_TO_ASSIGN, OVERDUE_UNASSIGNED, STALE_ASSIGNED_APPROVED -> CampaignStatus.APPROVED;
             case REJECTED -> CampaignStatus.REJECTED;
             case UNAVAILABLE_ASSIGNEE -> null;
@@ -74,6 +76,8 @@ public class AdminAttentionQueueService {
             query.setParameter("cutoff", LocalDateTime.now().minusHours(48));
         if (queue == Queue.OVERDUE_PENDING)
             query.setParameter("cutoff", LocalDateTime.now().minusHours(48));
+        if (queue == Queue.RECENT_IN_PROGRESS)
+            query.setParameter("cutoff", LocalDateTime.now().minusDays(7));
         if (queue == Queue.OVERDUE_IN_PROGRESS)
             query.setParameter("cutoff", LocalDateTime.now().minusDays(7));
         // Fetch one extra row to determine whether another page exists, without a full count.
