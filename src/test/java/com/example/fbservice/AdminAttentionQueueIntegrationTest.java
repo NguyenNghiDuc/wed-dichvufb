@@ -112,6 +112,32 @@ class AdminAttentionQueueIntegrationTest {
     }
 
     @Test
+    @WithMockUser(roles="ADMIN")
+    void staleAssignedApprovedQueueExcludesFreshUnassignedAndInProgressOrders() throws Exception {
+        var now = LocalDateTime.now();
+        CampaignOrder stale = create("w4-stale-assigned", CampaignStatus.APPROVED,
+            now.minusDays(8), now.minusDays(5));
+        stale.assignTo("w4-staff-stale");
+        orders.save(stale);
+        CampaignOrder fresh = create("w4-fresh-assigned", CampaignStatus.APPROVED,
+            now.minusDays(5), now.minusHours(1));
+        fresh.assignTo("w4-staff-fresh");
+        orders.save(fresh);
+        create("w4-old-unassigned", CampaignStatus.APPROVED,
+            now.minusDays(6), now.minusDays(5));
+        CampaignOrder running = create("w4-old-running", CampaignStatus.IN_PROGRESS,
+            now.minusDays(9), now.minusDays(8));
+        running.assignTo("w4-staff-running");
+        orders.save(running);
+
+        assertThat(queue.find(AdminAttentionQueueService.Queue.STALE_ASSIGNED_APPROVED, 0).rows())
+            .extracting(CampaignOrder::getId).containsExactly(stale.getId());
+        mvc.perform(get("/admin/attention").param("queue", "STALE_ASSIGNED_APPROVED"))
+            .andExpect(status().isOk()).andExpect(model().attribute("orders", hasSize(1)))
+            .andExpect(content().string(containsString("w4-stale-assigned")));
+    }
+
+    @Test
     void onlyAdminCanViewPriorityQueue() throws Exception {
         mvc.perform(get("/admin/attention")).andExpect(status().is3xxRedirection());
         mvc.perform(get("/admin/attention").with(user("w4-staff").roles("STAFF")))
