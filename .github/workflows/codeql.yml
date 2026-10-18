@@ -1,12 +1,17 @@
 name: CodeQL security analysis
 
 on:
+  # Feature PRs are analyzed by the pull_request event, not an extra push event.
   push:
-    branches: [main, 'feature/**']
+    branches: [main]
   pull_request:
     branches: [main, 'feature/**']
   schedule:
     - cron: '19 3 * * 1'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   actions: read
