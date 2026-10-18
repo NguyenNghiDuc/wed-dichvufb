@@ -6,7 +6,7 @@ is an enabled ADMIN in database, validates enabled STAFF/ADMIN recipients, locks
 the ticket row, and forbids duplicate or closed-ticket changes. STAFF can claim
 unassigned tickets, but cannot override someone else's claim.
 
-New PostgreSQL Flyway V14 `support_assignment_events` stores an append-only
+New PostgreSQL Flyway V24 `support_assignment_events` stores an append-only
 audit of both first claims and reassignments, including actor and old/new staff.
 Admin/staff detail shows at most the latest 50 entries, backed by an index.
 The customer receives a generic reassignment notification (no personal staff data).

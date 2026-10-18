@@ -11,7 +11,7 @@ Implemented candidates:
 - append-only assignment audit with 50-row bounded display
 - customer-to-staff reply notifications without untrusted message bodies
 - bounded rate controls using the current in-process TrafficLimiter
-- Flyway V10–V15 support/chat indexes and migrations; PostgreSQL concurrency tests
+- Flyway V20–V25 support/chat indexes and migrations; PostgreSQL concurrency tests
 
 Validate the latest HEAD Java/PostgreSQL CI and CodeQL; review the prior CodeQL
 SARIF issue #13. Run mobile/browser UAT, restore tests, real load and retry UX.

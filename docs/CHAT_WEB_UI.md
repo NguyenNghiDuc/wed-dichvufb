@@ -15,5 +15,5 @@ White-orange responsive cards and mobile messages CSS.
 Tests `ChatWebIntegrationTest` cover pagination, cross-account isolation, XSS,
 forged sender, CSRF and anonymous access.
 Tests also include `ChatConversationIndexIntegrationTest`, `ChatUnreadCountsIntegrationTest`, `ChatContactsApiIntegrationTest` and PostgreSQL query checks.
-Do not merge until Java CI, PostgreSQL/Flyway migrations V10–V15, CodeQL and
+Do not merge until Java CI, PostgreSQL/Flyway migrations V20–V25, CodeQL and
 mobile/staging UAT pass. No auth/payment/order code altered.

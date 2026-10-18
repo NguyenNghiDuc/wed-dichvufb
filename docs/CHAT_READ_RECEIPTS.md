@@ -1,7 +1,7 @@
 # Chat read receipts and reply notifications — Issue #27
 
 Existing PR #23 already provides paginated owner-scoped threads.
-This change adds a nullable `chat_messages.read_at` (Flyway V12) and index
+This change adds a nullable `chat_messages.read_at` (Flyway V22) and index
 `(receiver,sender,read_at)` without changing existing thread pagination.
 POST `/chat/thread/{other}/read` requires session + CSRF and atomically marks only
 messages addressed to the signed-in principal as read; it is idempotent.
