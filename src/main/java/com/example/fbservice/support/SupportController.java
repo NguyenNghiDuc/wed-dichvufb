@@ -60,9 +60,9 @@ public class SupportController {
     @GetMapping("/{id}/messages")
     public org.springframework.http.ResponseEntity<Page<SupportMessageEntry>> messages(
             @PathVariable Long id, @RequestParam(defaultValue = "0") int page,
-            Principal principal) {
+            @RequestParam(required = false) String q, Principal principal) {
         Page<SupportMessageEntry> result = service
-            .pageMessagesForOwner(principal.getName(), id, page)
+            .searchMessagesForOwner(principal.getName(), id, page, q)
             .map(SupportMessageEntry::from);
         return org.springframework.http.ResponseEntity.ok()
             .header(org.springframework.http.HttpHeaders.CACHE_CONTROL, "no-store")
@@ -71,11 +71,13 @@ public class SupportController {
 
     @GetMapping("/{id}")
     public String details(@PathVariable Long id, @RequestParam(defaultValue = "0") int page,
+                          @RequestParam(required = false) String q,
                           Principal principal, Model model) {
         var ticket = service.detailForOwner(principal.getName(), id);
-        var messages = service.pageMessagesForOwner(principal.getName(), id, page);
+        var messages = service.searchMessagesForOwner(principal.getName(), id, page, q);
         model.addAttribute("ticket", ticket);
         model.addAttribute("messages", messages.getContent());
+        model.addAttribute("query", q);
         model.addAttribute("messagePage", page);
         model.addAttribute("hasPrevious", messages.hasPrevious());
         model.addAttribute("hasNext", messages.hasNext());
@@ -90,7 +92,7 @@ public class SupportController {
             return "redirect:/support/" + id;
         } catch (IllegalArgumentException exception) {
             model.addAttribute("error", exception.getMessage());
-            return details(id, 0, principal, model);
+            return details(id, 0, null, principal, model);
         }
     }
 }
