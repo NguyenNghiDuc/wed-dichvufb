@@ -47,7 +47,8 @@ class SupportTicketProgressIntegrationTest {
         mvc.perform(get("/support/" + mine.getId()))
             .andExpect(status().isOk())
             .andExpect(content().string(containsString("Tiến độ xử lý")))
-            .andExpect(content().string(containsString("Thời gian từ lúc tạo")));
+            .andExpect(content().string(containsString("Thời gian từ lúc tạo")))
+            .andExpect(content().string(containsString("Chưa có phản hồi nào phù hợp")));
         mvc.perform(get("/support/" + foreign.getId() + "/progress"))
             .andExpect(status().isNotFound());
         mvc.perform(get(url).with(user("progress-other-owner")))
