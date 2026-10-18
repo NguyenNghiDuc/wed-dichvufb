@@ -84,6 +84,23 @@ and price. The new order must remain PENDING_REVIEW.
 Ordinary users cannot access admin status changes or cancel foreign orders.
 This test does not simulate real payments, which W6 owns.
 
+## Owner-only monthly dashboard, platform search and exports
+
+Customer dashboard and `GET /api/v1/campaign-orders/summary/monthly` expose
+exactly six calendar months, earliest to latest. Counts are queried with a
+mandatory `ownerUsername` constraint and half-open month boundaries. An empty
+month returns zero. Mobile/HTML shows six responsive cards; private
+`GET /campaigns/summary/monthly.csv` exports exactly six monthly count rows,
+UTF-8 and `Cache-Control: no-store`. The CSV contains no owner identifiers.
+
+Campaign list/API/CSV support `platform=FACEBOOK|INSTAGRAM|TIKTOK|YOUTUBE`
+combined with the existing exact ID, status, service, date and literal `q`
+filters, using the same SQL owner restriction. HTML pagination and export
+links preserve `platform`. Other platform values return HTTP 400.
+Tests: `CustomerCampaignMonthlyTrendIntegrationTest`,
+`CustomerCampaignPlatformFilterIntegrationTest`.
+Both are written and committed; their HEAD CI results must be verified.
+
 ## Verification / release gates
 
 H2 integration tests:
