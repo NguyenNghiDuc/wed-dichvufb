@@ -35,6 +35,18 @@ jobs:
           cache: maven
       - name: Run unit and PostgreSQL integration tests
         run: mvn -B --no-transfer-progress clean verify
+      - name: Upload JUnit and integration test reports
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: java-test-reports
+          path: |
+            target/surefire-reports/*.xml
+            target/surefire-reports/*.txt
+            target/failsafe-reports/*.xml
+            target/failsafe-reports/*.txt
+          if-no-files-found: warn
+          retention-days: 7
       - name: Publish test coverage for review
         if: always()
         uses: actions/upload-artifact@v5
@@ -64,3 +76,33 @@ jobs:
           curl -fsS http://127.0.0.1:8080/register | grep -q csrf
       - name: Validate Docker image
         run: docker build -t growlab-ci:latest .
+      - name: Smoke-test Docker runtime with production profile and PostgreSQL
+        env:
+          SPRING_PROFILES_ACTIVE: prod
+          DB_URL: jdbc:postgresql://localhost:5432/growlab_ci
+          DB_USERNAME: growlab
+          DB_PASSWORD: testpass
+        run: |
+          set -euo pipefail
+          docker rm -f growlab-w9-ci >/dev/null 2>&1 || true
+          trap 'docker logs --tail 80 growlab-w9-ci 2>/dev/null || true; docker rm -f growlab-w9-ci >/dev/null 2>&1 || true' EXIT
+          docker run -d --name growlab-w9-ci --network host \
+            -e SPRING_PROFILES_ACTIVE -e DB_URL -e DB_USERNAME -e DB_PASSWORD \
+            growlab-ci:latest
+          ready=0
+          for attempt in {1..60}; do
+            if curl --fail --silent --show-error http://127.0.0.1:8080/actuator/health |
+                grep -q '"status":"UP"'; then
+              ready=1
+              break
+            fi
+            if [ "$(docker inspect --format '{{.State.Running}}' growlab-w9-ci)" != "true" ]; then
+              break
+            fi
+            sleep 2
+          done
+          test "$ready" -eq 1 || { echo 'Docker container did not become healthy'; exit 1; }
+          curl --fail --silent --show-error http://127.0.0.1:8080/login |
+            grep -q 'csrf'
+          curl --fail --silent --show-error http://127.0.0.1:8080/ |
+            grep -q 'GrowLab'
