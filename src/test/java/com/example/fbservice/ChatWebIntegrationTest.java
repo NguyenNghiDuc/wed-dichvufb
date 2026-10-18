@@ -118,6 +118,24 @@ class ChatWebIntegrationTest {
             .andExpect(content().string(not(containsString("Đánh dấu tin này đã đọc"))));
     }
 
+    @Test @WithMockUser(username="webchat-disabled-sender")
+    void disabledContactsAreReadableAsHistoryButDoNotAcceptNewWebMessages() throws Exception {
+        User target = createUser("webchat-disabled-target", "USER");
+        target.setEnabled(false);
+        users.saveAndFlush(target);
+        // Existing history remains accessible to the actual participant.
+        chat.saveMessage(new ChatMessage("webchat-disabled-target",
+                "webchat-disabled-sender", "Historical message"));
+        mvc.perform(get("/chat/ui/webchat-disabled-target"))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString("Historical message")));
+        mvc.perform(post("/chat/ui/webchat-disabled-target/send").with(csrf())
+                .param("content", "Should be rejected"))
+            .andExpect(status().isNotFound());
+        assertThat(chat.threadFor("webchat-disabled-sender",
+                "webchat-disabled-target", 0, 20).getTotalElements()).isEqualTo(1);
+    }
+
     @Test void anonymousMayNotReadOrSendChat() throws Exception {
         mvc.perform(get("/chat/ui")).andExpect(status().is3xxRedirection());
         mvc.perform(post("/chat/ui/anyuser/send").with(csrf()).param("content","hello"))
