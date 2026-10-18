@@ -5,7 +5,6 @@ import com.example.fbservice.notification.AccountNotification;
 import com.example.fbservice.notification.AccountNotificationRepository;
 import com.example.fbservice.repository.DepositRequestRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.core.JsonParser;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -86,15 +85,13 @@ public class PaymentWebhookService {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
-        PaymentWebhookEvent event;
-        // Fail closed for duplicate JSON field names and trailing JSON documents.
-        // Never allow a producer and receiver to interpret the same signed
-        // payload as different payment references.
+        // Parse the signed body ONCE and enforce four exact JSON types.
+        // Jackson's default scalar coercions must not turn "50000", 50000.9,
+        // or an out-of-range integer into a valid settlement amount.
+        com.fasterxml.jackson.databind.JsonNode payload;
         try (JsonParser parser = json.getFactory().createParser(body)) {
             parser.enable(JsonParser.Feature.STRICT_DUPLICATE_DETECTION);
-            event = json.readerFor(PaymentWebhookEvent.class)
-                    .with(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
-                    .readValue(parser);
+            payload = json.readTree(parser);
             if (parser.nextToken() != null) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Trailing payment data");
             }
@@ -103,6 +100,20 @@ public class PaymentWebhookService {
         } catch (Exception ex) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid payment event");
         }
+        if (payload == null || !payload.isObject() || payload.size() != 4
+                || !payload.path("eventId").isTextual()
+                || !payload.path("status").isTextual()
+                || !payload.path("depositRequestId").isIntegralNumber()
+                || !payload.path("depositRequestId").canConvertToLong()
+                || !payload.path("amountVnd").isIntegralNumber()
+                || !payload.path("amountVnd").canConvertToLong()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid payment fields");
+        }
+        PaymentWebhookEvent event = new PaymentWebhookEvent(
+                payload.get("eventId").textValue(),
+                payload.get("depositRequestId").longValue(),
+                payload.get("amountVnd").longValue(),
+                payload.get("status").textValue());
         if (event == null || event.eventId() == null
                 || !event.eventId().matches("[a-zA-Z0-9_-]{8,100}")
                 || event.depositRequestId() == null || event.depositRequestId() < 1
