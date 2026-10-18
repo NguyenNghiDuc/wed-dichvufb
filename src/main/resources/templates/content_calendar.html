@@ -21,6 +21,7 @@
     <div class="field"><label for="title">Tiêu đề</label><input id="title" name="title" maxlength="120" required aria-describedby="title-count"><small id="title-count" aria-live="polite">0 / 120 ký tự</small></div>
     <div class="field"><label for="body">Nội dung</label><textarea id="body" name="body" maxlength="3000" required aria-describedby="body-count"></textarea><small id="body-count" aria-live="polite">0 / 3000 ký tự</small><small id="body-stats" aria-live="polite">0 từ · 0 hashtag</small></div>
     <div class="field"><label for="schedule">Giờ dự kiến (UTC, không bắt buộc)</label><input id="schedule" type="datetime-local" name="scheduledAtUtc"><small>Để trống để lưu bản nháp; không tự đăng bài.</small></div>
+    <div class="form-panel" aria-label="Xem trước bài viết"><h3>Xem trước bản nháp</h3><p class="muted">Chỉ xem trên trình duyệt; không tự lưu hoặc đăng.</p><strong id="preview-title">Chưa có tiêu đề</strong><p id="preview-body" style="white-space:pre-wrap;overflow-wrap:anywhere">Chưa có nội dung</p></div>
     <button class="btn" type="submit" id="save-draft">Lưu nội dung</button>
   </form>
 </div>
@@ -55,6 +56,20 @@
 </section>
 </main>
 <script>
+  // Preview uses textContent, never innerHTML.
+  const previewTitle = document.getElementById('preview-title');
+  const previewBody = document.getElementById('preview-body');
+  const draftTitle = document.getElementById('title');
+  const draftBody = document.getElementById('body');
+  if (previewTitle && previewBody && draftTitle && draftBody) {
+    const updatePreview = () => {
+      previewTitle.textContent = draftTitle.value || 'Chưa có tiêu đề';
+      previewBody.textContent = draftBody.value || 'Chưa có nội dung';
+    };
+    draftTitle.addEventListener('input', updatePreview);
+    draftBody.addEventListener('input', updatePreview);
+    updatePreview();
+  }
   // Counters use textContent only; never render user input as HTML.
   const createForm = document.getElementById("save-draft")?.form;
   if (createForm) {
