@@ -26,11 +26,19 @@ public class CustomerReviewsController {
         model.addAttribute("selectedRating", rating);
         model.addAttribute("query", q);
         model.addAttribute("reviews", result.getContent());
+        model.addAttribute("reviewSummary", reviews.summaryForOwner(principal.getName()));
         model.addAttribute("pageNumber", page);
         model.addAttribute("totalPages", result.getTotalPages());
         model.addAttribute("hasPrevious", result.hasPrevious());
         model.addAttribute("hasNext", result.hasNext());
         return "customer_reviews";
+    }
+
+    @GetMapping("/api/v1/customer/reviews/summary")
+    @ResponseBody
+    public ResponseEntity<CustomerReviewSummary> summary(Principal principal) {
+        return ResponseEntity.ok().cacheControl(CacheControl.noStore())
+            .body(reviews.summaryForOwner(principal.getName()));
     }
 
     @GetMapping("/api/v1/customer/reviews")

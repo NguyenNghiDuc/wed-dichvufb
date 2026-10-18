@@ -21,6 +21,27 @@ public class CampaignReviewService {
         this.reviews = reviews;
     }
 
+    /** Single grouped SQL read; never includes feedback text or other owners. */
+    @Transactional(readOnly = true)
+    public CustomerReviewSummary summaryForOwner(String username) {
+        if (username == null || username.isBlank())
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+        long[] stars = new long[6];
+        long total = 0;
+        long weighted = 0;
+        for (CampaignReviewRepository.OwnerRatingCount row : reviews.groupedRatingsForOwner(username)) {
+            int rating = row.getRating();
+            if (rating < 1 || rating > 5)
+                throw new IllegalStateException("Unexpected rating outside 1..5");
+            stars[rating] = row.getTotal();
+            total += row.getTotal();
+            weighted += rating * row.getTotal();
+        }
+        double average = total == 0 ? 0.0 : Math.round(weighted * 100.0 / total) / 100.0;
+        return new CustomerReviewSummary(total, average, stars[1], stars[2],
+                                          stars[3], stars[4], stars[5]);
+    }
+
     @Transactional(readOnly = true)
     public Optional<CampaignReviewView> findForOwner(String username, Long campaignId) {
         verifyOwner(username, campaignId);
