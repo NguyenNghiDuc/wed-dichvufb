@@ -20,7 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Service
 public class AdminActivityService {
-    public enum Area { ALL, ACCOUNTS, CATALOG, ASSIGNMENTS, ORDER_STATUS }
+    public enum Area { ALL, ACCOUNTS, CATALOG, ASSIGNMENTS, ORDER_STATUS, STAFF_STATUS }
 
     public record Entry(Area area, String actor, String target, String details,
                         LocalDateTime createdAt, long sourceId) {}
@@ -73,12 +73,22 @@ public class AdminActivityService {
         }
         if (area == Area.ALL || area == Area.ORDER_STATUS) {
             // Customer-initiated and staff-initiated campaign events are not Admin actions.
-            readAdminStatusSource(exactActor).forEach(e ->
+            readOrderStatusSource(exactActor, "Quản trị viên cập nhật trạng thái").forEach(e ->
                     entries.add(new Entry(Area.ORDER_STATUS, e.getActor(),
                         "Chiến dịch #" + e.getCampaignId(),
                         "Trạng thái: " + (e.getOldStatus() == null ? "—" : e.getOldStatus().name()) +
                             " → " + e.getNewStatus().name(),
                         e.getCreatedAt(), e.getId())));
+        }
+        if (area == Area.ALL || area == Area.STAFF_STATUS) {
+            // STAFF actions are recorded by the existing assignment/progress service.
+            // Do not conflate customer-request events with staff audit actions.
+            readOrderStatusSource(exactActor, "Nhân viên phụ trách cập nhật tiến độ").forEach(e ->
+                entries.add(new Entry(Area.STAFF_STATUS, e.getActor(),
+                    "Chiến dịch #" + e.getCampaignId(),
+                    "Tiến độ: " + (e.getOldStatus() == null ? "—" : e.getOldStatus().name()) +
+                        " → " + e.getNewStatus().name(),
+                    e.getCreatedAt(), e.getId())));
         }
         return entries.stream()
             .sorted(Comparator.comparing(Entry::createdAt).reversed()
@@ -96,13 +106,13 @@ public class AdminActivityService {
         return typed.setMaxResults(LIMIT_PER_SOURCE).getResultList();
     }
 
-    private List<CampaignEvent> readAdminStatusSource(String actor) {
+    private List<CampaignEvent> readOrderStatusSource(String actor, String description) {
         String query = "select e from CampaignEvent e " +
             "where e.description = :adminDescription" +
             (actor == null ? "" : " and e.actor = :actor") +
             " order by e.createdAt desc, e.id desc";
         TypedQuery<CampaignEvent> typed = entityManager.createQuery(query, CampaignEvent.class)
-            .setParameter("adminDescription", "Quản trị viên cập nhật trạng thái");
+            .setParameter("adminDescription", description);
         if (actor != null) typed.setParameter("actor", actor);
         return typed.setMaxResults(LIMIT_PER_SOURCE).getResultList();
     }
