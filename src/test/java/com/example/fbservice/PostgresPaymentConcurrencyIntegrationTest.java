@@ -172,6 +172,47 @@ class PostgresPaymentConcurrencyIntegrationTest {
                 .hasSize(beforeNotifications + 1);
     }
 
+    @Test
+    void boundedParallelDistinctSettlementsLeaveNoLostReceipts() throws Exception {
+        // This is a deterministic concurrency smoke test on PostgreSQL,
+        // not a production-sized throughput or latency benchmark.
+        int events = 32;
+        int workers = 8;
+        java.util.List<DepositRequest> testDeposits = new java.util.ArrayList<>();
+        for (int i = 0; i < events; i++) {
+            testDeposits.add(createDeposit("pg-batch-owner-" + i));
+        }
+        long beforeReceipts = receipts.count();
+        long beforeNotifications = notifications.count();
+        ExecutorService pool = Executors.newFixedThreadPool(workers);
+        CountDownLatch start = new CountDownLatch(1);
+        java.util.List<Future<Integer>> responses = new java.util.ArrayList<>();
+        try {
+            for (int i = 0; i < events; i++) {
+                final int index = i;
+                responses.add(pool.submit(() -> {
+                    start.await();
+                    return send("pgBatchEvent" + index + "Unique2026",
+                            testDeposits.get(index).getId());
+                }));
+            }
+            start.countDown();
+            for (Future<Integer> future : responses) {
+                assertThat(future.get(45, TimeUnit.SECONDS)).isEqualTo(200);
+            }
+        } finally {
+            start.countDown();
+            pool.shutdownNow();
+        }
+        assertThat(receipts.count()).isEqualTo(beforeReceipts + events);
+        assertThat(notifications.count()).isEqualTo(beforeNotifications + events);
+        for (int i = 0; i < events; i++) {
+            assertThat(receipts.findByEventId("pgBatchEvent" + i + "Unique2026")).isPresent();
+            assertThat(deposits.findById(testDeposits.get(i).getId())
+                    .orElseThrow().getStatus()).isEqualTo("APPROVED");
+        }
+    }
+
     @FunctionalInterface
     private interface Call { int invoke() throws Exception; }
 
