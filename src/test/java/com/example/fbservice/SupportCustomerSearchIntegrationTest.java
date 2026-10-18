@@ -37,6 +37,10 @@ class SupportCustomerSearchIntegrationTest {
             .andExpect(status().isOk())
             .andExpect(model().attribute("tickets",hasSize(1)))
             .andExpect(content().string(containsString("ticket-owner_beta")));
+        mvc.perform(get("/admin/support").param("customer","<img src=x onerror=alert(1)>"))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString("&lt;img")))
+            .andExpect(content().string(not(containsString("<img src=x onerror=alert(1)>"))));
         mvc.perform(get("/admin/support").param("customer","x".repeat(81)))
             .andExpect(status().isBadRequest());
         mvc.perform(get("/admin/support").with(user("search-ordinary-customer"))
