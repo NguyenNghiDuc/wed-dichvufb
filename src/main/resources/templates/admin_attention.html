@@ -15,7 +15,10 @@ aria-label="Chọn hàng đợi"><div class="admin-filter-field">
 <option th:each="q : ${queues}" th:value="${q.name()}" th:text="${q.label}" th:selected="${q == queue}"></option>
 </select></div><div class="admin-filter-actions"><button class="btn btn-small" type="submit">Xem hàng đợi</button></div></form>
 <div class="admin-table-heading"><strong th:text="${queue.label}">Các đơn cần rà soát</strong>
-<span>20 đơn / trang · cũ nhất trước</span></div>
+<div class="admin-row-actions"><span>20 đơn / trang · cũ nhất trước</span>
+<a class="btn btn-outline btn-small"
+   th:href="@{/admin/attention/export.csv(queue=${queue.name()},page=${pageNumber})}">↓ Xuất CSV trang này</a>
+</div></div>
 <div class="table-panel admin-table-scroll"><table class="data-table admin-table">
 <thead><tr><th>Mã</th><th>Khách hàng</th><th>Dịch vụ</th><th>Ngày tạo</th><th>Cập nhật cuối</th><th>Phụ trách</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
 <tbody><tr th:each="o : ${orders}"><td class="admin-id" th:text="|#${o.id}|"></td>
