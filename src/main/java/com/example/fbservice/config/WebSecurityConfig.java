@@ -1,6 +1,7 @@
 package com.example.fbservice.config;
 
 import com.example.fbservice.repository.UserRepository;
+import jakarta.servlet.DispatcherType;
 import org.springframework.context.annotation.*;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -19,6 +20,8 @@ public class WebSecurityConfig {
                 // Restrict it to POST; all other state-changing methods remain protected.
                 new AntPathRequestMatcher("/api/v1/payments/webhooks/internal", "POST")))
             .authorizeHttpRequests(auth -> auth
+                .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
+                .requestMatchers("/dich-vu/**").permitAll()
                 .requestMatchers("/", "/login", "/register", "/help", "/style.css", "/landing.js", "/favicon.ico",
                     "/actuator/health", "/actuator/health/**").permitAll()
                 .requestMatchers("/api/v1/payments/webhooks/internal").permitAll()
