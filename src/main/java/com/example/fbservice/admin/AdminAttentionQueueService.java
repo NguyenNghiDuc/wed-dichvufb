@@ -18,6 +18,7 @@ public class AdminAttentionQueueService {
         OVERDUE_PENDING("Chờ duyệt trên 48 giờ"),
         OVERDUE_IN_PROGRESS("Đang xử lý quá 7 ngày"),
         READY_TO_ASSIGN("Đã duyệt, chưa phân công"),
+        STALE_ASSIGNED_APPROVED("Đã phân công, chưa triển khai trên 72 giờ"),
         REJECTED("Đã từ chối"),
         UNAVAILABLE_ASSIGNEE("Phân công cho nhân viên không khả dụng");
         private final String label;
@@ -41,6 +42,7 @@ public class AdminAttentionQueueService {
             case OVERDUE_PENDING -> "c.status = :status and c.createdAt < :cutoff";
             case OVERDUE_IN_PROGRESS -> "c.status = :status and c.updatedAt < :cutoff";
             case READY_TO_ASSIGN -> "c.status = :status and c.assigneeUsername is null";
+            case STALE_ASSIGNED_APPROVED -> "c.status = :status and c.assigneeUsername is not null and c.updatedAt < :cutoff";
             case REJECTED -> "c.status = :status";
             case UNAVAILABLE_ASSIGNEE -> "c.status in :active and c.assigneeUsername is not null and not exists (select u.id from User u where u.username = c.assigneeUsername and u.enabled = true and u.role in :eligibleRoles)";
         };
@@ -50,7 +52,7 @@ public class AdminAttentionQueueService {
         CampaignStatus status = switch (queue) {
             case OVERDUE_PENDING -> CampaignStatus.PENDING_REVIEW;
             case OVERDUE_IN_PROGRESS -> CampaignStatus.IN_PROGRESS;
-            case READY_TO_ASSIGN -> CampaignStatus.APPROVED;
+            case READY_TO_ASSIGN, STALE_ASSIGNED_APPROVED -> CampaignStatus.APPROVED;
             case REJECTED -> CampaignStatus.REJECTED;
             case UNAVAILABLE_ASSIGNEE -> null;
         };
@@ -60,6 +62,8 @@ public class AdminAttentionQueueService {
         } else {
             query.setParameter("status", status);
         }
+        if (queue == Queue.STALE_ASSIGNED_APPROVED)
+            query.setParameter("cutoff", LocalDateTime.now().minusHours(72));
         if (queue == Queue.OVERDUE_PENDING)
             query.setParameter("cutoff", LocalDateTime.now().minusHours(48));
         if (queue == Queue.OVERDUE_IN_PROGRESS)
