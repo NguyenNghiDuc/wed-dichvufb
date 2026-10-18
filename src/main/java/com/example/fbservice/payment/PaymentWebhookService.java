@@ -18,7 +18,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.server.ResponseStatusException;
 
 @Service
@@ -29,15 +30,18 @@ public class PaymentWebhookService {
     private final PaymentReceiptRepository receipts;
     private final AccountNotificationRepository notifications;
     private final ObjectMapper json;
+    private final TransactionTemplate transactions;
 
     public PaymentWebhookService(@Value("${growth.payments.webhook-secret:}") String secret,
             DepositRequestRepository deposits, PaymentReceiptRepository receipts,
-            AccountNotificationRepository notifications, ObjectMapper json) {
+            AccountNotificationRepository notifications, ObjectMapper json,
+            PlatformTransactionManager transactionManager) {
         this.secret = secret;
         this.deposits = deposits;
         this.receipts = receipts;
         this.notifications = notifications;
         this.json = json;
+        this.transactions = new TransactionTemplate(transactionManager);
     }
 
     /**
@@ -45,7 +49,6 @@ public class PaymentWebhookService {
      * Sign the exact wire bytes: HMAC_SHA256(secret, ascii(epochSeconds) + "." + rawBody).
      * Verify before JSON decoding and before any database mutation.
      */
-    @Transactional
     public Map<String, Object> accept(byte[] body, String providedSignature, String timestamp) {
         if (secret == null || secret.getBytes(StandardCharsets.UTF_8).length < 32) {
             throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Webhook not configured");
@@ -109,6 +112,11 @@ public class PaymentWebhookService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid settlement event");
         }
 
+        // Bad signatures and malformed events never acquire a database transaction.
+        return transactions.execute(status -> settle(event));
+    }
+
+    private Map<String, Object> settle(PaymentWebhookEvent event) {
         // Lock the deposit first, so concurrent callbacks for one deposit are serialized.
         DepositRequest deposit = deposits.findLockedById(event.depositRequestId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
