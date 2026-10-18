@@ -49,8 +49,10 @@ class AdminAttentionQueueCsvIntegrationTest {
             .andReturn().getResponse();
         String csv=new String(result.getContentAsByteArray(),StandardCharsets.UTF_8);
         assertThat(csv).startsWith("\uFEFFcampaign_id,status,service_type,created_at");
-        assertThat(csv).contains(old.getId().toString())
-            .doesNotContain("queue-export-old","queue-export-recent",recent.getId().toString())
+        // Match CSV row boundaries: a bare numeric ID can occur in a timestamp.
+        assertThat(csv).contains("\r\n"+old.getId()+",")
+            .doesNotContain("\r\n"+recent.getId()+",")
+            .doesNotContain("queue-export-old","queue-export-recent")
             .doesNotContain("youtube.com","@legalchannel");
         assertThat(csv.split("\r\n")).hasSize(2);
         mvc.perform(get("/admin/attention").param("queue","OVERDUE_PENDING"))
