@@ -47,10 +47,18 @@ class CustomerOrderFormRegressionTest {
         CampaignOrder item=orders.create("order-form-cancel",new CampaignOrderRequest(
             SocialPlatform.YOUTUBE,CampaignServiceType.CONTENT_PLAN,
             "https://youtube.com/@good", "Chiến dịch phát triển nội dung thực tế"));
+        mvc.perform(get("/campaigns/" + item.getId()))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString("Hủy yêu cầu trước khi duyệt")));
+
         mvc.perform(post("/campaigns/" + item.getId() + "/cancel").with(csrf()))
             .andExpect(status().is3xxRedirection())
             .andExpect(redirectedUrl("/campaigns"))
             .andExpect(flash().attributeExists("notice"));
+        mvc.perform(get("/campaigns/" + item.getId()))
+            .andExpect(status().isOk())
+            .andExpect(content().string(not(containsString("Hủy yêu cầu trước khi duyệt"))));
+
         mvc.perform(post("/campaigns/" + item.getId() + "/cancel").with(csrf()))
             .andExpect(status().is3xxRedirection())
             .andExpect(flash().attributeExists("error"));
