@@ -17,3 +17,11 @@
  .support-filters .btn{width:100%}
  .chat-bubble{width:100%}
 }
+
+/* Compact, keyboard-accessible, SQL-backed ticket state counters. */
+.support-status-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:18px 0}
+.support-status-summary a{padding:14px 18px;display:flex;flex-direction:column;gap:4px;border:1px solid #f1d6be;border-radius:14px;background:#fff;min-width:0}
+.support-status-summary strong{font-size:1.6rem;color:#bf4b0d;font-variant-numeric:tabular-nums}
+.support-status-summary span{color:#575757;font-size:.91rem}
+.support-status-summary a:focus-visible{outline:3px solid #f26922;outline-offset:2px}
+@media(max-width:540px){.support-status-summary{gap:6px}.support-status-summary a{padding:12px 9px}.support-status-summary strong{font-size:1.3rem}.support-status-summary span{font-size:.78rem}}
