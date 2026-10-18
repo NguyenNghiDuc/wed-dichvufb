@@ -19,3 +19,9 @@ No production deployment or roadmap acceptance without CI and staging UAT.
 - Truy vấn Criteria có tham số, kèm ràng buộc owner trước, hỗ trợ kết hợp `days`, `unreadOnly` và phân trang 20 mục. Ký tự LIKE `%`, `_` và `!` được escape thành literal, không biến thành wildcard.
 - Không dùng trực tiếp q để ghép SQL, ORDER BY hay redirect URL. Đường dẫn bộ lọc và phân trang giữ q bằng Thymeleaf URI encoding.
 - Đây là tìm kiếm chuỗi trên dữ liệu của một chủ tài khoản; trước tải lớn cần đánh giá hiệu năng với PostgreSQL thực và cân nhắc full-text indexes theo kế hoạch W7.
+
+## Trang chi tiết và giữ trạng thái bộ lọc
+- `GET /notifications/{id}` chỉ tải `id + principal.username`; tài khoản khác nhận 404, anonymous phải đăng nhập.
+- Trang chi tiết dùng Thymeleaf `th:text` cho mọi nội dung không tin cậy; không render HTML người dùng, trang có `Cache-Control: no-store`.
+- Form đánh dấu một thông báo hoặc tất cả đều yêu cầu CSRF, giữ `page`, `days`, `unreadOnly`, `q` qua tham số được validate; unread-only sau read-all về trang đầu để không rơi vào trang rỗng.
+- Đánh dấu đọc là idempotent, giữ nguyên thời gian đọc cũ. Không nhận chủ tài khoản từ client.

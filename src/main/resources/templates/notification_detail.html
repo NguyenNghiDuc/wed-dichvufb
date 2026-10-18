@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Chi tiết thông báo · GrowLab</title><link rel="stylesheet" th:href="@{/style.css}"></head>
+<body><main class="page container">
+<a class="table-link" th:href="@{/notifications(page=${pageNumber},unreadOnly=${unreadOnly},days=${days},q=${q})}">← Quay lại hộp thư</a>
+<section class="form-panel">
+<div class="eyebrow">Hộp thư cá nhân</div><h1 th:text="${item.title}">Thông báo</h1>
+<p class="muted" th:text="${#temporals.format(item.createdAt,'dd/MM/yyyy HH:mm')}">Ngày</p>
+<p th:text="${item.message}" style="white-space:pre-wrap;overflow-wrap:anywhere">Nội dung</p>
+<p class="status" th:if="${item.readAt != null}" th:text="|Đã đọc: ${#temporals.format(item.readAt,'dd/MM/yyyy HH:mm')}|">Đã đọc</p>
+<form method="post" th:if="${item.readAt == null}" th:action="@{/notifications/{id}/read(id=${item.id})}">
+  <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+  <input type="hidden" name="page" th:value="${pageNumber}">
+  <input type="hidden" name="unreadOnly" th:value="${unreadOnly}">
+  <input type="hidden" name="days" th:value="${days}">
+  <input type="hidden" name="q" th:value="${q}">
+  <button type="submit" class="btn">Đánh dấu đã đọc</button>
+</form>
+</section></main></body></html>

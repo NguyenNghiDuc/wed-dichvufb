@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -74,20 +75,70 @@ public class NotificationController {
         return "notifications";
     }
 
+    @GetMapping("/{id}")
+    @Transactional(readOnly = true)
+    public String detail(@PathVariable Long id,
+                         @RequestParam(defaultValue = "0") int page,
+                         @RequestParam(defaultValue = "false") boolean unreadOnly,
+                         @RequestParam(defaultValue = "0") int days,
+                         @RequestParam(defaultValue = "") String q,
+                         Principal principal, Model model, HttpServletResponse response) {
+        validateFilters(page, days);
+        String term = search.validate(q);
+        var item = notifications.findByIdAndOwnerUsername(id, principal.getName())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        response.setHeader("Cache-Control", "no-store");
+        model.addAttribute("item", item);
+        model.addAttribute("pageNumber", page);
+        model.addAttribute("unreadOnly", unreadOnly);
+        model.addAttribute("days", days);
+        model.addAttribute("q", term);
+        return "notification_detail";
+    }
+
+    /** Requires the existing CSRF token and checks ownership on every mutation. */
     @PostMapping("/{id}/read")
     @Transactional
-    public String markRead(@PathVariable Long id, Principal principal) {
+    public String markRead(@PathVariable Long id,
+                           @RequestParam(defaultValue = "0") int page,
+                           @RequestParam(defaultValue = "false") boolean unreadOnly,
+                           @RequestParam(defaultValue = "0") int days,
+                           @RequestParam(defaultValue = "") String q,
+                           Principal principal, RedirectAttributes redirect) {
+        validateFilters(page, days);
+        String term = search.validate(q);
         var notification = notifications.findByIdAndOwnerUsername(id, principal.getName())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         notification.markRead();
-        return "redirect:/notifications";
+        return listRedirect(redirect, page, unreadOnly, days, term);
     }
 
     /** Idempotent; only the logged-in customer's unread rows are changed. */
     @PostMapping("/read-all")
     @Transactional
-    public String markAllRead(Principal principal) {
+    public String markAllRead(@RequestParam(defaultValue = "0") int page,
+                              @RequestParam(defaultValue = "false") boolean unreadOnly,
+                              @RequestParam(defaultValue = "0") int days,
+                              @RequestParam(defaultValue = "") String q,
+                              Principal principal, RedirectAttributes redirect) {
+        validateFilters(page, days);
+        String term = search.validate(q);
         notifications.markAllUnreadAsRead(principal.getName(), LocalDateTime.now());
+        // After marking all as read an unread-only page may be empty: send page 0.
+        return listRedirect(redirect, unreadOnly ? 0 : page, unreadOnly, days, term);
+    }
+
+    private String listRedirect(RedirectAttributes redirect, int page, boolean unreadOnly,
+                                int days, String term) {
+        redirect.addAttribute("page", page);
+        redirect.addAttribute("unreadOnly", unreadOnly);
+        redirect.addAttribute("days", days);
+        if (!term.isEmpty()) redirect.addAttribute("q", term);
         return "redirect:/notifications";
+    }
+
+    private void validateFilters(int page, int days) {
+        if (page < 0 || page > 10000 || (days != 0 && days != 7 && days != 30 && days != 90))
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid notification filters");
     }
 }
