@@ -64,3 +64,8 @@ bash scripts/ops/smoke.sh --tls
 - Operator runs manual staging HTTPS and restart/rollback rehearsal on disposable data, inspects log privacy, provides incident contact and RPO/RTO evidence.
 - Owners/reviewers approve database/migration compatibility, actual secrets system, offsite encryption, retention, monitoring and rollback.
 - Only then may statuses be changed from **implemented** to **accepted** and PR #49 be considered for merge. No automatic production action follows a green check.
+
+
+## Additional automated privacy and monitoring checks
+
+The same offline W10 gate runs `test_preflight.sh`, `test_smoke.sh`, `test_monitor.sh`, `test_secret_guard.sh` and `secret_guard.sh`. They exercise synthetic healthy/unhealthy services, invalid DNS/secrets, old or tampered backups, and credential markers in a disposable Git index without contacting any real endpoint. Passing these checks is **not** evidence of a successful Docker restoration or staging TLS handover.
