@@ -1,6 +1,8 @@
 package com.example.fbservice;
 
 import com.example.fbservice.service.ChatService;
+import com.example.fbservice.model.User;
+import com.example.fbservice.repository.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -23,6 +25,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         "spring.datasource.url=jdbc:h2:mem:w3chatdboutage;DB_CLOSE_DELAY=-1")
 class ChatUiDataErrorIntegrationTest {
     @Autowired MockMvc mvc;
+    @Autowired UserRepository users;
     @MockBean ChatService chats;
 
     @Test
@@ -40,6 +43,28 @@ class ChatUiDataErrorIntegrationTest {
             .andExpect(content().string(containsString("Thử lại")))
             .andExpect(content().string(not(containsString(sensitive))))
             .andExpect(content().string(not(containsString("private-chat-viewer"))));
+    }
+
+    @Test
+    @WithMockUser(username = "private-chat-viewer")
+    void privateThreadFailureAlsoShowsRedacted503InsteadOfAStackTrace() throws Exception {
+        User recipient = new User();
+        recipient.setUsername("private-chat-contact");
+        recipient.setRole("STAFF");
+        recipient.setEnabled(true);
+        recipient.setPassword("$2a$10$testOnlyHashNoCredentials");
+        users.saveAndFlush(recipient);
+        String privateDetails = "jdbc:postgresql://private-host/secret-database";
+        when(chats.threadFor("private-chat-viewer", "private-chat-contact", 0, 20))
+                .thenThrow(new DataAccessResourceFailureException(privateDetails));
+
+        mvc.perform(get("/chat/ui/private-chat-contact"))
+            .andExpect(status().isServiceUnavailable())
+            .andExpect(view().name("chat_error"))
+            .andExpect(header().string("Cache-Control", containsString("no-store")))
+            .andExpect(content().string(containsString("Trung tâm hỗ trợ")))
+            .andExpect(content().string(not(containsString(privateDetails))))
+            .andExpect(content().string(not(containsString("private-chat-contact"))));
     }
 
     @Test
