@@ -49,6 +49,13 @@ public class CampaignOrderApiController {
             .body(service.summaryForOwner(principal.getName()));
     }
 
+    /** Last six months, ordered oldest to newest; no arbitrary owner input. */
+    @GetMapping("/summary/monthly")
+    public ResponseEntity<List<CampaignMonthlyCount>> monthly(Principal principal) {
+        return ResponseEntity.ok().cacheControl(CacheControl.noStore())
+            .body(service.monthlyCountsForOwner(principal.getName()));
+    }
+
     @GetMapping("/summary/services")
     public ResponseEntity<List<CampaignServiceCount>> services(Principal principal) {
         return ResponseEntity.ok().cacheControl(CacheControl.noStore())
