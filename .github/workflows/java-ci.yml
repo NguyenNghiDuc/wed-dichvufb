@@ -24,6 +24,10 @@ jobs:
           --health-retries 10
     steps:
       - uses: actions/checkout@v5
+      - name: Verify Flyway version-guard tests
+        run: python3 -m unittest discover -s scripts -p 'test_flyway_collision_check.py' -v
+      - name: Reject colliding Flyway migrations
+        run: python3 scripts/flyway_collision_check.py
       - uses: actions/setup-java@v5
         with:
           distribution: temurin
