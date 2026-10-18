@@ -10,6 +10,8 @@ command -v od >/dev/null || { echo 'od required to create a random test password
 }
 export RESTORE_TEST_PASSWORD
 RESTORE_TEST_PASSWORD="$(od -An -N24 -tx1 /dev/urandom | tr -d ' \n')"
+# Compose parses the base db service too; use only synthetic secrets for this run.
+export POSTGRES_PASSWORD="$RESTORE_TEST_PASSWORD"
 scratch="$(mktemp -d)"
 compose=(docker compose -f compose.yaml -f compose.recovery.yaml --profile recovery)
 cleanup() {
