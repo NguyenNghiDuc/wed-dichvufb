@@ -38,6 +38,16 @@ GROUP BY deposit_request_id HAVING COUNT(*) > 1;
 
 Do not claim financial revenue from internal settlement events. Real VNPay requires its own sandbox credential, provider-specific checksum/response semantics, merchant-order mapping, webhook acknowledgement/retries and reconciliation against signed provider records, plus owner approval.
 
+## Rolling 24-hour internal receipt metrics
+
+The ADMIN-only reconciliation response now includes `receiptsLast24Hours` and
+`internalVndLast24Hours`, calculated in the **same SQL statement** as the
+integrity counts using `created_at >= CURRENT_TIMESTAMP - INTERVAL '1 day'`.
+The window is rolling, not a calendar-day report. Amounts reflect signed
+**internal sandbox events only**, not bank deposits, revenue or customer
+wallet balances. The response contains aggregates only; it never includes
+account identifiers, raw event IDs, secrets or payment signatures.
+
 ## Protected integrity endpoint (read only)
 
 `GET /api/v1/admin/payments/reconciliation` is restricted by the existing
