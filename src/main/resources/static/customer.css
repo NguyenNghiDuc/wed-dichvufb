@@ -28,3 +28,8 @@
 .customer-legacy-search{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:14px 0 22px}
 .customer-legacy-search input{min-height:42px;min-width:0;max-width:240px;padding:8px 12px;border:1px solid #ead8c9;border-radius:10px;background:white}
 @media(max-width:500px){.customer-legacy-search input{max-width:100%;flex:1 1 100%}.customer-legacy-search .btn{flex:1 1 auto}}
+
+/* Six-column legacy table is horizontally scrollable without crushing mobile text. */
+.legacy-customer-page .table-panel{max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.legacy-customer-page .data-table{min-width:710px}
+.legacy-customer-page .data-table td{overflow-wrap:anywhere}
