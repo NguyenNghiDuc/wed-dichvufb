@@ -85,9 +85,10 @@ public class CampaignOrderApiController {
     }
 
     @PostMapping("/{id}/cancel")
-    public ResponseEntity<CampaignOrder> cancel(@PathVariable Long id, Principal principal) {
+    public ResponseEntity<CampaignOrder> cancel(@PathVariable Long id,
+            @RequestParam(required = false) String reason, Principal principal) {
         return ResponseEntity.ok().cacheControl(CacheControl.noStore())
-            .body(service.cancelForOwner(principal.getName(), id));
+            .body(service.cancelForOwner(principal.getName(), id, reason));
     }
 
     @PostMapping
