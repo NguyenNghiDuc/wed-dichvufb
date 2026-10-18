@@ -11,6 +11,6 @@
 <div class="field"><label>Giá bán (VND)</label><input type="number" name="price" min="10000" max="50000000" th:value="${s.priceVnd}" required></div>
 <div class="field"><label><input class="check-input" type="checkbox" name="enabled" value="true" th:checked="${s.enabled}"> Nhận đơn mới</label></div>
 <button class="btn" type="submit">Lưu dịch vụ</button></form></article>
-</div><section class="section"><h2>Nhật ký điều chỉnh gần đây</h2><div class="table-panel"><table class="data-table"><thead><tr><th>Thời gian</th><th>Admin</th><th>Dịch vụ</th><th>Giá cũ</th><th>Giá mới</th><th>Trạng thái</th></tr></thead><tbody>
+</div><section class="section"><div class="page-header"><h2>Nhật ký điều chỉnh gần đây</h2><a class="btn btn-outline btn-small" th:href="@{/admin/catalog/history}">Xem lịch sử đầy đủ →</a></div><div class="table-panel"><table class="data-table"><thead><tr><th>Thời gian</th><th>Admin</th><th>Dịch vụ</th><th>Giá cũ</th><th>Giá mới</th><th>Trạng thái</th></tr></thead><tbody>
 <tr th:each="e : ${events}"><td th:text="${#temporals.format(e.createdAt,'dd/MM/yyyy HH:mm')}"></td><td th:text="${e.actor}"></td><td th:text="${e.serviceCode}"></td><td th:text="${e.oldPrice}"></td><td th:text="${e.newPrice}"></td><td th:text="|${e.oldEnabled} → ${e.newEnabled}|"></td></tr>
 <tr th:if="${#lists.isEmpty(events)}"><td colspan="6">Chưa có điều chỉnh nào.</td></tr></tbody></table></div></section></main></body></html>
