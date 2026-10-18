@@ -76,4 +76,17 @@ public class SupportController {
         redirect.addFlashAttribute("success", "Yêu cầu hỗ trợ đã đóng.");
         return "redirect:/support/" + id;
     }
+    @PostMapping("/{id}/reopen")
+    public String reopen(@PathVariable Long id,@RequestParam String reason,Principal principal,Model model,
+                         org.springframework.web.servlet.mvc.support.RedirectAttributes redirect) {
+        try {
+            service.reopenAsOwner(principal.getName(),id,reason);
+            redirect.addFlashAttribute("success","Đã mở lại yêu cầu hỗ trợ.");
+            return "redirect:/support/"+id;
+        } catch(IllegalArgumentException exception) {
+            model.addAttribute("error",exception.getMessage());model.addAttribute("inputReason",reason);
+            return details(id, principal, model);
+        }
+    }
+
 }

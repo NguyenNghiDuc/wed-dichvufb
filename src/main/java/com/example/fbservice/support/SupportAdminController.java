@@ -59,4 +59,17 @@ public class SupportAdminController {
             return details(id, model);
         }
     }
+    @PostMapping("/{id}/reopen")
+    public String reopen(@PathVariable Long id,@RequestParam String reason,Principal principal,Model model,
+                         org.springframework.web.servlet.mvc.support.RedirectAttributes redirect) {
+        try {
+            service.reopenAsAdmin(principal.getName(),id,reason);
+            redirect.addFlashAttribute("success","Đã mở lại yêu cầu hỗ trợ.");
+            return "redirect:/admin/support/"+id;
+        } catch(IllegalArgumentException exception) {
+            model.addAttribute("error",exception.getMessage());model.addAttribute("inputReason",reason);
+            return details(id, model);
+        }
+    }
+
 }

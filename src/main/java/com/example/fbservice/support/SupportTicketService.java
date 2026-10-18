@@ -139,6 +139,30 @@ public class SupportTicketService {
             "Bạn đã xác nhận đóng yêu cầu hỗ trợ."));
     }
 
+    @Transactional
+    public void reopenAsOwner(String user,Long id,String reason) {
+        SupportTicket ticket=tickets.lockForOwner(id,user)
+            .orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND));
+        reopen(ticket,user,reason);
+    }
+
+    @Transactional
+    public void reopenAsAdmin(String admin,Long id,String reason) {
+        SupportTicket ticket=tickets.lockForAdmin(id)
+            .orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND));
+        reopen(ticket,admin,reason);
+    }
+
+    private void reopen(SupportTicket ticket,String actor,String reason) {
+        validate(reason,10,1900);
+        if(ticket.getStatus()!=TicketStatus.CLOSED)throw new IllegalArgumentException("Chỉ mở lại yêu cầu đã đóng.");
+        limiter.check("support:reopen:"+actor,5,Duration.ofHours(1));
+        ticket.reopen();
+        messages.save(new SupportMessage(ticket.getId(),actor,"[Mở lại yêu cầu] "+reason.strip()));
+        notices.save(new AccountNotification(ticket.getOwnerUsername(),"Hỗ trợ #"+ticket.getId()+" đã mở lại",
+            "Yêu cầu đã được mở lại. Đăng nhập để xem lịch sử trao đổi và gửi phản hồi."));
+    }
+
     private Pageable paging(int page) {
         if (page < 0 || page > 10000) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Trang không hợp lệ.");
         return PageRequest.of(page, 20, Sort.by(Sort.Order.desc("updatedAt"), Sort.Order.desc("id")));
