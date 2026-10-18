@@ -31,6 +31,19 @@ class AdminStaffEnabledFilterIntegrationTest {
             .andExpect(status().isOk());
         mvc.perform(get("/admin/staff").param("enabled", "invalid"))
             .andExpect(status().isBadRequest());
+        mvc.perform(get("/admin/staff").param("page", "-1"))
+            .andExpect(status().isBadRequest());
+        mvc.perform(get("/admin/staff").param("page", "10001"))
+            .andExpect(status().isBadRequest());
+        mvc.perform(get("/admin/staff").param("role", "USER"))
+            .andExpect(status().isBadRequest());
+        mvc.perform(get("/admin/staff").param("username", "bad username"))
+            .andExpect(status().isBadRequest());
+        mvc.perform(get("/admin/staff").param("enabled", "false")
+                .param("role", "STAFF").param("page", "1"))
+            .andExpect(status().isOk())
+            .andExpect(model().attribute("hasPrevious", true))
+            .andExpect(model().attribute("enabledFilter", false));
         mvc.perform(post("/admin/staff")).andExpect(status().isForbidden());
         mvc.perform(post("/admin/staff").with(csrf()))
             .andExpect(status().isMethodNotAllowed());
