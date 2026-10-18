@@ -143,6 +143,8 @@ class ContentSearchIntegrationTest {
             .andExpect(content().string(containsString("create-content-form")))
             .andExpect(content().string(containsString("data-plan-fallback-url")))
             .andExpect(content().string(containsString("content-metrics.js")))
+            .andExpect(content().string(containsString("content-metrics-batch-form")))
+            .andExpect(content().string(containsString("TIKTOK,2026-10-01T12:00,120,10,1,2,0")))
             .andExpect(content().string(containsString("không xác minh số liệu")))
             .andExpect(content().string(containsString("Xóa bộ lọc")));
         mvc.perform(get("/content-assistant.js"))
@@ -153,6 +155,12 @@ class ContentSearchIntegrationTest {
             .andExpect(content().string(containsString("template.suggestions.map")))
             .andExpect(content().string(containsString("payload.language === \"VI\"")))
             .andExpect(content().string(not(containsString("draftForm.submit"))))
+            .andExpect(content().string(not(containsString("innerHTML"))));
+        mvc.perform(get("/content-metrics.js"))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString("USER_SUPPLIED_UNVERIFIED")))
+            .andExpect(content().string(containsString("posts.length")))
+            .andExpect(content().string(containsString("batchResult.textContent")))
             .andExpect(content().string(not(containsString("innerHTML"))));
     }
 
