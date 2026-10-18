@@ -53,8 +53,15 @@ mode="$(stat -c '%a' -- "$directory")"
   exit 2
 }
 temporary="$(mktemp "$directory/.growlab-XXXXXXXX.part")"
+temporary_sha=
+published=
+complete=false
 cleanup() {
   [[ -z "$temporary" || ! -e "$temporary" ]] || rm -f -- "$temporary"
+  [[ -z "$temporary_sha" || ! -e "$temporary_sha" ]] || rm -f -- "$temporary_sha"
+  if [[ "$complete" != true && -n "$published" ]]; then
+    rm -f -- "$published" "$published.sha256"
+  fi
 }
 trap cleanup EXIT
 trap 'echo "Backup failed; no complete archive published." >&2' ERR
@@ -71,11 +78,17 @@ fi
 token="$(basename "$temporary" .part | tr -cd 'A-Za-z0-9')"
 name="growlab_$(date -u +%Y%m%dT%H%M%SZ)_${token}.dump"
 published="$directory/$name"
-[[ ! -e "$published" ]] || { echo 'Destination collision' >&2; exit 1; }
+[[ ! -e "$published" && ! -e "$published.sha256" ]] || {
+  echo 'Destination collision' >&2; published=; exit 1
+}
+temporary_sha="$(mktemp "$directory/.growlab-XXXXXXXX.sha256.part")"
+digest="$(sha256sum "$temporary" | cut -d ' ' -f1)"
+printf '%s  %s\n' "$digest" "$name" > "$temporary_sha"
+chmod 600 -- "$temporary" "$temporary_sha"
 mv -- "$temporary" "$published"
 temporary=
-chmod 600 -- "$published"
-(cd "$directory" && sha256sum "$name" > "$name.sha256")
-chmod 600 -- "$published.sha256"
+mv -- "$temporary_sha" "$published.sha256"
+temporary_sha=
+complete=true
 printf 'Backup complete: %s\n' "$published"
 printf 'Checksum: %s.sha256\n' "$published"
