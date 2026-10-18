@@ -93,6 +93,14 @@ public class ChatService {
         return messages.findThread(viewer, other, pageRequest(page, size));
     }
 
+    /** Unread badge derived exclusively from the authenticated receiver. */
+    @Transactional(readOnly = true)
+    public long unreadTotalFor(String viewer) {
+        if (viewer == null || viewer.isBlank())
+            throw new IllegalArgumentException("Authentication required");
+        return messages.countByReceiverAndReadAtIsNull(viewer);
+    }
+
     /** Private, bounded conversation index without scanning or loading all messages in Java. */
     @Transactional(readOnly = true)
     public Page<String> contactNamesFor(String viewer, String term, int page) {
