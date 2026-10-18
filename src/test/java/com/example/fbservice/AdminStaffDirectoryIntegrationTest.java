@@ -85,6 +85,31 @@ class AdminStaffDirectoryIntegrationTest {
     }
 
     @Test
+    @WithMockUser(username="w4-filter-admin",roles="ADMIN")
+    void enabledFilterPaginatesInDatabaseAndExcludesUsers() throws Exception {
+        for (int i = 0; i < 24; i++)
+            account(String.format("w4-active-%02d", i), "STAFF", true);
+        for (int i = 0; i < 4; i++)
+            account(String.format("w4-locked-%02d", i), "STAFF", false);
+        account("w4-customer-locked", "USER", false);
+
+        var activeFirst = directory.page(0, AdminStaffDirectoryService.RoleFilter.STAFF, null, true);
+        var activeSecond = directory.page(1, AdminStaffDirectoryService.RoleFilter.STAFF, null, true);
+        var locked = directory.page(0, AdminStaffDirectoryService.RoleFilter.ALL, null, false);
+        assertThat(activeFirst.rows()).hasSize(20).allMatch(AdminStaffDirectoryService.StaffRow::enabled);
+        assertThat(activeFirst.hasNext()).isTrue();
+        assertThat(activeSecond.rows()).hasSize(4).allMatch(AdminStaffDirectoryService.StaffRow::enabled);
+        assertThat(activeSecond.hasNext()).isFalse();
+        assertThat(locked.rows()).hasSize(4).allMatch(row -> !row.enabled());
+        assertThat(locked.rows()).extracting(AdminStaffDirectoryService.StaffRow::username)
+            .doesNotContain("w4-customer-locked");
+        mvc.perform(get("/admin/staff").param("enabled", "false").param("role", "STAFF"))
+            .andExpect(status().isOk())
+            .andExpect(model().attribute("staff", hasSize(4)))
+            .andExpect(content().string(containsString("w4-locked-00")));
+    }
+
+    @Test
     void customerAndStaffCannotAccessTheAdminDirectory() throws Exception {
         mvc.perform(get("/admin/staff")).andExpect(status().is3xxRedirection());
         mvc.perform(get("/admin/staff").with(user("w4-staff").roles("STAFF")))
