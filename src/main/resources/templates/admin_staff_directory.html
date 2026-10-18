@@ -23,7 +23,10 @@
 </select></div>
 <div class="admin-filter-actions"><button class="btn btn-small" type="submit">Tìm kiếm</button>
 <a class="btn btn-outline btn-small" th:href="@{/admin/staff}">Xóa lọc</a></div></form>
-<div class="admin-table-heading"><strong>Đội ngũ được phân quyền</strong><span>20 tài khoản / trang</span></div>
+<div class="admin-table-heading"><strong>Đội ngũ được phân quyền</strong>
+<div class="admin-row-actions"><span>20 tài khoản / trang</span>
+<a class="btn btn-outline btn-small" th:href="@{/admin/staff/export.csv(page=${pageNumber},role=${roleFilter},username=${usernameFilter},enabled=${enabledFilter})}">Xuất CSV trang này ↗</a></div>
+</div>
 <div class="table-panel admin-table-scroll"><table class="data-table admin-table">
 <thead><tr><th>Nhân viên</th><th>Vai trò</th><th>Trạng thái</th><th>Đơn đang phụ trách</th><th>Quản lý</th></tr></thead>
 <tbody><tr th:each="u : ${staff}"><td><strong th:text="${u.username}"></strong></td>
