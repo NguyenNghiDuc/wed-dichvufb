@@ -96,6 +96,51 @@ class FailedLoginAuditIntegrationTest {
     }
 
     @Test
+    void rateLimitedLoginDoesNotWriteMoreFailedEventsOrBlockAnotherAccount() throws Exception {
+        User targeted=account("audit-failure-throttled", true);
+        User unrelated=account("audit-failure-unrelated", true);
+        // A fixed TCP peer is used instead of an untrusted X-Forwarded-For header.
+        // Per-account attempts cap at ten per ten minutes.
+        for (int i=0;i<10;i++) {
+            final int index=i;
+            mvc.perform(post("/login").with(csrf()).with(r -> {
+                        r.setRemoteAddr("198.51.100.185");
+                        r.addHeader("X-Forwarded-For","192.0.2."+(20+index));
+                        return r;
+                    }).param("username", targeted.getUsername())
+                    .param("password","not-the-password"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/login?error"));
+        }
+        assertThat(events.findTop200ByAccountIdOrderByCreatedAtDescIdDesc(targeted.getId()))
+            .extracting(SecurityActivity::getKind))
+            .hasSize(10)
+            .containsOnly(SecurityActivity.Kind.SIGN_IN_FAILED);
+
+        mvc.perform(post("/login").with(csrf()).with(r -> {
+                    r.setRemoteAddr("198.51.100.185");
+                    r.addHeader("X-Forwarded-For","192.0.2.99");
+                    return r;
+                }).param("username",targeted.getUsername())
+                .param("password","not-the-password"))
+            .andExpect(status().isTooManyRequests())
+            .andExpect(header().string("Retry-After","600"));
+        assertThat(events.findTop200ByAccountIdOrderByCreatedAtDescIdDesc(targeted.getId()))
+            .hasSize(10);
+
+        mvc.perform(post("/login").with(csrf()).with(r -> {
+                    r.setRemoteAddr("198.51.100.185");
+                    return r;
+                }).param("username",unrelated.getUsername())
+                .param("password","not-the-password"))
+            .andExpect(status().is3xxRedirection())
+            .andExpect(redirectedUrl("/login?error"));
+        assertThat(events.findTop200ByAccountIdOrderByCreatedAtDescIdDesc(unrelated.getId()))
+            .extracting(SecurityActivity::getKind))
+            .containsExactly(SecurityActivity.Kind.SIGN_IN_FAILED);
+    }
+
+    @Test
     void disabledAccountFailuresRemainGenericAndOwnerScoped() throws Exception {
         User blocked=account("audit-failure-locked", false);
         mvc.perform(post("/login").with(csrf()).with(r -> {
