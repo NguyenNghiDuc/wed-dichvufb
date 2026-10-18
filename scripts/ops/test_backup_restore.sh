@@ -12,6 +12,8 @@ export RESTORE_TEST_PASSWORD
 RESTORE_TEST_PASSWORD="$(od -An -N24 -tx1 /dev/urandom | tr -d ' \n')"
 # Compose parses the base db service too; use only synthetic secrets for this run.
 export POSTGRES_PASSWORD="$RESTORE_TEST_PASSWORD"
+# Per-run Compose project prevents collisions with existing app/staging containers.
+export COMPOSE_PROJECT_NAME="w10recovery$(od -An -N6 -tx1 /dev/urandom | tr -d ' \n')"
 scratch="$(mktemp -d)"
 compose=(docker compose -f compose.yaml -f compose.recovery.yaml --profile recovery)
 cleanup() {
