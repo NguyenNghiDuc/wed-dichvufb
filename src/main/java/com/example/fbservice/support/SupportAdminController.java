@@ -2,6 +2,8 @@ package com.example.fbservice.support;
 
 import java.security.Principal;
 import org.springframework.data.domain.Page;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -36,6 +38,13 @@ public class SupportAdminController {
         model.addAttribute("hasPrevious", records.hasPrevious());
         model.addAttribute("hasNext", records.hasNext());
         return "admin_support_list";
+    }
+
+    /** Staff-only queue summary, protected by the existing /admin/support role gate. */
+    @GetMapping("/stats")
+    public ResponseEntity<SupportTicketCounts> stats() {
+        return ResponseEntity.ok().header(HttpHeaders.CACHE_CONTROL, "no-store")
+            .body(service.countsForStaff());
     }
 
     @GetMapping("/{id}")
