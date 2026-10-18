@@ -92,7 +92,7 @@ class ServiceDetailPageIntegrationTest {
             .andExpect(model().attribute("priceRows", org.hamcrest.Matchers.hasSize(3)))
             .andExpect(content().string(containsString("Danh mục nền tảng")))
             .andExpect(content().string(containsString("GROWLAB SOCIAL STUDIO")))
-            .andExpect(content().string(containsString("Quy trình 4 bước")))
+            .andExpect(content().string(containsString("QUY TRÌNH 4 BƯỚC")))
             .andExpect(content().string(containsString("So sánh các gói tư vấn")))
             .andExpect(content().string(containsString("Câu hỏi thường gặp")))
             .andExpect(content().string(containsString("Đánh giá dịch vụ")))

@@ -33,6 +33,6 @@ Phiên bản GrowLab có **thiết kế riêng**: nền trắng ngà, hero xanh 
 
 **Responsive / accessibility:** Sidebar ở desktop trở thành thanh danh mục cuộn ngang trên thiết bị nhỏ; hero và order card xếp dọc; giá table cuộn ngang; có skip link, label input, FAQ details và focus-visible. CSS chỉ thêm các selector `grow-*` trong `style.css`, không dùng JS ngoài và không thay đổi styles chung.
 
-**Kiểm tra:** chạy `mvn -Dtest=ServiceDetailPageIntegrationTest test` (5 tests, gồm một test UI/pricing mới) trên Java 17. Sau đó chạy PostgreSQL/Flyway/JAR/Docker CI và CodeQL trên exact head commit. Cần kiểm tra giao diện thực tế trên Codespaces và mobile, phản hồi trước khi merge. Không đánh dấu nghiệm thu khi CI còn queued/cancelled.
+**Kiểm tra:** chạy `mvn -Dtest=ServiceDetailPageIntegrationTest test` (4 bài test, gồm một bài test UI/pricing mới) trên Java 17. Sau đó chạy PostgreSQL/Flyway/JAR/Docker CI và CodeQL trên exact head commit. Cần kiểm tra giao diện thực tế trên Codespaces và mobile, phản hồi trước khi merge. Không đánh dấu nghiệm thu khi CI còn queued/cancelled.
 
 **Lưu ý xung đột:** `style.css` cùng W3 PR #35, `WebSecurityConfig.java` cùng W1 PR #22, và W2 PR #33 cùng sở hữu luồng customer campaign. Khi merge cần giữ cả hai nhánh, không ghi đè nguyên file.
