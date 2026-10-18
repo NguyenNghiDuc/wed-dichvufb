@@ -23,9 +23,11 @@ import org.springframework.web.server.ResponseStatusException;
 public class AuthenticationRateLimitFilter extends OncePerRequestFilter {
     private static final Duration WINDOW = Duration.ofMinutes(10);
     private final TrafficLimiter limiter;
+    private final LoginFailureTracker failures;
 
-    public AuthenticationRateLimitFilter(TrafficLimiter limiter) {
+    public AuthenticationRateLimitFilter(TrafficLimiter limiter, LoginFailureTracker failures) {
         this.limiter = limiter;
+        this.failures = failures;
     }
 
     @Override
@@ -54,6 +56,14 @@ public class AuthenticationRateLimitFilter extends OncePerRequestFilter {
                 limiter.check(scope, 100, WINDOW);
                 String username = request.getParameter("username");
                 if (username == null || username.length() > 100) username = "(invalid)";
+                // Generic response: account-wide temporary lock does not reveal account existence.
+                // Runs after CSRF and before the password authentication provider.
+                if (failures.isTemporarilyLocked(username)) {
+                    response.setHeader("Cache-Control", "no-store");
+                    response.setStatus(HttpServletResponse.SC_FOUND);
+                    response.setHeader("Location", request.getContextPath() + "/login?error");
+                    return;
+                }
                 limiter.check(scope + ":account:" + sha256(username), 10, WINDOW);
                 // BCrypt only authenticates up to 72 UTF-8 bytes. Deny trailing input
                 // rather than allowing an overlong string with the same bcrypt prefix.

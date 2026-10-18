@@ -14,9 +14,11 @@ import org.springframework.stereotype.Component;
 @Component
 public class LoginAuditSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
     private final SecurityActivityService activity;
+    private final LoginFailureTracker failures;
 
-    public LoginAuditSuccessHandler(SecurityActivityService activity) {
+    public LoginAuditSuccessHandler(SecurityActivityService activity, LoginFailureTracker failures) {
         this.activity=activity;
+        this.failures=failures;
         setDefaultTargetUrl("/campaigns");
         setAlwaysUseDefaultTargetUrl(true);
     }
@@ -28,6 +30,7 @@ public class LoginAuditSuccessHandler extends SimpleUrlAuthenticationSuccessHand
             throw new ServletException("Database account principal required");
         }
         activity.record(account.getAccountId(), SecurityActivity.Kind.SIGN_IN);
+        failures.resetAfterSuccess(account.getUsername());
         super.onAuthenticationSuccess(request,response,authentication);
     }
 }

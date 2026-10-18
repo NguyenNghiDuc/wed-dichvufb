@@ -20,11 +20,14 @@ import org.springframework.stereotype.Component;
 public class LoginAuditFailureHandler extends SimpleUrlAuthenticationFailureHandler {
     private final UserRepository users;
     private final SecurityActivityService securityEvents;
+    private final LoginFailureTracker failures;
 
-    public LoginAuditFailureHandler(UserRepository users, SecurityActivityService securityEvents) {
+    public LoginAuditFailureHandler(UserRepository users, SecurityActivityService securityEvents,
+                                    LoginFailureTracker failures) {
         super("/login?error");
         this.users = users;
         this.securityEvents = securityEvents;
+        this.failures = failures;
     }
 
     @Override
@@ -32,6 +35,9 @@ public class LoginAuditFailureHandler extends SimpleUrlAuthenticationFailureHand
             HttpServletResponse response, AuthenticationException exception)
             throws IOException, ServletException {
         String submitted = request.getParameter("username");
+        // Track attempts for valid-looking names whether an account exists or not.
+        // This avoids account-existence differences in lockout behavior.
+        failures.recordFailure(submitted);
         // Only record an event for a real, syntactically valid account.
         // This does not disclose whether the account exists to the caller.
         if (submitted != null && submitted.matches("[A-Za-z0-9._-]{3,40}")) {
