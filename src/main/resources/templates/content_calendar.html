@@ -71,8 +71,8 @@
   if (bodyField && bodyStats) {
     const refreshStats = () => {
       const content = bodyField.value.trim();
-      const words = content ? content.split(/\\s+/u).length : 0;
-      const hashtags = (content.match(/#[\\p{L}\\p{N}_]+/gu) || []).length;
+      const words = content ? content.split(/\s+/u).length : 0;
+      const hashtags = (content.match(/#[\p{L}\p{N}_]+/gu) || []).length;
       bodyStats.textContent = words + ' từ · ' + hashtags + ' hashtag';
     };
     bodyField.addEventListener('input', refreshStats);
