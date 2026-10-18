@@ -19,7 +19,7 @@
     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
     <div class="field"><label for="platform">Nền tảng</label><select id="platform" name="platform" required><option th:each="p : ${platforms}" th:value="${p.name()}" th:text="${p.displayName}"></option></select></div>
     <div class="field"><label for="title">Tiêu đề</label><input id="title" name="title" maxlength="120" required aria-describedby="title-count"><small id="title-count" aria-live="polite">0 / 120 ký tự</small></div>
-    <div class="field"><label for="body">Nội dung</label><textarea id="body" name="body" maxlength="3000" required aria-describedby="body-count"></textarea><small id="body-count" aria-live="polite">0 / 3000 ký tự</small></div>
+    <div class="field"><label for="body">Nội dung</label><textarea id="body" name="body" maxlength="3000" required aria-describedby="body-count"></textarea><small id="body-count" aria-live="polite">0 / 3000 ký tự</small><small id="body-stats" aria-live="polite">0 từ · 0 hashtag</small></div>
     <div class="field"><label for="schedule">Giờ dự kiến (UTC, không bắt buộc)</label><input id="schedule" type="datetime-local" name="scheduledAtUtc"><small>Để trống để lưu bản nháp; không tự đăng bài.</small></div>
     <button class="btn" type="submit" id="save-draft">Lưu nội dung</button>
   </form>
@@ -65,6 +65,18 @@
         button.textContent = "Đang lưu…";
       }
     });
+  }
+  const bodyField = document.getElementById('body');
+  const bodyStats = document.getElementById('body-stats');
+  if (bodyField && bodyStats) {
+    const refreshStats = () => {
+      const content = bodyField.value.trim();
+      const words = content ? content.split(/\\s+/u).length : 0;
+      const hashtags = (content.match(/#[\\p{L}\\p{N}_]+/gu) || []).length;
+      bodyStats.textContent = words + ' từ · ' + hashtags + ' hashtag';
+    };
+    bodyField.addEventListener('input', refreshStats);
+    refreshStats();
   }
   for (const item of [{fieldId:'title', counterId:'title-count', limit:120}, {fieldId:'body', counterId:'body-count', limit:3000}]) {
     const {fieldId, counterId, limit} = item;
