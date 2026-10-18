@@ -17,8 +17,14 @@ public class SupportController {
     public SupportController(SupportTicketService service) { this.service = service; }
 
     @GetMapping
-    public String list(@RequestParam(defaultValue = "0") int page, Principal principal, Model model) {
-        Page<SupportTicket> records = service.listMine(principal.getName(), page);
+    public String list(@RequestParam(defaultValue = "0") int page,
+                       @RequestParam(required=false) String q,@RequestParam(required=false) Long ticketId,
+                       @RequestParam(required=false) TicketStatus status,Principal principal,Model model) {
+        Page<SupportTicket> records = service.searchMine(principal.getName(),page,q,ticketId,status);
+        model.addAttribute("filterQuery",com.example.fbservice.web.SearchText.clean(q,120));
+        model.addAttribute("ticketId",ticketId);model.addAttribute("selectedStatus",status);
+        model.addAttribute("ticketStatuses",TicketStatus.values());
+        model.addAttribute("totalPages",records.getTotalPages());model.addAttribute("totalElements",records.getTotalElements());
         model.addAttribute("tickets", records.getContent());
         model.addAttribute("pageNumber", page);
         model.addAttribute("hasNext", records.hasNext());

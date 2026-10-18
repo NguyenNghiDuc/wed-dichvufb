@@ -31,3 +31,10 @@ All account, public authentication/help, staff and admin templates share the dar
 TikTok customer and admin lists now export their current ID/status filter as UTF-8 CSV with BOM, a 5,000-row cap, formula-safe cell escaping and `Cache-Control: no-store`. Customer export derives ownership from authentication; it accepts no owner override. Admin export requires ADMIN.
 
 Customers may close their own resolved support request; repeated close is idempotent and other owners receive 404. Closed requests cannot accept replies. Invalid support, registration and content create/edit forms preserve non-secret submitted data. Registration validates the bcrypt 72-byte UTF-8 ceiling instead of relying only on character length. Passwords are never echoed into returned HTML.
+
+### Tra cứu tài khoản và yêu cầu hỗ trợ
+
+- `/admin/users`: tìm tên đăng nhập, tên hiển thị hoặc email (không phân biệt hoa thường), kết hợp quyền USER/STAFF/ADMIN và trạng thái hoạt động/đã khóa. Giữ bộ lọc khi chuyển trang, khóa/mở khóa hoặc đổi quyền; thao tác vẫn yêu cầu CSRF, quyền ADMIN và ghi nhật ký.
+- `/support`: khách hàng tìm tiêu đề, mã yêu cầu và trạng thái trong yêu cầu của chính mình. Tham số `owner` không thể thay đổi phạm vi này.
+- `/admin/support`: nhân viên và admin dùng các bộ lọc trên, thêm tên đăng nhập khách hàng chính xác.
+- Từ khóa là chuỗi con thông thường: `%`, `_` và dấu gạch chéo ngược được tìm theo ký tự, không mở rộng thành mẫu SQL. Giới hạn từ khóa 120 ký tự, 20 kết quả/trang; trang ngoài 0–10000, mã không dương và bộ lọc sai trả HTTP 400. Không cần migration mới.

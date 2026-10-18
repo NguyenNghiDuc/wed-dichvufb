@@ -3,6 +3,10 @@ package com.example.fbservice.admin;
 import com.example.fbservice.model.User;
 import com.example.fbservice.repository.UserRepository;
 import java.util.List;
+import java.util.ArrayList;
+import jakarta.persistence.criteria.Predicate;
+import com.example.fbservice.web.SearchText;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.domain.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -21,8 +25,29 @@ public class AdminUserService {
 
     @Transactional(readOnly=true)
     public Page<User> page(int page) {
+        return page(page,null,null,null);
+    }
+
+    @Transactional(readOnly=true)
+    public Page<User> page(int page,String query,String role,Boolean enabled) {
         if(page<0||page>10000) throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Invalid page");
-        return users.findAllByOrderByIdDesc(PageRequest.of(page,20));
+        String q=SearchText.clean(query,120);
+        String roleFilter=SearchText.clean(role,16);
+        if(!roleFilter.isEmpty()&&!List.of("USER","STAFF","ADMIN").contains(roleFilter))
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Vai trò lọc không hợp lệ.");
+        Specification<User> filter=(root,request,builder)->{
+            var conditions=new ArrayList<Predicate>();
+            if(!q.isEmpty()){
+                String pattern=SearchText.contains(q);
+                conditions.add(builder.or(builder.like(builder.lower(root.get("username")),pattern,'\\'),
+                    builder.like(builder.lower(root.get("displayName")),pattern,'\\'),
+                    builder.like(builder.lower(root.get("email")),pattern,'\\')));
+            }
+            if(!roleFilter.isEmpty())conditions.add(builder.equal(root.get("role"),roleFilter));
+            if(enabled!=null)conditions.add(builder.equal(root.get("enabled"),enabled));
+            return builder.and(conditions.toArray(new Predicate[0]));
+        };
+        return users.findAll(filter,PageRequest.of(page,20,Sort.by(Sort.Direction.DESC,"id")));
     }
 
     @Transactional(readOnly=true)

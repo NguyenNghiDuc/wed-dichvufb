@@ -13,8 +13,15 @@ public class SupportAdminController {
     public SupportAdminController(SupportTicketService service) { this.service = service; }
 
     @GetMapping
-    public String list(@RequestParam(defaultValue = "0") int page, Model model) {
-        Page<SupportTicket> records = service.listForAdmin(page);
+    public String list(@RequestParam(defaultValue = "0") int page,
+                       @RequestParam(required=false) String q,@RequestParam(required=false) Long ticketId,
+                       @RequestParam(required=false) TicketStatus status,@RequestParam(required=false) String owner,Model model) {
+        Page<SupportTicket> records = service.searchForAdmin(page,q,ticketId,status,owner);
+        model.addAttribute("filterQuery",com.example.fbservice.web.SearchText.clean(q,120));
+        model.addAttribute("ticketId",ticketId);model.addAttribute("selectedStatus",status);
+        model.addAttribute("ownerFilter",com.example.fbservice.web.SearchText.clean(owner,100));
+        model.addAttribute("ticketStatuses",TicketStatus.values());
+        model.addAttribute("totalPages",records.getTotalPages());model.addAttribute("totalElements",records.getTotalElements());
         model.addAttribute("tickets", records.getContent());
         model.addAttribute("pageNumber", page);
         model.addAttribute("hasPrevious", records.hasPrevious());
