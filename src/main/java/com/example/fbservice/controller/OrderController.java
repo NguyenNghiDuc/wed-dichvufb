@@ -3,6 +3,8 @@ package com.example.fbservice.controller;
 import com.example.fbservice.model.Order;
 import com.example.fbservice.service.OrderService;
 import java.security.Principal;
+import java.time.LocalDate;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Controller;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
@@ -39,15 +41,21 @@ public class OrderController {
     @GetMapping("/list")
     public String list(@RequestParam(defaultValue = "0") int page,
                        @RequestParam(required = false) Long orderId,
+                       @RequestParam(required = false) String service,
+                       @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+                       @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
                        Model model, Principal principal) {
         Page<Order> records;
         try {
-            records = orders.pageMine(principal.getName(), page, 20, orderId);
+            records = orders.pageMine(principal.getName(), page, 20, orderId, service, from, to);
         } catch (IllegalArgumentException exception) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid page");
         }
         model.addAttribute("orders", records.getContent());
         model.addAttribute("orderId", orderId);
+        model.addAttribute("selectedService", service);
+        model.addAttribute("from", from);
+        model.addAttribute("to", to);
         model.addAttribute("pageNumber", page);
         model.addAttribute("hasPrevious", records.hasPrevious());
         model.addAttribute("hasNext", records.hasNext());

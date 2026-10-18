@@ -2,6 +2,8 @@ package com.example.fbservice.controller;
 
 import com.example.fbservice.service.LegacyOrderCsvExportService;
 import java.security.Principal;
+import java.time.LocalDate;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.HttpStatus;
@@ -19,10 +21,13 @@ public class LegacyOrderCsvController {
 
     @GetMapping(value="/export.csv", produces="text/csv;charset=UTF-8")
     public ResponseEntity<String> mine(@RequestParam(required = false) Long orderId,
+                                       @RequestParam(required = false) String service,
+                                       @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+                                       @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
                                        Principal principal) {
         String csv;
         try {
-            csv = exports.exportMine(principal.getName(), orderId);
+            csv = exports.exportMine(principal.getName(), orderId, service, from, to);
         } catch (IllegalArgumentException exception) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid order filter");
         }

@@ -2,6 +2,7 @@ package com.example.fbservice.service;
 
 import com.example.fbservice.model.Order;
 import java.time.format.DateTimeFormatter;
+import java.time.LocalDate;
 import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
@@ -20,17 +21,22 @@ public class LegacyOrderCsvExportService {
 
     @Transactional(readOnly=true)
     public String exportMine(String owner) {
-        return exportMine(owner, null);
+        return exportMine(owner, null, null, null, null);
     }
 
     @Transactional(readOnly=true)
     public String exportMine(String owner, Long orderId) {
+        return exportMine(owner, orderId, null, null, null);
+    }
+
+    @Transactional(readOnly = true)
+    public String exportMine(String owner, Long orderId, String service, LocalDate from, LocalDate to) {
         StringBuilder csv = new StringBuilder("\uFEFF");
         csv.append("id,service,link,quantity,unit_price_vnd,total_price_vnd,note,created_at\r\n");
         int exported = 0;
         int page = 0;
         while (exported < MAX_ROWS) {
-            Page<Order> result = orders.pageMine(owner, page, PAGE_SIZE, orderId);
+            Page<Order> result = orders.pageMine(owner, page, PAGE_SIZE, orderId, service, from, to);
             List<Order> records = result.getContent();
             if (records.isEmpty()) break;
             for (Order o : records) {
