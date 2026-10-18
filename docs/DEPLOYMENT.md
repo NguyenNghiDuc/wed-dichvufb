@@ -3,7 +3,7 @@
 ## Phase 2: Database
 - Dev runs file-based H2 with `spring.flyway.enabled=false`.
 - Production uses PostgreSQL 16 + Flyway, Hibernate `ddl-auto=validate`.
-- Baseline clean Postgres DB migrations V1–V10 (including V3 payment receipts and V10 review/history indexes). **Existing H2 data is not copied**. Export and reconcile any real users, orders, and deposits manually before cutover. Never rename legacy resource folders and assume old migrations were run.
+- Baseline clean Postgres DB migrations **V1–V12** (V3 receipt uniqueness, V10/V11 reconciliation/history indexes and V12 bounded deposit/receipt amounts for new writes). V12 adds `NOT VALID` constraints: historical rows are not rewritten and require an independent audit before `VALIDATE CONSTRAINT`. **Existing H2 data is not copied**. Export and reconcile any real users, orders, and deposits manually before cutover. Never rename legacy resource folders and assume old migrations were run.
 - Backup PostgreSQL volume before production upgrades, test recovery on staging.
 
 ## Phase 3: Official APIs
@@ -19,10 +19,10 @@
 ## Phase 5: Payments
 - `POST /api/v1/payments/webhooks/internal` is a **generic internal signed event interface**; it is NOT a bank or VNPay integration. Without `GROWTH_WEBHOOK_SECRET` of 32+ bytes the endpoint returns 503.
 - Signed sandbox webhook requires `X-GrowLab-Timestamp` (Unix seconds, within ±300 seconds) and `X-GrowLab-Signature` = hex(HMAC-SHA256(secret, ASCII(timestamp) + "." + **exact raw JSON body bytes**)). The former body-only signature is intentionally rejected to prevent replay. Payload: `{"eventId":"unique-event-123","depositRequestId":123,"amountVnd":50000,"status":"SETTLED"}`. Refer to [PAYMENT_QA_RECONCILIATION.md](PAYMENT_QA_RECONCILIATION.md) for retry rules, reconciliation SQL and the controlled backup/restore rehearsal.
-- A signed event checks deposit amount, row lock, idempotency, and updates status PENDING→APPROVED. It does not credit wallet balance. Real payment provider authentication, transaction reconciliation and refunds require a separate approved adapter.
+- A signed event rejects duplicate auth headers, ambiguous JSON/unknown fields and malformed numeric types before opening a transaction; it checks deposit amount, row lock, idempotency, and updates status PENDING→APPROVED. It does not credit wallet balance. Real payment provider authentication, transaction reconciliation and refunds require a separate approved adapter.
 
 ## Phase 6: Run/test/deploy
-1. Clone, run `mvn -B clean verify` with PostgreSQL running on localhost:5432 for production schema integration tests; CI provisions DB automatically.
+1. Clone, run `mvn -B clean verify` with PostgreSQL running on localhost:5432 for production schema integration tests; CI provisions a disposable DB automatically. CI includes **32 distinct signed callbacks over 8 workers**, replay/race tests, backup + isolated restore with row-count/index checks, and real Docker-container health smoke. This is not a production load benchmark.
 2. Generate local secrets, set `POSTGRES_PASSWORD` (do not commit). `docker compose up --build -d`.
 3. Terminate TLS at trusted reverse proxy and configure secure cookies. App binds port 8080 to loopback only.
 4. Validate `/actuator/health`, registration/login/logout, CSRF, ownership, admin roles, order state transitions, scheduling, notifications, read-only YouTube test, disabled AI behavior, webhook bad signature, duplicate event, database backup.
