@@ -21,12 +21,13 @@ public record AiContentRequest(
     public boolean isTaskPlatformCompatible() {
         return platform==null || task==null ||
             (task!=AiContentTask.TIKTOK_IDEAS || platform==SocialPlatform.TIKTOK) &&
-            (task!=AiContentTask.YOUTUBE_SHORTS || platform==SocialPlatform.YOUTUBE);
+            (task!=AiContentTask.YOUTUBE_SHORTS || platform==SocialPlatform.YOUTUBE) &&
+            (task!=AiContentTask.VIDEO_SCRIPT || platform==SocialPlatform.TIKTOK || platform==SocialPlatform.YOUTUBE);
     }
 
     @AssertTrue(message="Cần cung cấp bản nháp để tối ưu.")
     public boolean isOptimizeDraftPresent() {
-        return task!=AiContentTask.OPTIMIZE ||
+        return (task!=AiContentTask.OPTIMIZE && task!=AiContentTask.PROOFREAD) ||
             (existingContent!=null && !existingContent.isBlank());
     }
 
