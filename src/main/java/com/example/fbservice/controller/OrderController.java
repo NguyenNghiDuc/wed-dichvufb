@@ -2,6 +2,7 @@ package com.example.fbservice.controller;
 
 import com.example.fbservice.model.Order;
 import com.example.fbservice.service.OrderService;
+import com.example.fbservice.service.LegacyOrderSummaryService;
 import java.security.Principal;
 import java.time.LocalDate;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -16,9 +17,11 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/order")
 public class OrderController {
     private final OrderService orders;
+    private final LegacyOrderSummaryService summaries;
 
-    public OrderController(OrderService orders) {
+    public OrderController(OrderService orders, LegacyOrderSummaryService summaries) {
         this.orders = orders;
+        this.summaries = summaries;
     }
 
     @GetMapping("/new")
@@ -52,6 +55,7 @@ public class OrderController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid page");
         }
         model.addAttribute("orders", records.getContent());
+        model.addAttribute("summary", summaries.forOwner(principal.getName()));
         model.addAttribute("orderId", orderId);
         model.addAttribute("selectedService", service);
         model.addAttribute("from", from);
