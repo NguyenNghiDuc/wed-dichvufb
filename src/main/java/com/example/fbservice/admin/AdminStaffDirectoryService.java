@@ -25,6 +25,11 @@ public class AdminStaffDirectoryService {
     /** Paged staff directory, with a single grouped workload lookup for the current page. */
     @Transactional(readOnly = true)
     public Result page(int page, RoleFilter role, String exactUsername) {
+        return page(page, role, exactUsername, null);
+    }
+
+    @Transactional(readOnly = true)
+    public Result page(int page, RoleFilter role, String exactUsername, Boolean enabled) {
         if (page < 0 || page > 10000 || role == null)
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid page or role");
         String username = exactUsername == null || exactUsername.isBlank() ?
@@ -32,12 +37,14 @@ public class AdminStaffDirectoryService {
         if (username != null && !username.matches("[a-zA-Z0-9._-]{3,40}"))
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid staff username");
 
-        String where = username == null ? "" : " and u.username = :username";
+        String where = (username == null ? "" : " and u.username = :username") +
+            (enabled == null ? "" : " and u.enabled = :enabled");
         var users = em.createQuery("select u from User u where u.role in :roles" +
             where + " order by u.username asc, u.id asc", User.class)
             .setParameter("roles", role == RoleFilter.ALL ?
                 List.of("STAFF", "ADMIN") : List.of(role.name()));
         if (username != null) users.setParameter("username", username);
+        if (enabled != null) users.setParameter("enabled", enabled);
         List<User> selected = users.setFirstResult(page * 20)
             .setMaxResults(21).getResultList();
         boolean hasNext = selected.size() > 20;

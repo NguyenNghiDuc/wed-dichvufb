@@ -18,13 +18,15 @@ public class AdminStaffDirectoryController {
                        @RequestParam(defaultValue="ALL")
                            AdminStaffDirectoryService.RoleFilter role,
                        @RequestParam(required=false) String username,
+                       @RequestParam(required=false) Boolean enabled,
                        Model model) {
-        var result = service.page(page, role, username);
+        var result = service.page(page, role, username, enabled);
         model.addAttribute("staff", result.rows());
         model.addAttribute("pageNumber", page);
         model.addAttribute("hasNext", result.hasNext());
         model.addAttribute("hasPrevious", page > 0);
         model.addAttribute("roleFilter", role);
+        model.addAttribute("enabledFilter", enabled);
         model.addAttribute("roles", AdminStaffDirectoryService.RoleFilter.values());
         model.addAttribute("usernameFilter", username == null ? "" : username.trim());
         return "admin_staff_directory";

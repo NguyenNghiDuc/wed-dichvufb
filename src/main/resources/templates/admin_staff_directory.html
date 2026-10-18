@@ -15,6 +15,12 @@
 <div class="admin-filter-field"><label for="role">Vai trò</label>
 <select name="role" id="role"><option th:each="r : ${roles}" th:value="${r.name()}"
  th:selected="${r == roleFilter}" th:text="${r.name() == 'ALL' ? 'Tất cả' : r.name()}"></option></select></div>
+<div class="admin-filter-field"><label for="enabled">Trạng thái tài khoản</label>
+<select name="enabled" id="enabled">
+<option value="" th:selected="${enabledFilter == null}">Tất cả</option>
+<option value="true" th:selected="${enabledFilter == true}">Hoạt động</option>
+<option value="false" th:selected="${enabledFilter == false}">Đã khóa</option>
+</select></div>
 <div class="admin-filter-actions"><button class="btn btn-small" type="submit">Tìm kiếm</button>
 <a class="btn btn-outline btn-small" th:href="@{/admin/staff}">Xóa lọc</a></div></form>
 <div class="admin-table-heading"><strong>Đội ngũ được phân quyền</strong><span>20 tài khoản / trang</span></div>
@@ -29,7 +35,7 @@
 <tr th:if="${#lists.isEmpty(staff)}"><td colspan="5" class="admin-empty">Không tìm thấy nhân viên.</td></tr></tbody></table></div>
 <nav class="admin-pager" aria-label="Phân trang nhân viên">
 <a th:if="${hasPrevious}" class="btn btn-outline btn-small"
- th:href="@{/admin/staff(page=${pageNumber - 1},role=${roleFilter},username=${usernameFilter})}">← Trước</a>
+ th:href="@{/admin/staff(page=${pageNumber - 1},role=${roleFilter},username=${usernameFilter},enabled=${enabledFilter})}">← Trước</a>
 <span th:text="|Trang ${pageNumber + 1}|">Trang 1</span>
 <a th:if="${hasNext}" class="btn btn-outline btn-small"
  th:href="@{/admin/staff(page=${pageNumber + 1},role=${roleFilter},username=${usernameFilter})}">Sau →</a></nav>
