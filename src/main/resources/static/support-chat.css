@@ -35,3 +35,16 @@
 .chat-inline-read button:focus-visible{outline:3px solid #f26922;outline-offset:2px}
 @media(max-width:540px){.chat-unread-summary{display:flex;justify-content:center}
  .chat-inline-read{justify-content:stretch}.chat-inline-read button{width:100%}}
+
+/* Ticket progression based on stored timestamps (not a promised SLA). */
+.ticket-progress{margin:16px 0 22px}
+.ticket-progress h2{margin:0 0 14px}
+.ticket-progress-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
+ gap:12px;margin:0 0 12px}
+.ticket-progress-grid>div{min-width:0;background:#fffaf5;border:1px solid #f1d6be;
+ border-radius:12px;padding:12px 14px}
+.ticket-progress-grid dt{font-size:.82rem;color:#67564a;font-weight:650}
+.ticket-progress-grid dd{margin:6px 0 0;color:#8f3908;font-weight:750;
+ font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+@media(max-width:700px){.ticket-progress-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:430px){.ticket-progress-grid{grid-template-columns:1fr}}
