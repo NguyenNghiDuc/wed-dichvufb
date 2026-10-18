@@ -64,6 +64,8 @@ expect_refused 'mismatched checksum filename' bash scripts/ops/restore_sandbox.s
 printf '%s  %s\n' "$actual" "$bad" > "$sandbox/$bad.sha256"
 printf '%s  %s\n' "$actual" injected.dump >> "$sandbox/$bad.sha256"
 expect_refused 'extra checksum manifest entries' bash scripts/ops/restore_sandbox.sh --sandbox "$sandbox/$bad"
+printf '%0260d' 0 > "$sandbox/$bad.sha256"
+expect_refused 'oversized restore checksum manifest' bash scripts/ops/restore_sandbox.sh --sandbox "$sandbox/$bad"
 ln -s "$sandbox/$bad" "$sandbox/link.dump"
 expect_refused 'symlinked archive' bash scripts/ops/restore_sandbox.sh --sandbox "$sandbox/link.dump"
 # Read-only inventory detects healthy checksum, then a tampered archive.
@@ -76,6 +78,8 @@ grep -q 'PASS:' "$sandbox/inventory"
 digest="$(sha256sum "$sandbox/backups/$filename" | cut -d ' ' -f1)"
 printf '%s  wrong-name.dump\n' "$digest" > "$sandbox/backups/$filename.sha256"
 expect_refused 'backup inventory manifest wrong filename' bash scripts/ops/backup_inventory.sh --check "$sandbox/backups" 24
+printf '%0260d' 0 > "$sandbox/backups/$filename.sha256"
+expect_refused 'oversized inventory checksum manifest' bash scripts/ops/backup_inventory.sh --check "$sandbox/backups" 24
 printf '%s  %s\n' "$digest" "$filename" > "$sandbox/backups/$filename.sha256"
 printf 'tampered' >> "$sandbox/backups/$filename"
 expect_refused 'tampered backup inventory' bash scripts/ops/backup_inventory.sh --check "$sandbox/backups" 24
