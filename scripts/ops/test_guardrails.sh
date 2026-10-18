@@ -74,4 +74,8 @@ expect_refused 'stale copied backup inventory' bash scripts/ops/backup_inventory
 bash scripts/ops/rollback_plan.sh --plan aaaaaaa bbbbbbb > "$sandbox/rollback-plan"
 grep -q 'NO COMMANDS EXECUTED' "$sandbox/rollback-plan"
 [[ ! -e "$W10_MOCK_CALLS" ]] || { echo 'Rollback invoked Docker' >&2; exit 1; }
+# Independent test programs keep their own isolated mock commands and no live network.
+bash scripts/ops/test_preflight.sh
+bash scripts/ops/test_smoke.sh
+bash scripts/ops/test_monitor.sh
 echo 'PASS: offline Bash syntax and fail-closed operational guardrails'
