@@ -80,6 +80,19 @@ public class ChatWebController {
         return "redirect:/chat/ui/" + other;
     }
 
+    /** One-message read receipt with the contact tied to this chat view. */
+    @PostMapping("/{other}/messages/{id}/read")
+    public String readOne(@PathVariable String other, @PathVariable Long id,
+                          Principal principal) {
+        validateContact(principal.getName(), other);
+        try {
+            chats.markMessageReadFrom(principal.getName(), other, id);
+        } catch (IllegalArgumentException ex) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Tin nhắn không hợp lệ");
+        }
+        return "redirect:/chat/ui/" + other;
+    }
+
     @PostMapping("/{other}/read")
     public String read(@PathVariable String other, Principal principal) {
         validateContact(principal.getName(), other);
