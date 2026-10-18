@@ -59,9 +59,9 @@ class CustomerCampaignKeywordSearchIntegrationTest {
         mvc.perform(get("/campaigns").param("q","100%"))
             .andExpect(status().isOk())
             .andExpect(model().attribute("query","100%"))
-            .andExpect(content().string(containsString("100% thực tế")))
-            .andExpect(content().string(not(containsString("thuộc người khác"))))
-            .andExpect(content().string(containsString("q=100%")));
+            .andExpect(content().string(containsString("value=\"100%\"")))
+            .andExpect(content().string(containsString("#" + literal.getId())))
+            .andExpect(content().string(not(containsString("#" + foreign.getId()))));
         String csv = mvc.perform(get("/campaigns/export.csv").param("q","100%")
                 .param("ownerUsername","keyword-other"))
             .andExpect(status().isOk())
