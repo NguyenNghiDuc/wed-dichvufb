@@ -29,6 +29,19 @@
 <option th:each="p : ${T(com.example.fbservice.support.TicketPriority).values()}" th:value="${p.name()}" th:text="${p.title}" th:selected="${p == ticket.priority}"></option>
 </select>
 <button class="btn btn-small" type="submit">Lưu ưu tiên</button></form></article>
+<section class="card ticket-progress" aria-label="Tiến độ xử lý yêu cầu">
+<h2>Tiến độ xử lý</h2>
+<dl class="ticket-progress-grid">
+<div><dt>Trạng thái hiện tại</dt><dd th:text="${progress.status.title}">Đang chờ</dd></div>
+<div><dt>Ngày gửi yêu cầu</dt><dd th:text="${#temporals.format(progress.createdAt,'dd/MM/yyyy HH:mm')}">18/10/2026</dd></div>
+<div><dt>Cập nhật gần nhất</dt><dd th:text="${#temporals.format(progress.lastActivityAt,'dd/MM/yyyy HH:mm')}">18/10/2026</dd></div>
+<div><dt>Thời gian từ lúc tạo</dt><dd th:text="|${progress.ageMinutes} phút|">0 phút</dd></div>
+<div><dt>Không có cập nhật trong</dt><dd th:text="|${progress.idleMinutes} phút|">0 phút</dd></div>
+<div><dt>Phân công xử lý</dt><dd th:text="${progress.assigned ? 'Đã phân công' : 'Chưa phân công'}">Chưa phân công</dd></div>
+</dl>
+<p class="muted">Các thời gian trên là thời gian nội bộ kể từ lúc tạo và cập nhật;
+không phải thời gian SLA đã cam kết hay thời điểm hoàn tất được xác minh.</p>
+</section>
 <section class="section"><h2>Lịch sử phân công gần đây</h2>
 <div class="table-panel"><table class="data-table">
 <thead><tr><th>Thời gian</th><th>Thực hiện</th><th>Từ</th><th>Đến</th></tr></thead>
