@@ -59,6 +59,13 @@ public class SupportAdminController {
             .body(result);
     }
 
+    /** STAFF/ADMIN operational progress, protected by the existing route gate. */
+    @GetMapping("/{id}/progress")
+    public ResponseEntity<SupportTicketProgress> progress(@PathVariable Long id) {
+        return ResponseEntity.ok().header(HttpHeaders.CACHE_CONTROL, "no-store")
+                .body(service.progressForStaff(id));
+    }
+
     @GetMapping("/{id}")
     public String details(@PathVariable Long id, @RequestParam(defaultValue = "0") int page,
                           @RequestParam(required = false) String q,
@@ -66,6 +73,7 @@ public class SupportAdminController {
         var ticket = service.detailForAdmin(id);
         var messages = service.searchMessagesForStaff(id, page, q);
         model.addAttribute("ticket", ticket);
+        model.addAttribute("progress", service.progressForStaff(id));
         boolean admin = service.isActiveAdmin(principal.getName());
         model.addAttribute("canReassign", admin);
         if (admin) model.addAttribute("assignees", service.eligibleAssignees());
