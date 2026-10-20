@@ -22,7 +22,8 @@ public class WebSecurityConfig {
             .csrf(csrf -> csrf.ignoringRequestMatchers(
                 // The signed machine-to-machine callback is the ONLY CSRF exception.
                 // Restrict it to POST; all other state-changing methods remain protected.
-                new AntPathRequestMatcher("/api/v1/payments/webhooks/internal", "POST")))
+                new AntPathRequestMatcher("/api/v1/payments/webhooks/internal", "POST"),
+                new AntPathRequestMatcher("/api/v1/payments/webhooks/bank-settled", "POST")))
             .exceptionHandling(errors -> errors.accessDeniedHandler(new AuthenticationAccessDeniedHandler()))
             .authorizeHttpRequests(auth -> auth
                 .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
@@ -31,7 +32,8 @@ public class WebSecurityConfig {
                 .requestMatchers("/dich-vu/**").permitAll()
                 .requestMatchers("/", "/login", "/register", "/help", "/style.css", "/landing.js", "/site.js", "/favicon.ico",
                     "/actuator/health", "/actuator/health/**").permitAll()
-                .requestMatchers("/api/v1/payments/webhooks/internal").permitAll()
+                .requestMatchers("/api/v1/payments/webhooks/internal",
+                    "/api/v1/payments/webhooks/bank-settled").permitAll()
                 .requestMatchers("/admin/support/**", "/staff/**").hasAnyRole("ADMIN", "STAFF")
                 .requestMatchers("/admin/**", "/api/v1/admin/**").hasRole("ADMIN")
                 .anyRequest().authenticated())

@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ví của tôi · GrowLab</title><link rel="stylesheet" th:href="@{/style.css}"><script defer th:src="@{/site.js}"></script></head>
+<body class="account-page"><header th:replace="~{fragments/site_layout :: header}"></header>
+<main class="page container" id="page-content" tabindex="-1">
+<div class="page-header"><div><div class="eyebrow">TÀI KHOẢN / VÍ TIỀN</div><h1>Ví của tôi</h1>
+<p class="muted">Chỉ giao dịch đã xác minh mới được ghi có.</p></div>
+<a class="btn" th:href="@{/deposit/new}">＋ Tạo yêu cầu nạp tiền</a></div>
+<section class="card" aria-label="Số dư ví"><p class="muted">Tổng tiền đã ghi có (chưa dùng thanh toán đơn)</p>
+<h2 th:text="|${#numbers.formatInteger(balanceVnd,0,'POINT')} đ|">0 đ</h2></section>
+<h2>Lịch sử ghi có (50 giao dịch mới nhất)</h2>
+<div class="table-panel"><table class="data-table"><thead><tr><th scope="col">Yêu cầu</th>
+<th scope="col">Ngày ghi nhận (UTC)</th><th scope="col">Số tiền</th><th scope="col">Trạng thái</th></tr></thead>
+<tbody><tr th:each="c : ${credits}">
+<td><a class="table-link" th:href="@{/deposit/{id}(id=${c.depositRequestId})}" th:text="|#${c.depositRequestId}|"></a></td>
+<td th:text="${#temporals.format(c.createdAt,'dd/MM/yyyy HH:mm')}"></td>
+<td th:text="|+${#numbers.formatInteger(c.amountVnd,0,'POINT')} đ|"></td><td>Đã đối soát</td></tr>
+<tr th:if="${#lists.isEmpty(credits)}"><td colspan="4" class="empty-state">Chưa có khoản ghi có được xác minh.</td></tr>
+</tbody></table></div>
+<p class="footnote"><a class="table-link" th:href="@{/deposit/list}">Xem lịch sử yêu cầu nạp tiền →</a></p>
+</main></body></html>
