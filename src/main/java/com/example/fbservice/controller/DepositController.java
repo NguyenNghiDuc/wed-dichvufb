@@ -5,6 +5,8 @@ import com.example.fbservice.service.DepositService;
 import com.example.fbservice.payment.WalletCreditRepository;
 import org.springframework.beans.factory.annotation.Value;
 import java.security.Principal;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -17,18 +19,22 @@ public class DepositController {
     private final WalletCreditRepository credits;
     private final String bankAccount;
     private final String accountHolder;
+    private final String settlementSecret;
 
     public DepositController(DepositService deposits, WalletCreditRepository credits,
             @Value("#{environment.getProperty('growth.payments.bank.account-number', '')}") String bankAccount,
-            @Value("#{environment.getProperty('growth.payments.bank.account-holder', '')}") String accountHolder) {
+            @Value("#{environment.getProperty('growth.payments.bank.account-holder', '')}") String accountHolder,
+            @Value("#{environment.getProperty('growth.payments.bank-webhook-secret', '')}") String secret) {
         this.deposits = deposits;
         this.credits = credits;
         this.bankAccount = bankAccount.trim();
         this.accountHolder = accountHolder.trim();
+        this.settlementSecret = secret;
     }
 
     private boolean bankReady() {
-        return bankAccount.matches("[0-9]{6,24}") && !accountHolder.isBlank();
+        return bankAccount.matches("[0-9]{6,24}") && !accountHolder.isBlank()
+            && settlementSecret != null && settlementSecret.length() >= 32;
     }
 
     @GetMapping("/new")
@@ -68,6 +74,12 @@ public class DepositController {
         model.addAttribute("accountHolder",accountHolder);
         model.addAttribute("transferReference","GLNAP"+deposit.getId());
         model.addAttribute("walletCredited",credits.existsByDepositRequestId(deposit.getId()));
+        if(bankReady() && "PENDING".equals(deposit.getStatus())) {
+            model.addAttribute("qrUrl","https://img.vietqr.io/image/970407-"+bankAccount
+                +"-compact2.png?amount="+deposit.getAmount()
+                +"&addInfo=GLNAP"+deposit.getId()
+                +"&accountName="+URLEncoder.encode(accountHolder,StandardCharsets.UTF_8));
+        }
         return "deposit_detail";
     }
 

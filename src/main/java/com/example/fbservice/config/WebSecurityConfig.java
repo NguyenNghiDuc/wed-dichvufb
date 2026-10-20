@@ -20,7 +20,7 @@ public class WebSecurityConfig {
         return http
             .authenticationProvider(provider)
             .csrf(csrf -> csrf.ignoringRequestMatchers(
-                // The signed machine-to-machine callback is the ONLY CSRF exception.
+                // Only the two signed machine-to-machine callbacks are CSRF exceptions.
                 // Restrict it to POST; all other state-changing methods remain protected.
                 new AntPathRequestMatcher("/api/v1/payments/webhooks/internal", "POST"),
                 new AntPathRequestMatcher("/api/v1/payments/webhooks/bank-settled", "POST")))
@@ -39,7 +39,7 @@ public class WebSecurityConfig {
                 .anyRequest().authenticated())
             .headers(headers -> headers.contentSecurityPolicy(csp -> csp.policyDirectives(
                 "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; " +
-                "form-action 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:")))
+                "form-action 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: https://img.vietqr.io")))
             .addFilterBefore(new AccountStatusFilter(users,sessions), AuthorizationFilter.class)
             .formLogin(form -> form.loginPage("/login").authenticationDetailsSource(LoginRequestDetails::new)
                 .successHandler(loginSuccess).permitAll())

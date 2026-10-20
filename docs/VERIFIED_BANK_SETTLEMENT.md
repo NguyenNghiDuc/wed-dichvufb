@@ -1,7 +1,7 @@
 # Verified Techcombank transfer settlement – adapter contract (NOT live banking)
 
 ## Status
-The website can show a configured Techcombank recipient and a unique transfer reference for each pending deposit; it has a wallet credit ledger, customer wallet history and a signed verified-settlement intake.
+The website can show a configured Techcombank recipient, VietQR (via img.vietqr.io) and a unique transfer reference for each pending deposit ONLY when the trusted-settlement secret is also configured; it has a wallet credit ledger, customer wallet history and a signed verified-settlement intake.
 **No real Techcombank API, bank connection or approved payment provider is connected here.** Never claim auto-top-up is enabled until a bank/PSP provider integration has been approved, authenticated and tested with real settlement records.
 
 ## Configuration
@@ -10,7 +10,7 @@ The website can show a configured Techcombank recipient and a unique transfer re
 - \`GROWTH_BANK_SETTLEMENT_SECRET\`: distinct random secret (>=32 characters) shared ONLY with a trusted bank/PSP verification adapter. Do not reuse legacy \`GROWTH_WEBHOOK_SECRET\`.
 - Production: TLS, PostgreSQL with Flyway, secrets manager, secure operations and provider IP allowlist where appropriate.
 
-If bank account or secret is missing, the verified-settlement endpoint responds 503; no automatic credit is possible.
+If bank account or secret is missing, the verified-settlement endpoint responds 503; no automatic credit is possible. The UI hides transfer instructions until bank account, account holder AND settlement secret are configured. QR image is served by a third party (VietQR) so clients will send the transfer amount/reference to img.vietqr.io.
 
 ## Transfer / settle
 1. Authenticated customer creates deposit at \`/deposit/new\` (1,000–1,000,000,000 VND).
