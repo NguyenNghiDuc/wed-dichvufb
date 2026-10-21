@@ -1,0 +1,54 @@
+# Render Blueprint: GrowLab payment STAGING only.
+# Resources use paid compute and a private PostgreSQL database.
+# No live bank settlement, money collection, or automatic deposit credit is enabled.
+services:
+  - type: web
+    name: growlab-payment-staging
+    runtime: docker
+    repo: https://github.com/NguyenNghiDuc/wed-dichvufb
+    branch: feature/techcombank-wallet-settlement-20261021
+    region: singapore
+    plan: 1c-2g
+    autoDeployTrigger: off
+    healthCheckPath: /actuator/health
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      - key: PORT
+        value: "10000"
+      - key: RENDER_DB_HOST
+        fromDatabase:
+          name: growlab-payment-staging-db
+          property: host
+      - key: RENDER_DB_PORT
+        fromDatabase:
+          name: growlab-payment-staging-db
+          property: port
+      - key: RENDER_DB_NAME
+        fromDatabase:
+          name: growlab-payment-staging-db
+          property: database
+      - key: DB_USERNAME
+        fromDatabase:
+          name: growlab-payment-staging-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: growlab-payment-staging-db
+          property: password
+      - key: GROWTH_CASSO_ENABLED
+        value: "false"
+      - key: GROWTH_LIVE_PAYMENTS_READY
+        value: "false"
+      - key: GROWTH_INTERNAL_VERIFIED_ENABLED
+        value: "false"
+
+databases:
+  - name: growlab-payment-staging-db
+    databaseName: growlab_payment_staging
+    user: growlab_staging
+    postgresMajorVersion: "16"
+    region: singapore
+    plan: 0.5c-1g
+    diskSizeGB: 15
+    ipAllowList: []
