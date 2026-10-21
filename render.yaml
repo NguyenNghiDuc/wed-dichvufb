@@ -16,18 +16,12 @@ services:
         value: prod
       - key: PORT
         value: "10000"
-      - key: RENDER_DB_HOST
+      # Render Postgres supports connectionString (NOT fromDatabase.host / port).
+      # The entrypoint strips private URL userinfo and converts it to JDBC.
+      - key: RENDER_DATABASE_URL
         fromDatabase:
           name: growlab-payment-staging-db
-          property: host
-      - key: RENDER_DB_PORT
-        fromDatabase:
-          name: growlab-payment-staging-db
-          property: port
-      - key: RENDER_DB_NAME
-        fromDatabase:
-          name: growlab-payment-staging-db
-          property: database
+          property: connectionString
       - key: DB_USERNAME
         fromDatabase:
           name: growlab-payment-staging-db

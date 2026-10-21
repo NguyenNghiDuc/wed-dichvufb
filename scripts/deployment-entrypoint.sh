@@ -1,19 +1,32 @@
 #!/bin/sh
-# Compatible with local compose (DB_URL supplied) and Render's split Postgres env vars.
-# Never print connection credentials into deployment logs.
+# Render Postgres has one supported "connectionString" property, not host/port.
+# Extract the hostname/path into the JDBC URL; credentials are provided separately.
+# Local Docker Compose continues to use DB_URL directly.
 set -eu
 
-if [ -n "${RENDER_DB_HOST:-}" ]; then
-  : "${RENDER_DB_PORT:?Missing Render database port}"
-  : "${RENDER_DB_NAME:?Missing Render database name}"
-  : "${DB_USERNAME:?Missing database username}"
-  : "${DB_PASSWORD:?Missing database password}"
-  export DB_URL="jdbc:postgresql://${RENDER_DB_HOST}:${RENDER_DB_PORT}/${RENDER_DB_NAME}"
+if [ -n "${RENDER_DATABASE_URL:-}" ]; then
+  case "$RENDER_DATABASE_URL" in
+    postgresql://*@*/*)
+      connection="${RENDER_DATABASE_URL#postgresql://}"
+      host_and_database="${connection#*@}"
+      case "$host_and_database" in
+        *'@'*|*' '*|'')
+          echo 'Invalid Render PostgreSQL URL' >&2
+          exit 1
+          ;;
+      esac
+      export DB_URL="jdbc:postgresql://$host_and_database"
+      ;;
+    *)
+      echo 'Invalid Render PostgreSQL URL scheme or structure' >&2
+      exit 1
+      ;;
+  esac
 fi
 
-: "${DB_URL:?DB_URL or Render database fields are required}"
+: "${DB_URL:?DB_URL or RENDER_DATABASE_URL is required}"
 : "${DB_USERNAME:?DB_USERNAME is required}"
 : "${DB_PASSWORD:?DB_PASSWORD is required}"
 
-# Render exposes a dynamic PORT (10000 by default); Compose uses 8080.
+# Render listens on PORT=10000 (default), Compose on 8080.
 exec java -XX:MaxRAMPercentage=70 -Dserver.address=0.0.0.0 -Dserver.port="${PORT:-8080}" -jar /app/app.jar

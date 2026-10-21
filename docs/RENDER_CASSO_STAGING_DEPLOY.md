@@ -9,9 +9,9 @@ GrowLab uses a Java 17 / Spring Boot Dockerfile, PostgreSQL 16 + Flyway and requ
 1. In the Render account owned by the project, connect GitHub repository `NguyenNghiDuc/wed-dichvufb` and select the branch `feature/techcombank-wallet-settlement-20261021`.
 2. Select **New > Blueprint**, choose that repository/branch and root `render.yaml`.
 3. **Review paid resources before approving**: web `growlab-payment-staging` (1 CPU / 2 GiB) and database `growlab-payment-staging-db` (0.5 CPU / 1 GiB; 15 GiB disk). Both are deployed in Singapore. The database is only reachable through Render's internal network (public IP allow-list empty).
-4. In the Render dashboard, approve/provision the Blueprint. The repository contains no bank credentials. Database username/password flow from Render Postgres automatically into the web process. `scripts/deployment-entrypoint.sh` builds the JDBC URL and binds to `PORT` (10000 on Render).
+4. In the Render dashboard, approve/provision the Blueprint. The repository contains no bank credentials. The private `RENDER_DATABASE_URL` is provided by Render's supported `connectionString` property; `DB_USERNAME` and `DB_PASSWORD` come from the separately supported `user` and `password` properties. `scripts/deployment-entrypoint.sh` strips URL credentials and builds the PostgreSQL JDBC URL, binding to `PORT` (10000 on Render).
 5. Let the web service build with Docker, start `SPRING_PROFILES_ACTIVE=prod`, apply Flyway and pass `/actuator/health`. `autoDeployTrigger: off` means later pushes won't silently deploy a payment-sensitive branch.
-6. Copy the **actual public HTTPS URL assigned by Render** (do not guess a hostname). Check it in a browser and run:
+6. Copy the **actual public HTTPS URL assigned by Render** (do not guess a hostname). Run `sh scripts/render-staging-smoke.sh https://ACTUAL_RENDER_HOST` to verify the health route, login page, access control and payment webhook is safely disabled. You can also inspect it manually:
    ```sh
    curl -fsS "https://ACTUAL_RENDER_HOST/actuator/health"
    curl -I "https://ACTUAL_RENDER_HOST/login"
@@ -43,3 +43,8 @@ References:
 - https://render.com/docs/blueprint-spec
 - https://render.com/docs/health-checks
 - https://developer.casso.vn/webhook/thiet-lap-webhook-thu-cong
+
+## Local verification before deploying
+- Run `sh scripts/test_deployment_entrypoint.sh` to test Render URL conversion and Compose fallback with a mock Java command (does not connect to any database).
+- Run `render blueprints validate render.yaml` using the authenticated Render CLI for full provider schema and workspace validation. This requires Render access; ordinary YAML parsing alone is NOT authoritative validation.
+- The Render Blueprint does not create any service until the account owner explicitly approves it in the Render dashboard. Select the GitHub feature branch; the main branch does not yet include these files.
