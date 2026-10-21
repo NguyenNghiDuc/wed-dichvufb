@@ -13,4 +13,6 @@ public interface WalletCreditRepository extends JpaRepository<WalletCredit,Long>
     List<WalletCredit> findTop50ByOwnerUsernameOrderByCreatedAtDescIdDesc(String ownerUsername);
     @Query("select coalesce(sum(c.amountVnd),0) from WalletCredit c where c.ownerUsername=:owner")
     long balanceForUser(@Param("owner") String owner);
+    @Query("select coalesce(sum(c.amountVnd),0) from WalletCredit c")
+    long totalCreditedVnd();
 }

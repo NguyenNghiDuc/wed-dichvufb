@@ -44,3 +44,9 @@ If bank account or secret is missing, the verified-settlement endpoint responds 
 - Signed Casso demo/test deliveries are NOT proof that real Techcombank synchronization works. Manually reconcile at least one confirmed small bank transfer in staging before enabling public deposits. Casso Flow may have provider connection fees and availability constraints.
 - `/api/v1/payments/webhooks/bank-settled` (internal adapter) is now explicitly disabled unless `GROWTH_INTERNAL_VERIFIED_ENABLED=true`, and MUST remain disabled when using Casso directly.
 - Casso signature reference: https://github.com/CassoHQ/casso-webhook-v2-verify-signature and https://developer.casso.vn/webhook/thiet-lap-webhook-thu-cong.
+
+## Admin reconciliation board (read-only)
+- `GET /admin/deposits/reconciliation` is ADMIN-only, paginated, and read-only.
+- Shows verified wallet credit count/total, pending requests, pending older than 24 hours and APPROVED requests without any wallet credit (including legacy generic webhook).
+- APPROVED without wallet credit is not bank payment proof. Verify directly with bank/Casso before any correction or refund.
+- New requests redirect to `/deposit/{id}` so customers can see their unique reference. Actual bank QR remains disabled until live activation.

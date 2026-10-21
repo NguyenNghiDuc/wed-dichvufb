@@ -53,9 +53,9 @@ public class DepositController {
     @PostMapping("/create")
     public String create(@ModelAttribute("deposit") DepositRequest input, Principal principal, Model model, RedirectAttributes redirect) {
         try {
-            deposits.save(input, principal.getName());
-            redirect.addFlashAttribute("success", "Đã gửi yêu cầu nạp tiền. Yêu cầu đang chờ xử lý, chưa ghi có số dư.");
-            return "redirect:/deposit/list";
+            DepositRequest created=deposits.save(input,principal.getName());
+            redirect.addFlashAttribute("success","Đã tạo yêu cầu nạp tiền #"+created.getId()+". Chưa ghi có số dư.");
+            return "redirect:/deposit/"+created.getId();
         } catch (IllegalArgumentException ex) {
             model.addAttribute("error", ex.getMessage());
             model.addAttribute("bankReady", bankReady());
