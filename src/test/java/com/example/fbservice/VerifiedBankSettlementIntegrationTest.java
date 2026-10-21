@@ -24,7 +24,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
   "spring.datasource.url=jdbc:h2:mem:banksettlements;DB_CLOSE_DELAY=-1",
   "growth.payments.bank.account-number=123456789012",
   "growth.payments.bank.account-holder=GrowLab Test",
-  "growth.payments.bank-webhook-secret=0123456789abcdef0123456789abcdef"
+  "growth.payments.bank-webhook-secret=0123456789abcdef0123456789abcdef",
+  "growth.payments.internal-verified-enabled=true"
 })
 class VerifiedBankSettlementIntegrationTest {
     private static final String SECRET="0123456789abcdef0123456789abcdef";

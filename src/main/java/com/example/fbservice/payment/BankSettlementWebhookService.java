@@ -25,6 +25,7 @@ public class BankSettlementWebhookService {
     private static final Pattern REFERENCE=
         Pattern.compile("(?:^|[^A-Z0-9])GLNAP([1-9][0-9]{0,17})(?=$|[^A-Z0-9])");
     private final String secret;
+    private final boolean internalEnabled;
     private final String destinationAccount;
     private final DepositRequestRepository deposits;
     private final PaymentReceiptRepository receipts;
@@ -34,10 +35,11 @@ public class BankSettlementWebhookService {
 
     public BankSettlementWebhookService(
         @Value("#{environment.getProperty('growth.payments.bank-webhook-secret', '')}") String secret,
+        @Value("#{environment.getProperty('growth.payments.internal-verified-enabled', 'false')}") boolean internalEnabled,
         @Value("#{environment.getProperty('growth.payments.bank.account-number', '')}") String account,
         DepositRequestRepository deposits,PaymentReceiptRepository receipts,
         WalletCreditRepository credits,AccountNotificationRepository notifications,ObjectMapper json) {
-        this.secret=secret; this.destinationAccount=account.trim();
+        this.secret=secret; this.internalEnabled=internalEnabled; this.destinationAccount=account.trim();
         this.deposits=deposits; this.receipts=receipts; this.credits=credits;
         this.notifications=notifications; this.json=json;
     }
@@ -46,7 +48,7 @@ public class BankSettlementWebhookService {
     public Map<String,Object> accept(String body,String providedSignature){
         // Fail closed: only a trusted, independently verified bank/PSP adapter gets this secret.
         // An HMAC on an unverified customer claim is NOT evidence of a settled transfer.
-        if(secret==null||secret.length()<32||!destinationAccount.matches("[0-9]{6,24}"))
+        if(!internalEnabled||secret==null||secret.length()<32||!destinationAccount.matches("[0-9]{6,24}"))
             throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,"Bank settlement adapter not configured");
         if(body==null||body.length()>8192)
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Invalid payload size");
@@ -64,6 +66,15 @@ public class BankSettlementWebhookService {
         BankSettlementEvent event;
         try{event=json.readValue(body,BankSettlementEvent.class);}
         catch(Exception ex){throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Invalid settlement event");}
+        return creditVerified(event);
+    }
+
+    /**
+     * Invoke ONLY after a provider-specific adapter validates the provider's
+     * signed webhook. This method has no HTTP mapping.
+     */
+    @Transactional
+    public Map<String,Object> creditVerified(BankSettlementEvent event){
         if(event==null||event.eventId()==null||!event.eventId().matches("[A-Za-z0-9_-]{8,100}")||
            event.transactionId()==null||!event.transactionId().matches("[A-Za-z0-9_-]{8,100}")||
            event.amountVnd()==null||event.amountVnd()<1000||event.amountVnd()>1000000000L||

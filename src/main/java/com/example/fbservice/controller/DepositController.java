@@ -19,22 +19,28 @@ public class DepositController {
     private final WalletCreditRepository credits;
     private final String bankAccount;
     private final String accountHolder;
-    private final String settlementSecret;
+    private final String cassoSecret;
+    private final boolean cassoEnabled;
+    private final boolean liveReady;
 
     public DepositController(DepositService deposits, WalletCreditRepository credits,
             @Value("#{environment.getProperty('growth.payments.bank.account-number', '')}") String bankAccount,
             @Value("#{environment.getProperty('growth.payments.bank.account-holder', '')}") String accountHolder,
-            @Value("#{environment.getProperty('growth.payments.bank-webhook-secret', '')}") String secret) {
+            @Value("#{environment.getProperty('growth.payments.casso.webhook-secret', '')}") String cassoSecret,
+            @Value("#{environment.getProperty('growth.payments.casso.enabled', 'false')}") boolean cassoEnabled,
+            @Value("#{environment.getProperty('growth.payments.live-ready', 'false')}") boolean liveReady) {
         this.deposits = deposits;
         this.credits = credits;
         this.bankAccount = bankAccount.trim();
         this.accountHolder = accountHolder.trim();
-        this.settlementSecret = secret;
+        this.cassoSecret = cassoSecret;
+        this.cassoEnabled = cassoEnabled;
+        this.liveReady = liveReady;
     }
 
     private boolean bankReady() {
         return bankAccount.matches("[0-9]{6,24}") && !accountHolder.isBlank()
-            && settlementSecret != null && settlementSecret.length() >= 32;
+            && liveReady && cassoEnabled && cassoSecret != null && cassoSecret.length() >= 32;
     }
 
     @GetMapping("/new")

@@ -33,3 +33,14 @@ If bank account or secret is missing, the verified-settlement endpoint responds 
 - Wallet currently has **credits only**. Do not enable order purchases/debits, withdrawals or refunds until debit-side locking, ledger entries and refund controls are built/tested.
 - Keep account details out of Git; do not edit old Flyway files. V40 migration is forward-only.
 - Verify \`mvn -B clean verify\` (with Postgres test DB) and staging with a REAL verified provider adapter before production.
+
+
+## Casso Flow V2 provider adapter (implemented, OFF by default)
+- Casso documents Techcombank statement synchronization via its Flow product; it is a Casso read-only/RPA data connector, **not a public Techcombank API or a confirmed supported individual account**. Confirm provider eligibility and bank contractual terms before connecting.
+- Use Casso **Webhook V2** only. URL: `https://YOUR_DOMAIN/api/v1/payments/webhooks/casso-v2`.
+- Configure `GROWTH_BANK_ACCOUNT_NUMBER`, `GROWTH_BANK_ACCOUNT_HOLDER`, `GROWTH_CASSO_WEBHOOK_SECRET` (Casso V2 secret key), `GROWTH_CASSO_ENABLED=true` and, **after** approval + end-to-end test, `GROWTH_LIVE_PAYMENTS_READY=true` in deployment secrets (never in Git). Leave both flags OFF until all prerequisites pass.
+- Casso V2 signature: `X-Casso-Signature: t=<milliseconds>,v1=<hex>`; canonical JSON of all recursively alphabetically sorted payload keys; HMAC-SHA512 over `timestamp + '.' + canonical_json`. Webhook rejects missing/invalid signature and timestamps outside 26 hours past / 5 min future. Key stays secret; never expose in browser or commit it.
+- Requires `error=0`, positive incoming `data.amount`, `data.bankAbbreviation=TCB`, `data.accountNumber` matching configured recipient and `data.id>0` as provider transaction identity. It uses `data.description` for unique `GLNAP{id}` reference. Unique ledger constraints and row locking prevent duplicate wallet credits.
+- Signed Casso demo/test deliveries are NOT proof that real Techcombank synchronization works. Manually reconcile at least one confirmed small bank transfer in staging before enabling public deposits. Casso Flow may have provider connection fees and availability constraints.
+- `/api/v1/payments/webhooks/bank-settled` (internal adapter) is now explicitly disabled unless `GROWTH_INTERNAL_VERIFIED_ENABLED=true`, and MUST remain disabled when using Casso directly.
+- Casso signature reference: https://github.com/CassoHQ/casso-webhook-v2-verify-signature and https://developer.casso.vn/webhook/thiet-lap-webhook-thu-cong.

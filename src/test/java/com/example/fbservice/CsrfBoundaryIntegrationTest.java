@@ -17,7 +17,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @TestPropertySource(properties={
     "spring.datasource.url=jdbc:h2:mem:csrfregression;DB_CLOSE_DELAY=-1",
-    "growth.payments.webhook-secret=test-only-local-nonproduction-signing-key-123456789"
+    "growth.payments.webhook-secret=test-only-local-nonproduction-signing-key-123456789",
+    "growth.payments.internal-verified-enabled=true"
 })
 class CsrfBoundaryIntegrationTest {
     @Autowired MockMvc mvc;
