@@ -9,7 +9,7 @@ services:
     branch: feature/techcombank-wallet-settlement-20261021
     region: singapore
     plan: 1c-2g
-    autoDeployTrigger: off
+    autoDeployTrigger: "off"
     healthCheckPath: /actuator/health
     envVars:
       - key: SPRING_PROFILES_ACTIVE
