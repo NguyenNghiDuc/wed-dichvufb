@@ -54,9 +54,15 @@ class DepositManagementIntegrationTest {
   var records=(org.springframework.data.domain.Page<?>)result.getModelAndView().getModel().get("records");
   assertThat(records.getTotalElements()).isEqualTo(1);
  }
- @Test void createRedirectsToHistoryWithAnExplicitPendingConfirmation() throws Exception {
-  mvc.perform(post("/deposit/create").with(user("new_owner")).with(csrf()).param("amount","50000").param("status","APPROVED").param("ownerUsername","victim"))
-   .andExpect(redirectedUrl("/deposit/list")).andExpect(flash().attributeExists("success"));
-  var saved=repo.findByOwnerUsernameOrderByCreatedAtDesc("new_owner");assertThat(saved).hasSize(1);assertThat(saved.get(0).getStatus()).isEqualTo("PENDING");
+ @Test void createRedirectsToUniqueReferenceWithAnExplicitPendingConfirmation() throws Exception {
+  var response=mvc.perform(post("/deposit/create").with(user("new_owner")).with(csrf())
+    .param("amount","50000").param("status","APPROVED").param("ownerUsername","victim"))
+    .andExpect(status().is3xxRedirection()).andExpect(flash().attributeExists("success")).andReturn();
+  var saved=repo.findByOwnerUsernameOrderByCreatedAtDesc("new_owner");
+  assertThat(saved).hasSize(1);
+  assertThat(saved.get(0).getStatus()).isEqualTo("PENDING");
+  assertThat(response.getResponse().getRedirectedUrl()).isEqualTo("/deposit/"+saved.get(0).getId());
+  mvc.perform(get("/deposit/"+saved.get(0).getId()).with(user("new_owner")))
+    .andExpect(status().isOk()).andExpect(model().attribute("transferReference","GLNAP"+saved.get(0).getId()));
  }
 }

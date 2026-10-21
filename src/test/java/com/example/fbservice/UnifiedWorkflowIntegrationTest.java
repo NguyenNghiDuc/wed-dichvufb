@@ -24,7 +24,8 @@ class UnifiedWorkflowIntegrationTest {
  @Autowired AccountNotificationRepository notices;
  @Test void publicPagesUseSharedThemeWithoutLeakingPrivilegedLinks() throws Exception {
   for(String path:new String[]{"/login","/register","/help"}){
-   mvc.perform(get(path)).andExpect(status().isOk()).andExpect(content().string(containsString("class=\"account-page\"")))
+   mvc.perform(get(path)).andExpect(status().isOk()).andExpect(content().string(containsString(path.equals("/help") ?
+        "class=\"account-page\"" : "class=\"auth-page\"")))
     .andExpect(content().string(containsString("/site.js")))
     .andExpect(content().string(not(containsString("/admin/users"))));
   }

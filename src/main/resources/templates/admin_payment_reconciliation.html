@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Đối soát thanh toán · GrowLab</title><link rel="stylesheet" th:href="@{/style.css}">
+<script defer th:src="@{/site.js}"></script></head>
+<body class="account-page"><header th:replace="~{fragments/site_layout :: header}"></header>
+<main class="page container" id="page-content" tabindex="-1">
+<div class="page-header"><div><div class="eyebrow">ADMIN / THANH TOÁN</div>
+<h1>Đối soát nạp tiền</h1><p class="muted">Bảng chỉ đọc: không tự cộng tiền hay xác nhận chuyển khoản bằng tay.</p></div>
+<a class="btn btn-outline" th:href="@{/admin/deposits}">← Quản lý yêu cầu</a></div>
+<div class="grid cards-grid">
+<section class="card"><h2>Ghi có đã đối soát</h2>
+<p><strong th:text="|${#numbers.formatInteger(creditedTotal,0,'POINT')} đ|"></strong></p>
+<p class="muted" th:text="|${creditedCount} giao dịch đã ghi có|"></p></section>
+<section class="card"><h2>Đã xác nhận nhưng chưa ghi có</h2>
+<p><strong th:text="${approvedWithoutCredit}">0</strong></p>
+<p class="muted">Cần kiểm tra nguồn thanh toán và giao dịch cũ; không tự tạo số dư.</p></section>
+<section class="card"><h2>Yêu cầu đang chờ</h2>
+<p><strong th:text="${pendingCount}">0</strong></p>
+<p class="muted" th:text="|${olderPendingCount} yêu cầu quá 24 giờ (chưa chắc đã trả tiền)|"></p></section>
+</div>
+<h2>Danh sách cần kiểm tra: trạng thái APPROVED nhưng chưa có ghi có</h2>
+<p class="muted">Có thể có yêu cầu đã được xác nhận trong luồng cũ. Chỉ đánh giá sau khi đối chiếu ngân hàng/Casso.</p>
+<div class="table-panel"><table class="data-table"><thead><tr>
+<th scope="col">Mã yêu cầu</th><th scope="col">Tài khoản khách</th>
+<th scope="col">Ngày tạo (UTC)</th><th scope="col">Số tiền yêu cầu</th><th scope="col">Trạng thái</th></tr></thead>
+<tbody>
+<tr th:each="d : ${uncredited.content}"><td th:text="|#${d.id}|"></td>
+<td th:text="${d.ownerUsername}"></td>
+<td th:text="${#temporals.format(d.createdAt,'dd/MM/yyyy HH:mm')}"></td>
+<td th:text="|${#numbers.formatInteger(d.amount,0,'POINT')} đ|"></td>
+<td>Chưa có bản ghi ghi có</td></tr>
+<tr th:if="${uncredited.empty}"><td colspan="5" class="empty-state">Không có yêu cầu đã duyệt nhưng thiếu ghi có ví.</td></tr>
+</tbody></table></div>
+<nav class="actions" aria-label="Phân trang yêu cầu chưa ghi có">
+<a class="btn btn-outline" th:if="${uncredited.hasPrevious()}" th:href="@{/admin/deposits/reconciliation(page=${uncredited.number - 1})}">← Trang trước</a>
+<a class="btn btn-outline" th:if="${uncredited.hasNext()}" th:href="@{/admin/deposits/reconciliation(page=${uncredited.number + 1})}">Trang sau →</a></nav>
+<p class="footnote">Giao dịch thiếu hoặc sai mã chuyển khoản: kiểm tra tại nhà cung cấp và sao kê ngân hàng. Không được ghi có khi chưa xác minh.</p>
+</main></body></html>

@@ -17,7 +17,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @TestPropertySource(properties={
     "spring.datasource.url=jdbc:h2:mem:csrfregression;DB_CLOSE_DELAY=-1",
-    "growth.payments.webhook-secret=test-only-local-nonproduction-signing-key-123456789"
+    "growth.payments.webhook-secret=test-only-local-nonproduction-signing-key-123456789",
+    "growth.payments.internal-verified-enabled=true"
 })
 class CsrfBoundaryIntegrationTest {
     @Autowired MockMvc mvc;
@@ -34,14 +35,16 @@ class CsrfBoundaryIntegrationTest {
     void loginAndRegistrationPostsRequireCsrfEvenWhenPubliclyAccessible() throws Exception {
         mvc.perform(post("/register").param("username", "newtestuser")
                 .param("password", "not-a-real-password"))
-            .andExpect(status().isForbidden());
+            .andExpect(status().is3xxRedirection())
+            .andExpect(redirectedUrl("/register?sessionExpired"));
         mvc.perform(post("/register").with(csrf()).param("username", "xx")
                 .param("password", "not-a-real-password"))
             .andExpect(status().isOk())
             .andExpect(view().name("register"));
         mvc.perform(post("/login").param("username", "unknown-csrf-test")
                 .param("password", "incorrect"))
-            .andExpect(status().isForbidden());
+            .andExpect(status().is3xxRedirection())
+            .andExpect(redirectedUrl("/login?sessionExpired"));
         mvc.perform(post("/login").with(csrf()).param("username", "unknown-csrf-test")
                 .param("password", "incorrect"))
             .andExpect(status().is3xxRedirection());

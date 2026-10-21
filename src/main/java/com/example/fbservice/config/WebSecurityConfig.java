@@ -20,9 +20,11 @@ public class WebSecurityConfig {
         return http
             .authenticationProvider(provider)
             .csrf(csrf -> csrf.ignoringRequestMatchers(
-                // The signed machine-to-machine callback is the ONLY CSRF exception.
+                // Only signed machine-to-machine callbacks are CSRF exceptions.
                 // Restrict it to POST; all other state-changing methods remain protected.
-                new AntPathRequestMatcher("/api/v1/payments/webhooks/internal", "POST")))
+                new AntPathRequestMatcher("/api/v1/payments/webhooks/internal", "POST"),
+                new AntPathRequestMatcher("/api/v1/payments/webhooks/bank-settled", "POST"),
+                new AntPathRequestMatcher("/api/v1/payments/webhooks/casso-v2", "POST")))
             .exceptionHandling(errors -> errors.accessDeniedHandler(new AuthenticationAccessDeniedHandler()))
             .authorizeHttpRequests(auth -> auth
                 .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
@@ -31,13 +33,15 @@ public class WebSecurityConfig {
                 .requestMatchers("/dich-vu/**").permitAll()
                 .requestMatchers("/", "/login", "/register", "/help", "/style.css", "/landing.js", "/site.js", "/favicon.ico",
                     "/actuator/health", "/actuator/health/**").permitAll()
-                .requestMatchers("/api/v1/payments/webhooks/internal").permitAll()
+                .requestMatchers("/api/v1/payments/webhooks/internal",
+                    "/api/v1/payments/webhooks/bank-settled",
+                    "/api/v1/payments/webhooks/casso-v2").permitAll()
                 .requestMatchers("/admin/support/**", "/staff/**").hasAnyRole("ADMIN", "STAFF")
                 .requestMatchers("/admin/**", "/api/v1/admin/**").hasRole("ADMIN")
                 .anyRequest().authenticated())
             .headers(headers -> headers.contentSecurityPolicy(csp -> csp.policyDirectives(
                 "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; " +
-                "form-action 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:")))
+                "form-action 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: https://img.vietqr.io")))
             .addFilterBefore(new AccountStatusFilter(users,sessions), AuthorizationFilter.class)
             .formLogin(form -> form.loginPage("/login").authenticationDetailsSource(LoginRequestDetails::new)
                 .successHandler(loginSuccess).permitAll())
