@@ -1,6 +1,5 @@
 package com.example.fbservice;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -58,7 +57,7 @@ class RenderStagingDeploymentTest {
 
     @Test void deploymentShellHandlesRenderAndDockerComposeWithoutJavaProcess() throws Exception {
         Assumptions.assumeTrue(!System.getProperty("os.name").toLowerCase().contains("windows"));
-        Process process = new ProcessBuilder("sh","scripts/test_deployment_entrypoint.sh")
+        Process process = new ProcessBuilder("/bin/sh","scripts/test_deployment_entrypoint.sh")
             .redirectErrorStream(true).start();
         try {
             boolean finished=process.waitFor(12,TimeUnit.SECONDS);

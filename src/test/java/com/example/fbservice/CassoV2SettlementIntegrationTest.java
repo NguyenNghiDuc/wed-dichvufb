@@ -43,7 +43,7 @@ class CassoV2SettlementIntegrationTest {
         DepositRequest d=new DepositRequest();
         d.setAmount(amount);return deposits.save(d,owner);
     }
-    private String payload(DepositRequest deposit,long cassoId,long amount,String account,
+    private String payload(long cassoId,long amount,String account,
                            String bankCode,String description) throws Exception{
         Map<String,Object> inner=new TreeMap<>();
         inner.put("accountNumber",account);
@@ -67,7 +67,7 @@ class CassoV2SettlementIntegrationTest {
 
     @Test void authenticSignedIncomingTransferCreditsOnceAndDedupesProviderId() throws Exception {
         DepositRequest d=create("casso_owner",50000);
-        String body=payload(d,9971501L,50000,"123456789012","TCB","GLNAP"+d.getId());
+        String body=payload(9971501L,50000,"123456789012","TCB","GLNAP"+d.getId());
         String signature=sig(body);
         mvc.perform(post("/api/v1/payments/webhooks/casso-v2").contentType("application/json")
             .content(body)).andExpect(status().isBadRequest());
@@ -89,12 +89,12 @@ class CassoV2SettlementIntegrationTest {
         DepositRequest d=create("casso_bad",82000);
         String ref="GLNAP"+d.getId();
         String[] bad={
-          payload(d,9971502L,81000,"123456789012","TCB",ref),
-          payload(d,9971503L,82000,"999999999999","TCB",ref),
-          payload(d,9971504L,82000,"123456789012","MBB",ref),
-          payload(d,9971505L,-82000,"123456789012","TCB",ref),
-          payload(d,0,82000,"123456789012","TCB",ref),
-          payload(d,9971506L,82000,"123456789012","TCB","NO-REFERENCE")
+          payload(9971502L,81000,"123456789012","TCB",ref),
+          payload(9971503L,82000,"999999999999","TCB",ref),
+          payload(9971504L,82000,"123456789012","MBB",ref),
+          payload(9971505L,-82000,"123456789012","TCB",ref),
+          payload(0,82000,"123456789012","TCB",ref),
+          payload(9971506L,82000,"123456789012","TCB","NO-REFERENCE")
         };
         for(String body:bad){
             mvc.perform(post("/api/v1/payments/webhooks/casso-v2").contentType("application/json")
@@ -108,10 +108,10 @@ class CassoV2SettlementIntegrationTest {
     @Test void aSingleProviderIdCannotFundAnotherDeposit() throws Exception {
         var first=create("casso_first",90000);
         var second=create("casso_second",90000);
-        String a=payload(first,9971507L,90000,"123456789012","TCB","GLNAP"+first.getId());
+        String a=payload(9971507L,90000,"123456789012","TCB","GLNAP"+first.getId());
         mvc.perform(post("/api/v1/payments/webhooks/casso-v2").contentType("application/json")
             .header("X-Casso-Signature",sig(a)).content(a)).andExpect(status().isOk());
-        String b=payload(second,9971507L,90000,"123456789012","TCB","GLNAP"+second.getId());
+        String b=payload(9971507L,90000,"123456789012","TCB","GLNAP"+second.getId());
         mvc.perform(post("/api/v1/payments/webhooks/casso-v2").contentType("application/json")
             .header("X-Casso-Signature",sig(b)).content(b)).andExpect(status().isConflict());
         assertThat(credits.balanceForUser("casso_second")).isZero();

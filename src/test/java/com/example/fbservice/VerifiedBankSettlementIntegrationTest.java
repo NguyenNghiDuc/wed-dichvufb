@@ -42,14 +42,14 @@ class VerifiedBankSettlementIntegrationTest {
         DepositRequest d=new DepositRequest();d.setAmount(amount);
         return service.save(d,owner);
     }
-    private String event(DepositRequest d,String transactionId,long amount,String destination,String ref){
+    private String event(String transactionId,long amount,String destination,String ref){
         return "{\"eventId\":\"event-001-"+transactionId+"\",\"transactionId\":\""+transactionId
             +"\",\"amountVnd\":"+amount+",\"destinationAccount\":\""+destination
             +"\",\"description\":\""+ref+"\",\"status\":\"SETTLED\"}";
     }
     @Test void onlySignedMatchedTransferCreditsWalletExactlyOnce() throws Exception {
         DepositRequest d=deposit("bank_alice",50000);
-        String body=event(d,"txn-bank-00001",50000,"123456789012","GLNAP"+d.getId());
+        String body=event("txn-bank-00001",50000,"123456789012","GLNAP"+d.getId());
         mvc.perform(post("/api/v1/payments/webhooks/bank-settled").contentType("application/json")
             .content(body)).andExpect(status().isUnauthorized());
         assertThat(credits.balanceForUser("bank_alice")).isZero();
@@ -71,9 +71,9 @@ class VerifiedBankSettlementIntegrationTest {
     @Test void wrongAccountWrongAmountAndReferenceNeverCredit() throws Exception {
         DepositRequest d=deposit("bank_invalid",81000);
         for(String body:new String[]{
-            event(d,"txn-bank-00002",81000,"999999999999","GLNAP"+d.getId()),
-            event(d,"txn-bank-00003",79000,"123456789012","GLNAP"+d.getId()),
-            event(d,"txn-bank-00004",81000,"123456789012","SOME-OTHER-TEXT")
+            event("txn-bank-00002",81000,"999999999999","GLNAP"+d.getId()),
+            event("txn-bank-00003",79000,"123456789012","GLNAP"+d.getId()),
+            event("txn-bank-00004",81000,"123456789012","SOME-OTHER-TEXT")
         }){
             mvc.perform(post("/api/v1/payments/webhooks/bank-settled").contentType("application/json")
                 .header("X-GrowLab-Signature",sign(body)).content(body))
@@ -84,11 +84,11 @@ class VerifiedBankSettlementIntegrationTest {
     }
     @Test void unrelatedValidBankTransactionCannotCreditSecondDeposit() throws Exception {
         DepositRequest one=deposit("bank_first",70000), two=deposit("bank_second",70000);
-        String first=event(one,"txn-bank-00005",70000,"123456789012","GLNAP"+one.getId());
+        String first=event("txn-bank-00005",70000,"123456789012","GLNAP"+one.getId());
         mvc.perform(post("/api/v1/payments/webhooks/bank-settled").contentType("application/json")
             .header("X-GrowLab-Signature",sign(first)).content(first))
             .andExpect(status().isOk());
-        String stolen=event(two,"txn-bank-00005",70000,"123456789012","GLNAP"+two.getId());
+        String stolen=event("txn-bank-00005",70000,"123456789012","GLNAP"+two.getId());
         mvc.perform(post("/api/v1/payments/webhooks/bank-settled").contentType("application/json")
             .header("X-GrowLab-Signature",sign(stolen)).content(stolen))
             .andExpect(status().isConflict());
