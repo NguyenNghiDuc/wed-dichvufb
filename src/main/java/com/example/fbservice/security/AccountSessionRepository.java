@@ -5,6 +5,9 @@ import java.util.*;
 import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 public interface AccountSessionRepository extends JpaRepository<AccountSession,Long>{
+ Optional<AccountSession> findBySessionHash(String hash);
+ @Modifying @Query("update AccountSession s set s.lastSeenAt=:now,s.expiresAt=:expiry where s.sessionHash=:hash and s.userId=:userId and s.authVersion=:version and s.revokedAt is null and s.expiresAt>:now")
+ int touchActive(@Param("hash") String hash,@Param("userId") Long userId,@Param("version") long version,@Param("now") LocalDateTime now,@Param("expiry") LocalDateTime expiry);
  @Lock(LockModeType.PESSIMISTIC_WRITE) @Query("select s from AccountSession s where s.sessionHash=:hash")
  Optional<AccountSession> lockByHash(@Param("hash") String hash);
  @Lock(LockModeType.PESSIMISTIC_WRITE) @Query("select s from AccountSession s where s.id=:id and s.userId=:userId")

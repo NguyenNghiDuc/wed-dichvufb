@@ -16,11 +16,13 @@ import org.springframework.web.server.ResponseStatusException;
 public class ContentDraftService {
     private static final int PAGE_SIZE = 20;
     private final ContentDraftRepository drafts;
-    public ContentDraftService(ContentDraftRepository drafts){this.drafts=drafts;}
+    private final com.example.fbservice.config.TrafficLimiter limiter;
+    public ContentDraftService(ContentDraftRepository drafts,com.example.fbservice.config.TrafficLimiter limiter){this.drafts=drafts;this.limiter=limiter;}
 
     @Transactional
     public ContentDraft save(String owner,SocialPlatform platform,String title,String body,LocalDateTime when){
         validate(owner,platform,title,body,when);
+        limiter.check("content:write:"+owner,200,java.time.Duration.ofHours(1));
         return drafts.save(new ContentDraft(owner,platform,title.strip(),body.strip(),when));
     }
 
@@ -45,6 +47,7 @@ public class ContentDraftService {
     public ContentDraft revise(String owner,Long id,SocialPlatform platform,
                                String title,String body,LocalDateTime when) {
         validate(owner,platform,title,body,when);
+        limiter.check("content:write:"+owner,200,java.time.Duration.ofHours(1));
         // Row lock + ownership in SQL avoids racing another request or exposing foreign drafts.
         ContentDraft draft=lockMine(owner,id);
         draft.revise(platform,title.strip(),body.strip(),when);
@@ -53,6 +56,7 @@ public class ContentDraftService {
 
     @Transactional
     public void deleteMine(String owner,Long id) {
+        limiter.check("content:write:"+owner,200,java.time.Duration.ofHours(1));
         drafts.delete(lockMine(owner,id));
     }
 

@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.server.ResponseStatusException;
 
-/** Local defense-in-depth. Move to shared store for multi-instance deployments. */
+/** Shared limits per peer/account, plus a broader source budget against account rotation. */
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE + 10)
 public class AuthenticationRateLimitFilter extends OncePerRequestFilter {
@@ -37,7 +37,11 @@ public class AuthenticationRateLimitFilter extends OncePerRequestFilter {
         String action = request.getRequestURI().substring(request.getContextPath().length());
         String client = request.getRemoteAddr();
         try {
-            limiter.check("auth:" + action + ":" + client, 10, Duration.ofMinutes(10));
+            String name=request.getParameter("username");
+            name=name==null?"":name.strip();
+            if(name.length()>100)name=name.substring(0,100);
+            limiter.check("auth-source:"+action+":"+client,"/register".equals(action)?30:300,Duration.ofMinutes(10));
+            limiter.check("auth:"+action+":"+client+":"+name,10,Duration.ofMinutes(10));
         } catch (ResponseStatusException exception) {
             response.setHeader("Retry-After", "600");
             response.sendError(HttpStatus.TOO_MANY_REQUESTS.value(), "Too many authentication attempts");

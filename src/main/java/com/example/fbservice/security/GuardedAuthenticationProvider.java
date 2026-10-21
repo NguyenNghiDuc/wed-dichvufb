@@ -11,27 +11,33 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-/** Account-row lock makes the failure window shared and atomic across application instances. */
+/** Shared source/account throttling; account-row locking preserves failure audit counters. */
 @Component
 public class GuardedAuthenticationProvider extends DaoAuthenticationProvider {
  private final UserRepository users;
  private final AccountSecurityEventRepository events;
  private final Clock clock;
+ private final com.example.fbservice.config.TrafficLimiter limiter;
  public GuardedAuthenticationProvider(DatabaseUserDetailsService details,PasswordEncoder encoder,
-     UserRepository users,AccountSecurityEventRepository events,Clock clock){
-  setUserDetailsService(details);setPasswordEncoder(encoder);this.users=users;this.events=events;this.clock=clock;
+     UserRepository users,AccountSecurityEventRepository events,Clock clock,com.example.fbservice.config.TrafficLimiter limiter){
+  setUserDetailsService(details);setPasswordEncoder(encoder);this.users=users;this.events=events;this.clock=clock;this.limiter=limiter;
  }
  @Override
  @Transactional(noRollbackFor=AuthenticationException.class)
  public Authentication authenticate(Authentication authentication)throws AuthenticationException{
   User account=users.lockByUsername(authentication.getName()).orElse(null);
   LocalDateTime now=LocalDateTime.now(clock);
-  if(account!=null&&account.getLoginLockedUntil()!=null&&account.getLoginLockedUntil().isAfter(now)){
-   event(account,authentication,SecurityEventType.LOGIN_BLOCKED,now);
-   throw new LockedException("Account temporarily unavailable");
+  LoginRequestDetails client=authentication.getDetails() instanceof LoginRequestDetails d?d:null;
+  String source=client==null?"unknown":client.getRemoteAddress();
+  String bucket="login-failure:"+authentication.getName()+":"+source;
+  try{limiter.check(bucket,5,Duration.ofMinutes(15));}
+  catch(org.springframework.web.server.ResponseStatusException blocked){
+   if(account!=null)event(account,authentication,SecurityEventType.LOGIN_BLOCKED,now);
+   throw new LockedException("Account temporarily unavailable from this source");
   }
   try{
    Authentication result=super.authenticate(authentication);
+   limiter.clear(bucket);
    if(account!=null){account.setFailedLoginCount(0);account.setFailedLoginWindow(null);account.setLoginLockedUntil(null);}
    return result;
   }catch(BadCredentialsException failure){

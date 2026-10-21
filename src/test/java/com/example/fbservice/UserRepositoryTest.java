@@ -9,6 +9,7 @@ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabas
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@org.springframework.test.context.TestPropertySource(properties="spring.datasource.url=jdbc:h2:mem:userrepository;DB_CLOSE_DELAY=-1")
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE) // giữ nguyên DB config trong application.properties
 class UserRepositoryTest {
@@ -21,7 +22,7 @@ class UserRepositoryTest {
         // Tạo user
         User user = new User();
         user.setUsername("nguyenvanA");
-        user.setPassword("123456");
+        user.setPassword("unused-repository-fixture");
         user.setEmail("a@gmail.com");
 
         // Lưu

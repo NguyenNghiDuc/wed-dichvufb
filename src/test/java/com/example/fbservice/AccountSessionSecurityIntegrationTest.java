@@ -100,21 +100,27 @@ class AccountSessionSecurityIntegrationTest {
   assertThat(sessions.list(u,null)).isEmpty();
   assertThat(sessions.history(u.getId(),0).getContent()).extracting(AccountSecurityEvent::getType).contains(SecurityEventType.LOGOUT);
  }
- @Test void fiveFailuresAcrossIpsPersistAndLockDoesNotExtendAndEventuallyExpires() throws Exception {
+ @Test void failuresBlockOnlyTheAccountAndSourceAndEventuallyExpire() throws Exception {
   var u=account("device_lockout");var active=login(u.getUsername(),"Known browser");
-  for(int i=0;i<5;i++)mvc.perform(post("/login").with(csrf()).with(r->{r.setRemoteAddr("203.0.113."+address.getAndIncrement());return r;})
+  for(int i=0;i<5;i++)mvc.perform(post("/login").with(csrf()).with(r->{r.setRemoteAddr("203.0.113.44");return r;})
     .param("username",u.getUsername()).param("password","incorrect"))
    .andExpect(redirectedUrl("/login?error"));
   var locked=users.findById(u.getId()).orElseThrow();
-  assertThat(locked.getFailedLoginCount()).isEqualTo(5);assertThat(locked.getLoginLockedUntil()).isAfter(LocalDateTime.now().plusMinutes(14));
+  assertThat(locked.getFailedLoginCount()).isEqualTo(5);
   var until=locked.getLoginLockedUntil();
-  mvc.perform(post("/login").with(csrf()).param("username",u.getUsername()).param("password","SessionPass123!"))
+  mvc.perform(post("/login").with(csrf()).with(r->{r.setRemoteAddr("203.0.113.44");return r;})
+    .param("username",u.getUsername()).param("password","SessionPass123!"))
    .andExpect(redirectedUrl("/login?error"));
   assertThat(users.findById(u.getId()).orElseThrow().getLoginLockedUntil()).isEqualTo(until);
   mvc.perform(get("/profile").session(active)).andExpect(status().isOk());
-  locked.setLoginLockedUntil(LocalDateTime.now().minusSeconds(1));users.saveAndFlush(locked);
-  login(u.getUsername(),"Unlocked browser");
-  var fresh=users.findById(u.getId()).orElseThrow();assertThat(fresh.getFailedLoginCount()).isZero();assertThat(fresh.getLoginLockedUntil()).isNull();
+  // One abusive client cannot deny a legitimate login from a different source.
+  login(u.getUsername(),"Different source browser");
+  var fresh=users.findById(u.getId()).orElseThrow();assertThat(fresh.getFailedLoginCount()).isZero();
+  jdbc.update("update rate_limit_windows set expires_at_ms=? where bucket_hash=?",System.currentTimeMillis()-1,
+    ClientMetadata.hash("login-failure:"+u.getUsername()+":203.0.113.44"));
+  mvc.perform(post("/login").with(csrf()).with(r->{r.setRemoteAddr("203.0.113.44");return r;})
+    .param("username",u.getUsername()).param("password","SessionPass123!"))
+   .andExpect(redirectedUrl("/"));
   assertThat(sessions.history(u.getId(),0).getContent()).extracting(AccountSecurityEvent::getType)
    .contains(SecurityEventType.LOGIN_FAILURE,SecurityEventType.LOGIN_BLOCKED,SecurityEventType.LOGIN_SUCCESS);
  }
@@ -165,4 +171,17 @@ class AccountSessionSecurityIntegrationTest {
   mvc.perform(get("/profile").session(session)).andExpect(status().isForbidden());
   assertThat(sessions.history(u.getId(),0).getContent()).extracting(AccountSecurityEvent::getType).contains(SecurityEventType.PASSWORD_CHANGED);
  }
+ @Test void sessionTouchesAreThrottledButRevocationStillTakesEffectImmediately() throws Exception {
+  var u=account("touch_throttle");var session=login(u.getUsername(),"Throttle browser");
+  String hash=ClientMetadata.hash(session.getId());
+  var initial=jdbc.queryForObject("select last_seen_at from account_sessions where session_hash=?",java.sql.Timestamp.class,hash);
+  for(int i=0;i<3;i++)mvc.perform(get("/profile").session(session)).andExpect(status().isOk());
+  assertThat(jdbc.queryForObject("select last_seen_at from account_sessions where session_hash=?",java.sql.Timestamp.class,hash)).isEqualTo(initial);
+  jdbc.update("update account_sessions set last_seen_at=? where session_hash=?",java.sql.Timestamp.valueOf(LocalDateTime.now().minusMinutes(2)),hash);
+  mvc.perform(get("/profile").session(session)).andExpect(status().isOk());
+  assertThat(jdbc.queryForObject("select last_seen_at from account_sessions where session_hash=?",java.sql.Timestamp.class,hash)).isAfter(initial);
+  jdbc.update("update account_sessions set revoked_at=? where session_hash=?",java.sql.Timestamp.valueOf(LocalDateTime.now()),hash);
+  mvc.perform(get("/profile").session(session)).andExpect(status().isForbidden());
+ }
+
 }

@@ -12,3 +12,7 @@ data/
 .env
 .env.*
 !.env.example
+
+# Python guard tooling
+__pycache__/
+*.pyc

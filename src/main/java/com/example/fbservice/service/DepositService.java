@@ -16,8 +16,12 @@ import org.springframework.web.server.ResponseStatusException;
 @Service
 public class DepositService {
     private final DepositRequestRepository repo;
-    public DepositService(DepositRequestRepository repo){this.repo=repo;}
+    private final com.example.fbservice.repository.UserRepository users;
+    private final com.example.fbservice.config.TrafficLimiter limiter;
+    public DepositService(DepositRequestRepository repo,com.example.fbservice.repository.UserRepository users,
+                          com.example.fbservice.config.TrafficLimiter limiter){this.repo=repo;this.users=users;this.limiter=limiter;}
 
+    @Transactional
     public DepositRequest save(DepositRequest input,String username) {
         if(username==null||username.isBlank()||input==null||
            input.getAmount()<1000||input.getAmount()>1000000000L||
@@ -25,10 +29,15 @@ public class DepositService {
            (input.getBankName()!=null && input.getBankName().length()>255)||
            (input.getAccountNumber()!=null && input.getAccountNumber().length()>255))
             throw new IllegalArgumentException("Số tiền hoặc nội dung yêu cầu không hợp lệ.");
+        limiter.check("deposit:create:"+username,100,java.time.Duration.ofHours(1));
+        users.lockByUsername(username).filter(com.example.fbservice.model.User::isEnabled)
+            .orElseThrow(()->new ResponseStatusException(HttpStatus.UNAUTHORIZED));
+        if(repo.countByOwnerUsernameAndStatus(username,"PENDING")>=25)
+            throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS,"Bạn đã có 25 yêu cầu đang chờ xử lý.");
+        if(input.getBankName()!=null&&!input.getBankName().isBlank()||input.getAccountNumber()!=null&&!input.getAccountNumber().isBlank())
+            throw new IllegalArgumentException("Không gửi thông tin ngân hàng qua biểu mẫu yêu cầu này.");
         DepositRequest request=new DepositRequest();
         request.setOwnerUsername(username);
-        request.setBankName(input.getBankName());
-        request.setAccountNumber(input.getAccountNumber());
         request.setAmount(input.getAmount());
         request.setNote(input.getNote());
         request.setStatus("PENDING");

@@ -26,17 +26,12 @@ class TiktokOrderingIntegrationTest {
     @BeforeEach void configure(){server=service.saveServer(null,"VN Manual","VN","Xét duyệt thủ công",12,100,10000,true,0);}
     TiktokOrderingService.Request request(){return new TiktokOrderingService.Request("https://www.tiktok.com/@sample","VN",server.getId(),100,"");}
 
-    @Test void publicFormAndProtectedPreviewRenderRealCatalog() throws Exception {
+    @Test void publicCatalogIsConsultingAndLegacyPreviewRedirects() throws Exception {
         mvc.perform(get("/").with(anonymous())).andExpect(status().isOk())
-            .andExpect(content().string(containsString("Quốc gia")))
-            .andExpect(content().string(containsString("Số lượng")))
-            .andExpect(content().string(containsString("VN Manual")));
-        mvc.perform(get("/tiktok/orders/new").with(anonymous())).andExpect(status().is3xxRedirection());
-        mvc.perform(get("/tiktok/orders/new").param("targetUrl",request().targetUrl()).param("country","VN")
-            .param("serverId",server.getId().toString()).param("quantity","100"))
-            .andExpect(status().isOk()).andExpect(model().attribute("checkout",true))
-            .andExpect(model().attribute("quantity",100));
-        assertThat(service.quote(request()).totalPriceVnd()).isEqualTo(1200);
+            .andExpect(content().string(containsString("gói tư vấn")))
+            .andExpect(content().string(org.hamcrest.Matchers.not(containsString("id=\"tiktok-order-form\""))));
+        mvc.perform(get("/tiktok/orders/new")).andExpect(redirectedUrl("/campaigns/new"));
+        assertThat(orders.count()).isZero();
     }
     @Test void hostileLinkWrongCountryAndQuantityAreRejected(){
         for(String url:new String[]{"javascript:alert(1)","https://tiktok.com.evil.example/@sample","https://user@tiktok.com/@sample","https://tiktok.com:443/@sample","https://tiktok.com/no-profile"}){
@@ -63,10 +58,11 @@ class TiktokOrderingIntegrationTest {
     }
     @Test void customerCannotTamperWithPriceOrReadAnotherOwnersOrder() throws Exception {
         mvc.perform(post("/tiktok/orders").with(csrf()).param("targetUrl",request().targetUrl()).param("country","VN")
-            .param("serverId",server.getId().toString()).param("quantity","100").param("serverVersion","0")
-            .param("totalPriceVnd","1").param("unitPriceVnd","1"))
-            .andExpect(status().is3xxRedirection()).andExpect(flash().attributeExists("success"));
-        var order=orders.findAll().get(0);
+            .param("serverId",server.getId().toString()).param("quantity","100").param("serverVersion","0"))
+            .andExpect(status().isGone());
+        assertThat(orders.count()).isZero();
+        // A historical fixture still obeys owner scoping, snapshot prices and cancellation.
+        var order=service.create("tiktok_alice",request(),0);
         assertThat(order.getTotalPriceVnd()).isEqualTo(1200);
         mvc.perform(get("/tiktok/orders/"+order.getId())).andExpect(status().isOk());
         mvc.perform(get("/tiktok/orders/"+order.getId()).with(user("tiktok_bob"))).andExpect(status().isNotFound());
@@ -109,4 +105,13 @@ class TiktokOrderingIntegrationTest {
         mvc.perform(get("/admin/tiktok/orders").with(user("operator").roles("ADMIN"))).andExpect(status().isOk());
         mvc.perform(get("/tiktok/orders").param("page","-1")).andExpect(status().isBadRequest());
     }
+    @Test void bothLegacyCreationRoutesAreClosedButCsrfStillProtectsThem() throws Exception {
+        mvc.perform(get("/order/new")).andExpect(redirectedUrl("/campaigns/new"));
+        mvc.perform(post("/order/save")).andExpect(status().isForbidden());
+        mvc.perform(post("/order/save").with(csrf())).andExpect(status().isGone());
+        mvc.perform(post("/tiktok/orders")).andExpect(status().isForbidden());
+        mvc.perform(post("/tiktok/orders").with(csrf())).andExpect(status().isGone());
+        assertThat(orders.count()).isZero();
+    }
+
 }

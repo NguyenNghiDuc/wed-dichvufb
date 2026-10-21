@@ -18,8 +18,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest @AutoConfigureMockMvc @Transactional
 @TestPropertySource(properties="spring.datasource.url=jdbc:h2:mem:depositmanagement;DB_CLOSE_DELAY=-1")
 class DepositManagementIntegrationTest {
+ @Autowired com.example.fbservice.repository.UserRepository users;
  @Autowired MockMvc mvc; @Autowired DepositService deposits; @Autowired DepositRequestRepository repo;
- DepositRequest request(String owner){var d=new DepositRequest();d.setAmount(200000);d.setNote("Nạp tiền cho chiến dịch");return deposits.save(d,owner);}
+ void owner(String name){if(!users.existsByUsername(name)){var u=new com.example.fbservice.model.User();u.setUsername(name);u.setPassword("unused-test-fixture");users.saveAndFlush(u);}}
+ DepositRequest request(String owner){owner(owner);var d=new DepositRequest();d.setAmount(200000);d.setNote("Nạp tiền cho chiến dịch");return deposits.save(d,owner);}
  @Test void ownersSeeDetailsButCannotReadOrCancelAnotherAccountsRequest() throws Exception {
   var d=request("deposit_owner");
   mvc.perform(get("/deposit/"+d.getId()).with(user("deposit_owner"))).andExpect(status().isOk()).andExpect(content().string(org.hamcrest.Matchers.containsString("200.000 đ")));
@@ -55,6 +57,7 @@ class DepositManagementIntegrationTest {
   assertThat(records.getTotalElements()).isEqualTo(1);
  }
  @Test void createRedirectsToHistoryWithAnExplicitPendingConfirmation() throws Exception {
+  owner("new_owner");
   mvc.perform(post("/deposit/create").with(user("new_owner")).with(csrf()).param("amount","50000").param("status","APPROVED").param("ownerUsername","victim"))
    .andExpect(redirectedUrl("/deposit/list")).andExpect(flash().attributeExists("success"));
   var saved=repo.findByOwnerUsernameOrderByCreatedAtDesc("new_owner");assertThat(saved).hasSize(1);assertThat(saved.get(0).getStatus()).isEqualTo("PENDING");

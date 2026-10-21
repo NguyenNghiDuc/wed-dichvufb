@@ -57,9 +57,12 @@ public class AccountSessionService {
     public boolean validateAndTouch(AccountPrincipal principal,HttpSession session) {
         if(session==null)return false;
         var now=LocalDateTime.now(clock);
-        return sessions.lockByHash(ClientMetadata.hash(session.getId())).map(record->{
+        String hash=ClientMetadata.hash(session.getId());
+        return sessions.findBySessionHash(hash).map(record->{
             if(!record.valid(principal.getAccountId(),principal.getAuthVersion(),now))return false;
-            record.touch(now,timeout(session));return true;
+            int idle=timeout(session),interval=Math.max(1,Math.min(60,idle/4));
+            if(record.getLastSeenAt().plusSeconds(interval).isAfter(now))return true;
+            return sessions.touchActive(hash,principal.getAccountId(),principal.getAuthVersion(),now,now.plusSeconds(idle))==1;
         }).orElse(false);
     }
 

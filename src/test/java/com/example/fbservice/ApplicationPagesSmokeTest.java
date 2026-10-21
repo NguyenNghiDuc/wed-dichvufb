@@ -35,7 +35,7 @@ class ApplicationPagesSmokeTest {
     void authenticatedViewsRender() throws Exception {
         mvc.perform(get("/campaigns")).andExpect(status().isOk());
         mvc.perform(get("/campaigns/new")).andExpect(status().isOk());
-        mvc.perform(get("/order/new")).andExpect(status().isOk());
+        mvc.perform(get("/order/new")).andExpect(redirectedUrl("/campaigns/new"));
         mvc.perform(get("/deposit/new")).andExpect(status().isOk());
     }
 

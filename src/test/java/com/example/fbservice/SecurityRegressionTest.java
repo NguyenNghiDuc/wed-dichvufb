@@ -23,13 +23,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class SecurityRegressionTest {
     @Autowired MockMvc mvc;
     @Autowired CampaignOrderService campaigns;
+    @Autowired TrafficLimiter limiter;
 
     @Test
     void protectiveHeadersAndRateLimiterPresent() throws Exception {
         mvc.perform(get("/")).andExpect(status().isOk())
            .andExpect(header().string("Content-Security-Policy",
                org.hamcrest.Matchers.containsString("default-src 'self'")));
-        TrafficLimiter limiter = new TrafficLimiter();
+
         limiter.check("quality-gate", 2, Duration.ofMinutes(1));
         limiter.check("quality-gate", 2, Duration.ofMinutes(1));
         assertThatThrownBy(() -> limiter.check("quality-gate", 2, Duration.ofMinutes(1)))
@@ -117,4 +118,12 @@ class SecurityRegressionTest {
            .andExpect(status().isOk())
            .andExpect(jsonPath("$.content").isEmpty());
     }
+    @Test void separateAccountsBehindOnePeerDoNotShareTheSmallLoginBudget() throws Exception {
+        for(int i=0;i<12;i++){
+            mvc.perform(post("/login").with(csrf()).with(r->{r.setRemoteAddr("198.51.100.90");return r;})
+                .param("username","different_name_"+i).param("password","not-a-password"))
+                .andExpect(status().is3xxRedirection());
+        }
+    }
+
 }

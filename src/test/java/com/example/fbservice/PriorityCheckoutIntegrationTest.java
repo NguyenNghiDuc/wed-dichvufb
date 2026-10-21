@@ -36,13 +36,15 @@ class PriorityCheckoutIntegrationTest {
   mvc.perform(get(url)).andExpect(status().is3xxRedirection());
   mvc.perform(get("/campaigns/999999/success").with(user("priority_private"))).andExpect(status().isNotFound());
  }
- @Test void tiktokPostHasConfirmationAndUsesStoredServerAndPrice() throws Exception {
+ @Test void legacyTiktokCreationIsGoneButArchivedConfirmationRemainsOwnerScoped() throws Exception {
   var server=tiktok.saveServer(null,"Priority test","VN","Manual",10,1,1000,true,0);
-  var result=mvc.perform(post("/tiktok/orders").with(user("priority_tiktok")).with(csrf()).param("targetUrl","https://tiktok.com/@priority_demo").param("country","VN").param("serverId",server.getId().toString()).param("quantity","100").param("serverVersion","0"))
-   .andExpect(redirectedUrlPattern("/tiktok/orders/*/success")).andReturn();
-  String location=result.getResponse().getRedirectedUrl();long count=tiktokOrders.count();
+  mvc.perform(post("/tiktok/orders").with(user("priority_tiktok")).with(csrf()))
+   .andExpect(status().isGone());
+  assertThat(tiktokOrders.count()).isZero();
+  var archived=tiktok.create("priority_tiktok",new TiktokOrderingService.Request("https://tiktok.com/@priority_demo","VN",server.getId(),100,""),0);
+  String location="/tiktok/orders/"+archived.getId()+"/success";
   mvc.perform(get(location).with(user("priority_tiktok"))).andExpect(status().isOk()).andExpect(model().attribute("price",1000L));
-  mvc.perform(get(location).with(user("another"))).andExpect(status().isNotFound());assertThat(tiktokOrders.count()).isEqualTo(count);
+  mvc.perform(get(location).with(user("another"))).andExpect(status().isNotFound());
  }
  @Test void quoteWithoutCouponReflectsServerCatalogAndDoesNotCreateAnOrder() throws Exception {
   catalog.update("admin",CampaignServiceType.CONTENT_PLAN,234567,true);long count=orders.count();

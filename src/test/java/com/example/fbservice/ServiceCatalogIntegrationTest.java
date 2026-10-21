@@ -44,7 +44,7 @@ class ServiceCatalogIntegrationTest {
             .andExpect(content().string(org.hamcrest.Matchers.containsString("99000")));
         mvc.perform(get("/"))
             .andExpect(status().isOk())
-            .andExpect(content().string(org.hamcrest.Matchers.containsString("99000")));
+            .andExpect(content().string(org.hamcrest.Matchers.containsString("99.000 đ")));
         assertThat(catalog.recent()).isNotEmpty();
 
         mvc.perform(post("/admin/catalog/PROFILE_AUDIT").with(csrf())

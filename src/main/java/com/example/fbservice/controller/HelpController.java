@@ -22,10 +22,10 @@ public class HelpController {
   new Question("payments","payments","Chức năng nạp tiền và thanh toán đã hoạt động chưa?","Chưa có cổng thanh toán thật được kết nối. Yêu cầu nạp tiền hiện là quy trình thủ công; không chuyển tiền dựa trên form thử nghiệm. Báo giá không phải xác nhận đã thanh toán."),
   new Question("password","account","Đổi hoặc quên mật khẩu thì làm gì?","Nếu còn đăng nhập, vào Hồ sơ và bảo mật để đổi mật khẩu bằng mật khẩu hiện tại. Quên mật khẩu bằng email chưa khả dụng; hãy liên hệ hỗ trợ. Không gửi mật khẩu hoặc OTP cho nhân viên."),
   new Question("sessions","account","Xem và thu hồi thiết bị đăng nhập ở đâu?","Vào Hồ sơ → Quản lý phiên và bảo mật. Bạn có thể thu hồi từng phiên bằng mật khẩu hiện tại hoặc đăng xuất tất cả thiết bị. Khi thu hồi phiên hiện tại bạn sẽ đăng xuất ngay."),
-  new Question("locked","account","Vì sao đăng nhập bị khóa tạm thời?","Sau 5 lần sai mật khẩu trong 15 phút, đăng nhập mới bị khóa 15 phút. Chờ hết hạn rồi thử lại. Khóa tài khoản bởi Admin là trạng thái riêng cần liên hệ hỗ trợ."),
+  new Question("locked","account","Vì sao đăng nhập bị khóa tạm thời?","Sau 5 lần sai mật khẩu trong 15 phút, cặp tài khoản và nguồn truy cập đó bị giới hạn 15 phút. Các nguồn khác không bị khóa theo. Chờ hết hạn rồi thử lại. Khóa tài khoản bởi Admin là trạng thái riêng cần liên hệ hỗ trợ."),
   new Question("warning","account","Cảnh báo trình duyệt hoặc mạng mới nghĩa là gì?","Website thông báo khi cặp IP và trình duyệt đăng nhập thay đổi. VPN hoặc mạng mới có thể gây cảnh báo. Nếu không phải bạn, hãy đổi mật khẩu và thu hồi các phiên cũ."),
   new Question("support","support","Liên hệ hỗ trợ ở đâu?","Đăng nhập rồi chọn Công cụ → Hỗ trợ → Tạo yêu cầu. Ghi rõ mã đơn và vấn đề; không gửi mật khẩu, mã OTP hoặc khóa API."),
-  new Question("close","support","Đóng phiếu hỗ trợ khi đã giải quyết như thế nào?","Mở phiếu của bạn và chọn Đóng yêu cầu. Phiếu đã đóng không nhận thêm phản hồi; nếu có vấn đề mới hãy tạo phiếu mới.")
+  new Question("close","support","Đóng phiếu hỗ trợ khi đã giải quyết như thế nào?","Mở phiếu của bạn và chọn Đóng yêu cầu. Phiếu đã đóng không nhận thêm phản hồi; bạn có thể Mở lại yêu cầu kèm lý do để tiếp tục trao đổi và giữ lịch sử.")
  );
  @GetMapping("/help")
  public String help(@RequestParam(defaultValue="") String q,@RequestParam(defaultValue="") String category,Model model){

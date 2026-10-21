@@ -18,42 +18,39 @@ public class ChatController {
         this.chat = chat;
     }
 
+    public record SendMessage(String receiver,String content) {}
+    public record MessageView(Long id,String sender,String receiver,String content,java.time.LocalDateTime timestamp) {
+        static MessageView from(ChatMessage m){return new MessageView(m.getId(),m.getSender(),m.getReceiver(),m.getContent(),m.getTimestamp());}
+    }
     @PostMapping("/send")
-    public ChatMessage sendMessage(@RequestBody ChatMessage message, Principal principal) {
-        if (message == null || message.getReceiver() == null || message.getReceiver().isBlank()
-            || message.getReceiver().length() > 100 || message.getContent() == null ||
-            message.getContent().isBlank() || message.getContent().length() > 255)
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid message");
-        // Ignore the request body's sender and ID. Only the authenticated user can author a message.
-        ChatMessage safe = new ChatMessage(principal.getName(),
-                message.getReceiver().trim(), message.getContent());
-        return chat.saveMessage(safe);
+    public MessageView sendMessage(@RequestBody SendMessage message, Principal principal) {
+        return MessageView.from(chat.sendAuthorized(principal.getName(),message.receiver(),message.content()));
     }
 
     @GetMapping("/thread/{other}")
-    public Page<ChatMessage> getThread(@PathVariable String other,
+    public Page<MessageView> getThread(@PathVariable String other,
                                        @RequestParam(defaultValue = "0") int page,
                                        @RequestParam(defaultValue = "20") int size,
                                        Principal principal) {
         try {
-            return chat.threadFor(principal.getName(), other, page, size);
+            return chat.threadFor(principal.getName(), other, page, size).map(MessageView::from);
         } catch (IllegalArgumentException exception) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid chat participant or pagination");
         }
     }
 
     @GetMapping("/conversation/{sender}/{receiver}")
-    public List<ChatMessage> getConversation(@PathVariable String sender,
+    public List<MessageView> getConversation(@PathVariable String sender,
                                               @PathVariable String receiver, Principal principal) {
         if (!principal.getName().equals(sender) && !principal.getName().equals(receiver))
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
-        return chat.getConversation(sender, receiver);
+        return chat.getConversation(sender, receiver).stream().map(MessageView::from).toList();
     }
 
     @GetMapping("/inbox/{receiver}")
-    public List<ChatMessage> getInbox(@PathVariable String receiver, Principal principal) {
+    public List<MessageView> getInbox(@PathVariable String receiver, Principal principal) {
         if (!principal.getName().equals(receiver))
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
-        return chat.getMessagesForUser(receiver);
+        return chat.getMessagesForUser(receiver).stream().map(MessageView::from).toList();
     }
 }

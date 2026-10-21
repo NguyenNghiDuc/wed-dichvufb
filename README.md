@@ -2,6 +2,10 @@
 
 Dự án nâng cấp từ **wed-dichvufb**: phát triển kênh mạng xã hội bằng tư vấn hồ sơ, kế hoạch nội dung và chiến lược quảng cáo hợp lệ. **Không cung cấp hoặc cam kết follower giả**, chưa có tự động đăng bài, chưa kết nối API Facebook/TikTok/YouTube, chưa xử lý thanh toán thực tế.
 
+## Current product scope
+
+Trang chủ và luồng đặt mới chỉ nhận **tư vấn hồ sơ, nội dung và chiến lược quảng cáo**. `GET /tiktok/orders/new` và `GET /order/new` chuyển đến gói tư vấn; các POST tạo đơn cũ trả `410 Gone` sau kiểm tra đăng nhập/CSRF. Dữ liệu lịch sử, quyền tra cứu, hủy và xử lý đơn tồn vẫn giữ nguyên. Không có kết nối giao follower hoặc nhà cung cấp tương tác.
+
 ## Stack
 Java 17, Spring Boot 3.2.5, Thymeleaf, Spring Security, Spring Data JPA, H2 (phát triển). Giao diện trắng–cam responsive. Nằm trong các thư mục Maven chuẩn `src/main/resources` và `src/test/java`.
 
@@ -103,3 +107,7 @@ UPDATE users SET role = 'ADMIN' WHERE username = '<trusted-account-username>' AN
 Then sign out and sign back in so the session receives the new role. Only authorized operators should have DB write access. Account management: `/admin/users`, audit: `/admin/users/audit`; service prices: `/admin/catalog`. Staff may access only `/admin/support/**`. Locking and role changes invalidate existing database-authenticated sessions on the following request. Admins cannot modify their own account via the UI.
 
 Pricing comes from `service_offerings`, seeded via Flyway V6 on new PostgreSQL databases; development H2 uses matching enum defaults if the table is empty. Changing or disabling services affects **new orders only**, not historic order quotes. Pricing API: `GET /api/v1/services` (authenticated). External posting, fake engagement, and real payments remain disabled pending provider authorizations.
+
+## Security hardening (October 2026)
+
+Shared database rate limits, trusted-proxy configuration, account/source lockout, write budgets, deposit caps and chat restrictions are documented in [docs/SECURITY_HARDENING_2026_10.md](docs/SECURITY_HARDENING_2026_10.md). Apply migration V16 before deploying this version on PostgreSQL. This change does not enable wallet crediting or external fulfillment.

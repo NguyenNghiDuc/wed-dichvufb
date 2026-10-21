@@ -18,7 +18,7 @@ public class WebSecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http, UserRepository users, AccountSessionService sessions,
             GuardedAuthenticationProvider provider, TrackedLoginSuccessHandler loginSuccess) throws Exception {
         return http
-            .authenticationProvider(provider)
+            .authenticationManager(new org.springframework.security.authentication.ProviderManager(provider))
             .csrf(csrf -> csrf.ignoringRequestMatchers(
                 // The signed machine-to-machine callback is the ONLY CSRF exception.
                 // Restrict it to POST; all other state-changing methods remain protected.

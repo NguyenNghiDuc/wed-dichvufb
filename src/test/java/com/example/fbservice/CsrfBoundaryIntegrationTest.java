@@ -21,6 +21,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 })
 class CsrfBoundaryIntegrationTest {
     @Autowired MockMvc mvc;
+    @Autowired com.example.fbservice.repository.UserRepository users;
 
     @Test
     void publicLoginAndRegistrationFormsIncludeCsrfTokens() throws Exception {
@@ -34,14 +35,15 @@ class CsrfBoundaryIntegrationTest {
     void loginAndRegistrationPostsRequireCsrfEvenWhenPubliclyAccessible() throws Exception {
         mvc.perform(post("/register").param("username", "newtestuser")
                 .param("password", "not-a-real-password"))
-            .andExpect(status().isForbidden());
+            .andExpect(status().isSeeOther()).andExpect(redirectedUrl("/register?sessionExpired"));
+        org.assertj.core.api.Assertions.assertThat(users.existsByUsername("newtestuser")).isFalse();
         mvc.perform(post("/register").with(csrf()).param("username", "xx")
                 .param("password", "not-a-real-password"))
             .andExpect(status().isOk())
             .andExpect(view().name("register"));
         mvc.perform(post("/login").param("username", "unknown-csrf-test")
                 .param("password", "incorrect"))
-            .andExpect(status().isForbidden());
+            .andExpect(status().isSeeOther()).andExpect(redirectedUrl("/login?sessionExpired"));
         mvc.perform(post("/login").with(csrf()).param("username", "unknown-csrf-test")
                 .param("password", "incorrect"))
             .andExpect(status().is3xxRedirection());

@@ -16,6 +16,7 @@ import org.springframework.web.server.ResponseStatusException;
 public class CampaignOrderService {
     private final com.example.fbservice.catalog.ServiceCatalogService catalog;
     private final com.example.fbservice.promotion.CouponService coupons;
+    private final com.example.fbservice.config.TrafficLimiter limiter;
     private final CampaignOrderRepository orders;
     private final CampaignEventRepository events;
     private final AccountNotificationRepository notifications;
@@ -23,7 +24,8 @@ public class CampaignOrderService {
     public CampaignOrderService(CampaignOrderRepository orders, CampaignEventRepository events,
                                 AccountNotificationRepository notifications,
                                 com.example.fbservice.catalog.ServiceCatalogService catalog,
-                                com.example.fbservice.promotion.CouponService coupons) {
+                                com.example.fbservice.promotion.CouponService coupons,com.example.fbservice.config.TrafficLimiter limiter) {
+        this.limiter=limiter;
         this.catalog=catalog;this.coupons=coupons;
         this.orders = orders;
         this.events = events;
@@ -34,6 +36,7 @@ public class CampaignOrderService {
     public CampaignOrder create(String username, CampaignOrderRequest request) {
         if (username == null || username.isBlank()) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
         validate(request);
+        limiter.check("campaign:create:"+username,100,java.time.Duration.ofHours(1));
         var quote=coupons.reserve(username,request.couponCode(),catalog.quote(request.serviceType()));
         CampaignOrder order = new CampaignOrder(username,request,quote.totalPriceVnd());
         order.pricing(quote.originalPriceVnd(),quote.discountVnd(),quote.couponCode());
