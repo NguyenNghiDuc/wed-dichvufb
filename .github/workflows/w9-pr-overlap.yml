@@ -1,0 +1,106 @@
+name: W9 overlapping PR file audit
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: "Open pull request number to audit"
+        type: number
+        required: true
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: w9-overlap-${{ github.event.pull_request.number || inputs.pr_number }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  overlaps:
+    name: Report shared files across open PRs
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - name: Compare changed files against every other open PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number || inputs.pr_number }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          import os
+          import subprocess
+          import sys
+
+          repo = os.environ["GITHUB_REPOSITORY"]
+          number = os.environ.get("PR_NUMBER", "")
+          if not number.isdecimal() or int(number) <= 0:
+              sys.exit("A valid PR number is required.")
+
+          def api(path):
+              response = subprocess.check_output(
+                  ["gh", "api", "--method", "GET", f"repos/{repo}/{path}"],
+                  text=True,
+              )
+              return json.loads(response)
+
+          def paged(path):
+              page = 1
+              while True:
+                  separator = "&" if "?" in path else "?"
+                  batch = api(f"{path}{separator}per_page=100&page={page}")
+                  if not isinstance(batch, list):
+                      sys.exit(f"Unexpected pagination response for {path}")
+                  yield from batch
+                  if len(batch) < 100:
+                      return
+                  page += 1
+
+          current = api(f"pulls/{number}")
+          if current.get("state") != "open":
+              sys.exit("PR is not open; cannot compare active file changes.")
+          changed = {record["filename"] for record in paged(f"pulls/{number}/files")}
+          if not changed:
+              sys.exit("No changed files returned for the target PR.")
+
+          rows = []
+          others = sorted(paged("pulls?state=open"),
+                          key=lambda pr: int(pr["number"]))
+          for other in others:
+              if int(other["number"]) == int(number):
+                  continue
+              names = {record["filename"] for record in
+                       paged(f"pulls/{other['number']}/files")}
+              shared = sorted(changed.intersection(names))
+              if shared:
+                  rows.append((other["number"], shared))
+
+          summary = [
+              f"## W9 shared-file audit — PR #{number}",
+              "",
+              f"Inspected {len(others)} open PRs; target changes {len(changed)} files.",
+              "A shared filename is a review risk, not proof of a Git merge conflict.",
+              "",
+          ]
+          if rows:
+              summary.extend(["| Other PR | Shared file paths |",
+                              "|---|---|"])
+              for other_number, shared in rows:
+                  display = ", ".join(
+                      path.replace("|", "&#124;") for path in shared
+                  )
+                  summary.append(f"| #{other_number} | {display} |")
+                  print(f"::warning title=Shared PR files::PR #{number} and "
+                        f"#{other_number} modify {len(shared)} same paths")
+          else:
+              summary.append("No overlapping paths among currently open PRs.")
+          output = os.environ.get("GITHUB_STEP_SUMMARY")
+          if output:
+              with open(output, "a", encoding="utf-8") as handle:
+                  handle.write("\n".join(summary) + "\n")
+          print("\n".join(summary))
+          PY

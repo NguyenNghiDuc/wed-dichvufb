@@ -1,11 +1,16 @@
 name: Java CI
 on:
+  # Avoid duplicate push and pull_request runs for every active feature PR.
   push:
-    branches: [main, 'feature/**']
+    branches: [main]
   pull_request:
     branches: [main, 'feature/**']
 permissions:
   contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  # Only superseded PR runs may be cancelled; never count cancellation as PASS.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
   verify:
     runs-on: ubuntu-latest
@@ -35,6 +40,44 @@ jobs:
           cache: maven
       - name: Run unit and PostgreSQL integration tests
         run: mvn -B --no-transfer-progress clean verify
+      - name: Verify JaCoCo XML and publish measured line coverage
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import os
+          import xml.etree.ElementTree as ET
+
+          coverage = Path("target/site/jacoco/jacoco.xml")
+          if not coverage.is_file() or coverage.stat().st_size == 0:
+              raise SystemExit("JaCoCo XML missing/empty; cannot verify coverage")
+          report = ET.parse(coverage).getroot()
+          counts = [node for node in report.findall("./counter") if node.get("type") == "LINE"]
+          if len(counts) != 1:
+              raise SystemExit("JaCoCo XML must contain one project LINE counter")
+          covered = int(counts[0].get("covered", "0"))
+          missed = int(counts[0].get("missed", "0"))
+          if covered <= 0 or covered + missed <= 0:
+              raise SystemExit("JaCoCo measured no covered application lines")
+          ratio = covered / (covered + missed) * 100
+          message = f"JaCoCo line coverage: {ratio:.2f}% ({covered}/{covered + missed})"
+          print(message)
+          summary = os.getenv("GITHUB_STEP_SUMMARY")
+          if summary:
+              with open(summary, "a", encoding="utf-8") as handle:
+                  handle.write("### W9 measured coverage\n" + message + "\n")
+          PY
+      - name: Upload JUnit and integration test reports
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: java-test-reports
+          path: |
+            target/surefire-reports/*.xml
+            target/surefire-reports/*.txt
+            target/failsafe-reports/*.xml
+            target/failsafe-reports/*.txt
+          if-no-files-found: warn
+          retention-days: 7
       - name: Publish test coverage for review
         if: always()
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
@@ -64,3 +107,33 @@ jobs:
           curl -fsS http://127.0.0.1:8080/register | grep -q csrf
       - name: Validate Docker image
         run: docker build -t growlab-ci:latest .
+      - name: Smoke-test Docker runtime with production profile and PostgreSQL
+        env:
+          SPRING_PROFILES_ACTIVE: prod
+          DB_URL: jdbc:postgresql://localhost:5432/growlab_ci
+          DB_USERNAME: growlab
+          DB_PASSWORD: testpass
+        run: |
+          set -euo pipefail
+          docker rm -f growlab-w9-ci >/dev/null 2>&1 || true
+          trap 'docker logs --tail 80 growlab-w9-ci 2>/dev/null || true; docker rm -f growlab-w9-ci >/dev/null 2>&1 || true' EXIT
+          docker run -d --name growlab-w9-ci --network host \
+            -e SPRING_PROFILES_ACTIVE -e DB_URL -e DB_USERNAME -e DB_PASSWORD \
+            growlab-ci:latest
+          ready=0
+          for attempt in {1..60}; do
+            if curl --fail --silent --show-error http://127.0.0.1:8080/actuator/health |
+                grep -q '"status":"UP"'; then
+              ready=1
+              break
+            fi
+            if [ "$(docker inspect --format '{{.State.Running}}' growlab-w9-ci)" != "true" ]; then
+              break
+            fi
+            sleep 2
+          done
+          test "$ready" -eq 1 || { echo 'Docker container did not become healthy'; exit 1; }
+          curl --fail --silent --show-error http://127.0.0.1:8080/login |
+            grep -q 'csrf'
+          curl --fail --silent --show-error http://127.0.0.1:8080/ |
+            grep -q 'GrowLab'

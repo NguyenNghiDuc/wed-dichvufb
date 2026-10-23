@@ -1,0 +1,104 @@
+name: W9 exact HEAD quality gate
+
+on:
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: "Pull request number to verify"
+        type: number
+        required: true
+      expected_sha:
+        description: "Exact 40-character current PR HEAD SHA"
+        type: string
+        required: true
+
+permissions:
+  contents: read
+  actions: read
+  pull-requests: read
+
+jobs:
+  verify-head:
+    name: Fail closed on stale or unfinished CI
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check PR HEAD and required completed workflow conclusions
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ inputs.pr_number }}
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          import os
+          import re
+          import subprocess
+          import sys
+
+          repo = os.environ["GITHUB_REPOSITORY"]
+          number = os.environ["PR_NUMBER"]
+          expected = os.environ["EXPECTED_SHA"]
+          if not re.fullmatch(r"[0-9a-f]{40}", expected):
+              sys.exit("Invalid expected_sha; must be 40 lowercase hexadecimal characters.")
+          if not number.isdigit() or int(number) <= 0:
+              sys.exit("Invalid PR number.")
+
+          def request(endpoint):
+              raw = subprocess.check_output(
+                  ["gh", "api", "--method", "GET", endpoint],
+                  text=True,
+                  stderr=subprocess.DEVNULL,
+              )
+              return json.loads(raw)
+
+          pr = request(f"repos/{repo}/pulls/{number}")
+          if pr.get("state") != "open":
+              sys.exit("PR is not open; no release sign-off.")
+          if pr.get("draft"):
+              sys.exit("PR is draft; no release sign-off.")
+          if pr["head"]["sha"] != expected:
+              sys.exit("PR HEAD moved; stale SHA is not eligible for approval.")
+
+          runs = request(
+              f"repos/{repo}/actions/runs?event=pull_request&head_sha={expected}&per_page=100"
+          )
+          required = {"Java CI", "CodeQL security analysis"}
+          current = [r for r in runs.get("workflow_runs", [])
+                     if r.get("head_sha") == expected and r.get("name") in required
+                     and (any(int(p.get("number", 0)) == int(number)
+                              for p in (r.get("pull_requests") or []))
+                          or (r.get("head_branch") == pr["head"]["ref"]
+                              and (r.get("head_repository") or {}).get("full_name")
+                                  == pr["head"]["repo"]["full_name"]))]
+          issues = []
+          for name in sorted(required):
+              matching = sorted((r for r in current if r["name"] == name),
+                                key=lambda r: (r.get("run_started_at") or "",
+                                               r.get("created_at") or "", r["id"]),
+                                reverse=True)
+              if not matching:
+                  issues.append(f"{name}: missing PR-head workflow run")
+                  continue
+              run = matching[0]
+              result = run.get("conclusion")
+              state = run.get("status")
+              print(f"{name}: status={state}, conclusion={result}, "
+                    f"run={run.get('html_url')}, head={expected}")
+              if state != "completed" or result != "success":
+                  issues.append(f"{name}: not successful (status={state}, conclusion={result})")
+
+          summary = os.environ.get("GITHUB_STEP_SUMMARY")
+          if summary:
+              with open(summary, "a", encoding="utf-8") as output:
+                  output.write(f"## W9 HEAD gate\n\nPR #{number} — {expected}\n\n")
+                  output.write("Java CI and CodeQL must both finish successfully for this exact SHA.\n")
+                  output.write("This does not grant security acceptance if #13 is unresolved.\n")
+                  for issue in issues:
+                      output.write(f"\n- BLOCKED: {issue}")
+                  output.write("\n")
+          if issues:
+              sys.exit("Release head gate failed closed: " + " | ".join(issues))
+          print("Both required workflows completed successfully for exact PR HEAD.")
+          PY

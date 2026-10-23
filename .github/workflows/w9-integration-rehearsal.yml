@@ -1,0 +1,109 @@
+name: W9 cross-PR integration rehearsal
+
+on:
+  workflow_dispatch:
+    inputs:
+      w2_sha:
+        description: "Exact 40-character HEAD SHA of W2 PR #33"
+        required: true
+        type: string
+      w3_sha:
+        description: "Exact 40-character HEAD SHA of W3 PR #35"
+        required: true
+        type: string
+      w6_sha:
+        description: "Exact 40-character HEAD SHA of W6 PR #37"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  integration:
+    name: Verify isolated main + W2 + W3 + W6
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: growlab_ci
+          POSTGRES_USER: growlab
+          POSTGRES_PASSWORD: testpass
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U growlab -d growlab_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - name: Checkout latest main (no write privileges)
+        uses: actions/checkout@v5
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Check immutable PR SHA inputs match live PR heads
+        env:
+          GH_TOKEN: ${{ github.token }}
+          W2_SHA: ${{ inputs.w2_sha }}
+          W3_SHA: ${{ inputs.w3_sha }}
+          W6_SHA: ${{ inputs.w6_sha }}
+        run: |
+          set -euo pipefail
+          for sha in "$W2_SHA" "$W3_SHA" "$W6_SHA"; do
+            [[ "$sha" =~ ^[0-9a-f]{40}$ ]] || { echo "Invalid 40-character SHA"; exit 1; }
+          done
+          for pair in "33:$W2_SHA" "35:$W3_SHA" "37:$W6_SHA"; do
+            pr="$(printf '%s' "$pair" | cut -d: -f1)"
+            expected="$(printf '%s' "$pair" | cut -d: -f2)"
+            current="$(gh api "repos/$GITHUB_REPOSITORY/pulls/$pr" --jq '.head.sha')"
+            if [ "$current" != "$expected" ]; then
+              echo "PR #$pr moved: aborting stale-head rehearsal"
+              exit 1
+            fi
+          done
+      - name: Merge exact PR heads only into ephemeral checkout
+        env:
+          W2_SHA: ${{ inputs.w2_sha }}
+          W3_SHA: ${{ inputs.w3_sha }}
+          W6_SHA: ${{ inputs.w6_sha }}
+        run: |
+          set -euo pipefail
+          git config user.name "GrowLab W9 CI"
+          git config user.email "w9-ci@users.noreply.github.com"
+          git switch -c w9-integration-simulation
+          for sha in "$W2_SHA" "$W3_SHA" "$W6_SHA"; do
+            git fetch --no-tags origin "$sha"
+            if ! git merge --no-ff --no-edit "$sha"; then
+              git merge --abort || true
+              echo "Merge conflict detected. Do not merge individual PRs."
+              exit 1
+            fi
+          done
+          echo "Ephemeral integration SHA: $(git rev-parse HEAD)"
+          echo "Never push this checkout: it exists for QA only."
+      - name: Reject duplicate or invalid Flyway versions
+        run: python3 scripts/flyway_collision_check.py
+      - name: Verify Flyway guard regression tests
+        run: python3 -m unittest discover -s scripts -p 'test_flyway_collision_check.py' -v
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+      - name: Verify combined application against temporary PostgreSQL 16
+        run: mvn -B --no-transfer-progress clean verify
+      - name: Publish combined Java test evidence
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: w9-combined-pr-test-reports
+          path: |
+            target/surefire-reports/*.xml
+            target/surefire-reports/*.txt
+            target/site/jacoco/jacoco.xml
+          retention-days: 7
+          if-no-files-found: warn
