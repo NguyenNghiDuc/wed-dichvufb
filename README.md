@@ -7,7 +7,7 @@ Dự án nâng cấp từ **wed-dichvufb**: phát triển kênh mạng xã hội
 Trang chủ và luồng đặt mới chỉ nhận **tư vấn hồ sơ, nội dung và chiến lược quảng cáo**. `GET /tiktok/orders/new` và `GET /order/new` chuyển đến gói tư vấn; các POST tạo đơn cũ trả `410 Gone` sau kiểm tra đăng nhập/CSRF. Dữ liệu lịch sử, quyền tra cứu, hủy và xử lý đơn tồn vẫn giữ nguyên. Không có kết nối giao follower hoặc nhà cung cấp tương tác.
 
 ## Stack
-Java 17, Spring Boot 3.2.5, Thymeleaf, Spring Security, Spring Data JPA, H2 (phát triển). Giao diện trắng–cam responsive. Nằm trong các thư mục Maven chuẩn `src/main/resources` và `src/test/java`.
+Java 25, Spring Boot 3.5.16, Thymeleaf, Spring Security, Spring Data JPA, H2 (phát triển). Giao diện trắng–cam responsive. Nằm trong các thư mục Maven chuẩn `src/main/resources` và `src/test/java`.
 
 ## Codespaces và lỗi phiên bản Java
 
@@ -30,6 +30,10 @@ Nếu chưa có JDK 17, mở Command Palette và chọn **Codespaces: Rebuild Co
 `-DskipTests package` chỉ kiểm tra build/đóng gói. `mvn clean verify` đầy đủ còn cần PostgreSQL test tại `localhost:5432`, database `growlab_ci` theo cấu hình trong Java CI; rebuild không tự tạo hoặc xóa database này.
 
 ## Khởi động
+
+Cần **JDK 25** và Maven 3.8+; Maven Enforcer từ chối Java 17 hoặc Java 26 để không vô tình biên dịch sai bytecode. Trong GitHub Codespaces mặc định đã có JDK 25, hãy kiểm tra `java -version` và `mvn -version`. Nếu trước đây bạn đã ép Java 17 qua `~/.bashrc`, bỏ hai dòng export `JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64` và `PATH="$JAVA_HOME/bin:$PATH"` rồi chọn JDK 25: `sdk use java 25.0.4+1-ms` (khi phiên bản này còn được SDKMAN cài đặt). Không cài lại Java 17.
+
+Cùng một JDK 25 được dùng cho Maven, Java CI, CodeQL, Docker build và Docker runtime. Spring Boot 3.5.16 là bản cuối cùng của nhánh 3.5.x, vì vậy cần lên kế hoạch riêng để nâng lên Spring Boot 4.x trong tương lai; không gộp nâng major framework vào lần chuyển Java này.
 
 ```bash
 mvn test

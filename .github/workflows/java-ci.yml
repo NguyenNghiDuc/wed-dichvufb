@@ -31,7 +31,7 @@ jobs:
       - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: '25'
           cache: maven
       - name: Run unit and PostgreSQL integration tests
         run: mvn -B --no-transfer-progress clean verify
