@@ -70,20 +70,28 @@ def inspect_sarif(content: str) -> list[str]:
             errors.append(f'SARIF run {index} does not identify CodeQL')
         if not isinstance(run.get('results'), list):
             errors.append(f'SARIF run {index} has no results array')
-        invocations = run.get('invocations', [])
-        if not isinstance(invocations, list):
-            errors.append(f'SARIF run {index} invocations are invalid')
+        # Action success alone is not evidence that SARIF contains a completed run.
+        invocations = run.get('invocations')
+        if not isinstance(invocations, list) or not invocations:
+            errors.append(f'SARIF run {index} has no valid invocation evidence')
             continue
         for invocation in invocations:
             if not isinstance(invocation, dict):
                 errors.append(f'SARIF run {index} invocation is invalid')
                 continue
-            if invocation.get('executionSuccessful') is False:
-                errors.append(f'SARIF run {index} reports failed execution')
-            for note in invocation.get('toolExecutionNotifications', []):
-                if isinstance(note, dict) and note.get('level') == 'error':
-                    errors.append(f'SARIF run {index} contains tool execution errors')
-                    break
+            if invocation.get('executionSuccessful') is not True:
+                errors.append(f'SARIF run {index} lacks successful execution evidence')
+            for field in ('toolExecutionNotifications', 'toolConfigurationNotifications'):
+                notes = invocation.get(field, [])
+                if not isinstance(notes, list):
+                    errors.append(f'SARIF run {index} {field} are invalid')
+                    continue
+                for note in notes:
+                    if not isinstance(note, dict):
+                        errors.append(f'SARIF run {index} {field} entry is invalid')
+                    elif note.get('level') == 'error':
+                        errors.append(f'SARIF run {index} contains {field} errors')
+                        break
     return errors
 
 
@@ -149,6 +157,33 @@ class IntegrityTests(unittest.TestCase):
     def test_tool_notification_error(self):
         doc = json.loads(self.SARIF)
         doc['runs'][0]['invocations'][0]['toolExecutionNotifications'] = [{'level': 'error'}]
+        self.assertTrue(inspect_sarif(json.dumps(doc)))
+
+    def test_missing_or_empty_invocations_fail_closed(self):
+        doc = json.loads(self.SARIF)
+        del doc['runs'][0]['invocations']
+        self.assertTrue(inspect_sarif(json.dumps(doc)))
+        doc['runs'][0]['invocations'] = []
+        self.assertTrue(inspect_sarif(json.dumps(doc)))
+
+    def test_missing_success_marker_fails_closed(self):
+        doc = json.loads(self.SARIF)
+        del doc['runs'][0]['invocations'][0]['executionSuccessful']
+        self.assertTrue(inspect_sarif(json.dumps(doc)))
+
+    def test_malformed_tool_notifications_fail_closed(self):
+        doc = json.loads(self.SARIF)
+        doc['runs'][0]['invocations'][0]['toolExecutionNotifications'] = 'error'
+        self.assertTrue(inspect_sarif(json.dumps(doc)))
+
+    def test_configuration_notification_errors_fail_closed(self):
+        doc = json.loads(self.SARIF)
+        doc['runs'][0]['invocations'][0]['toolConfigurationNotifications'] = [{'level': 'error'}]
+        self.assertTrue(inspect_sarif(json.dumps(doc)))
+
+    def test_invalid_notification_entry_fails_closed(self):
+        doc = json.loads(self.SARIF)
+        doc['runs'][0]['invocations'][0]['toolExecutionNotifications'] = [42]
         self.assertTrue(inspect_sarif(json.dumps(doc)))
 
     def test_no_artifact_fails_closed(self):
