@@ -28,7 +28,7 @@ jobs:
         run: python3 -m unittest discover -s scripts -p 'test_flyway_collision_check.py' -v
       - name: Reject colliding Flyway migrations
         run: python3 scripts/flyway_collision_check.py
-      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: temurin
           java-version: '17'
