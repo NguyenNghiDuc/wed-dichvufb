@@ -48,6 +48,23 @@ class CsrfBoundaryIntegrationTest {
     }
 
     @Test
+    void invalidCsrfTokenCannotRegisterOrAuthenticate() throws Exception {
+        String username = "csrf-invalid-token-user";
+        mvc.perform(post("/register").with(csrf().useInvalidToken())
+                .param("username", username)
+                .param("password", "not-a-real-password"))
+            .andExpect(status().isSeeOther())
+            .andExpect(redirectedUrl("/register?sessionExpired"));
+        org.assertj.core.api.Assertions.assertThat(users.existsByUsername(username)).isFalse();
+
+        mvc.perform(post("/login").with(csrf().useInvalidToken())
+                .param("username", username)
+                .param("password", "not-a-real-password"))
+            .andExpect(status().isSeeOther())
+            .andExpect(redirectedUrl("/login?sessionExpired"));
+    }
+
+    @Test
     @WithMockUser(username = "csrf-owner", roles = "ADMIN")
     void authenticatedStateChangesRequireCsrf() throws Exception {
         mvc.perform(post("/admin/campaign-orders/1/status").param("status", "APPROVED"))
