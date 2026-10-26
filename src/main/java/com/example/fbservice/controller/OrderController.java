@@ -17,21 +17,9 @@ public class OrderController {
     }
 
     @GetMapping("/new")
-    public String form(Model model) {
-        model.addAttribute("order", new Order());
-        return "order_form";
-    }
-
+    public String form(){return "redirect:/campaigns/new";}
     @PostMapping("/save")
-    public String save(@ModelAttribute Order order, Principal principal, Model model) {
-        try {
-            orders.create(order, principal.getName());
-            return "redirect:/order/list";
-        } catch (IllegalArgumentException ex) {
-            model.addAttribute("error", ex.getMessage());
-            return "order_form";
-        }
-    }
+    public String save(){throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.GONE,"Luồng đặt đơn cũ đã đóng.");}
 
     @GetMapping("/list")
     public String list(Model model, Principal principal) {

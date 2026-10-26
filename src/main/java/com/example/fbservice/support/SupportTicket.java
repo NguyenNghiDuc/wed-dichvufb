@@ -34,14 +34,20 @@ public class SupportTicket {
     public void customerReplied() {
         ensureOpen();
         status = TicketStatus.OPEN;
+        touch();
     }
     public void staffReplied() {
         ensureOpen();
         status = TicketStatus.ANSWERED;
+        touch();
     }
     public void close() {
         ensureOpen();
         status = TicketStatus.CLOSED;
+    }
+    public void reopen() {
+        if (status != TicketStatus.CLOSED) throw new IllegalArgumentException("Chỉ mở lại yêu cầu đã đóng.");
+        status = TicketStatus.OPEN;
     }
     public void ensureOpen() {
         if (status == TicketStatus.CLOSED) throw new IllegalArgumentException("Yêu cầu đã đóng.");

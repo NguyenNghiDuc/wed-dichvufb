@@ -23,19 +23,47 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class SecurityRegressionTest {
     @Autowired MockMvc mvc;
     @Autowired CampaignOrderService campaigns;
+    @Autowired TrafficLimiter limiter;
 
     @Test
     void protectiveHeadersAndRateLimiterPresent() throws Exception {
         mvc.perform(get("/")).andExpect(status().isOk())
            .andExpect(header().string("Content-Security-Policy",
                org.hamcrest.Matchers.containsString("default-src 'self'")));
-        TrafficLimiter limiter = new TrafficLimiter();
+
         limiter.check("quality-gate", 2, Duration.ofMinutes(1));
         limiter.check("quality-gate", 2, Duration.ofMinutes(1));
         assertThatThrownBy(() -> limiter.check("quality-gate", 2, Duration.ofMinutes(1)))
             .isInstanceOf(ResponseStatusException.class)
             .satisfies(error -> assertThat(((ResponseStatusException) error).getStatusCode())
                 .isEqualTo(HttpStatus.TOO_MANY_REQUESTS));
+    }
+
+    @Test
+    void staleAuthenticationFormsAreRejectedAndOfferFreshSameOriginForms() throws Exception {
+        for (String path : new String[]{"/login", "/register"}) {
+            mvc.perform(post(path).param("username", "stale_csrf_account").param("password", "UnusedPass123!"))
+                .andExpect(status().isSeeOther())
+                .andExpect(header().string("Location", path + "?sessionExpired"));
+            mvc.perform(post(path).with(csrf().useInvalidToken()))
+                .andExpect(status().isSeeOther())
+                .andExpect(header().string("Location", path + "?sessionExpired"));
+            mvc.perform(get(path).param("sessionExpired", ""))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Phiên xác thực đã hết hạn")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("name=\"_csrf\"")));
+        }
+        mvc.perform(post("/profile/display-name").param("displayName", "Blocked"))
+            .andExpect(status().isForbidden());
+        var fresh = mvc.perform(get("/login")).andExpect(status().isOk()).andReturn();
+        var token = java.util.regex.Pattern.compile("name=\"_csrf\"[^>]*value=\"([^\"]+)\"")
+            .matcher(fresh.getResponse().getContentAsString());
+        assertThat(token.find()).isTrue();
+        mvc.perform(post("/login")
+                .session((org.springframework.mock.web.MockHttpSession) fresh.getRequest().getSession(false))
+                .param("_csrf", token.group(1))
+                .param("username", "csrf_recovery_unknown_user").param("password", "NotThePassword123!"))
+            .andExpect(status().isFound()).andExpect(redirectedUrl("/login?error"));
     }
 
     @Test
@@ -90,4 +118,12 @@ class SecurityRegressionTest {
            .andExpect(status().isOk())
            .andExpect(jsonPath("$.content").isEmpty());
     }
+    @Test void separateAccountsBehindOnePeerDoNotShareTheSmallLoginBudget() throws Exception {
+        for(int i=0;i<12;i++){
+            mvc.perform(post("/login").with(csrf()).with(r->{r.setRemoteAddr("198.51.100.90");return r;})
+                .param("username","different_name_"+i).param("password","not-a-password"))
+                .andExpect(status().is3xxRedirection());
+        }
+    }
+
 }

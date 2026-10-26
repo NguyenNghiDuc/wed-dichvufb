@@ -50,4 +50,9 @@ class PaymentWebhookIntegrationTest {
             .andExpect(status().isOk()).andExpect(jsonPath("$.duplicate").value(true));
         assertThat(deposits.findById(d.getId()).orElseThrow().getStatus()).isEqualTo("APPROVED");
     }
+    @Test void oversizedWebhookIsRejectedBeforeSignatureAndJsonProcessing() throws Exception {
+        mvc.perform(post("/api/v1/payments/webhooks/internal").contentType("application/json")
+            .content("x".repeat(4097))).andExpect(status().isPayloadTooLarge());
+    }
+
 }

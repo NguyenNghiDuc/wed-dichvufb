@@ -2,8 +2,32 @@
 
 Dự án nâng cấp từ **wed-dichvufb**: phát triển kênh mạng xã hội bằng tư vấn hồ sơ, kế hoạch nội dung và chiến lược quảng cáo hợp lệ. **Không cung cấp hoặc cam kết follower giả**, chưa có tự động đăng bài, chưa kết nối API Facebook/TikTok/YouTube, chưa xử lý thanh toán thực tế.
 
+## Current product scope
+
+Trang chủ và luồng đặt mới chỉ nhận **tư vấn hồ sơ, nội dung và chiến lược quảng cáo**. `GET /tiktok/orders/new` và `GET /order/new` chuyển đến gói tư vấn; các POST tạo đơn cũ trả `410 Gone` sau kiểm tra đăng nhập/CSRF. Dữ liệu lịch sử, quyền tra cứu, hủy và xử lý đơn tồn vẫn giữ nguyên. Không có kết nối giao follower hoặc nhà cung cấp tương tác.
+
 ## Stack
 Java 17, Spring Boot 3.2.5, Thymeleaf, Spring Security, Spring Data JPA, H2 (phát triển). Giao diện trắng–cam responsive. Nằm trong các thư mục Maven chuẩn `src/main/resources` và `src/test/java`.
+
+## Codespaces và lỗi phiên bản Java
+
+Dự án yêu cầu **JDK 17** và Maven 3.9.x. Nếu Maven báo `Detected JDK version 25 ... not in [17,18)`, terminal đang chọn sai JDK; giữ nguyên kiểm tra Enforcer trong `pom.xml`.
+
+Trong Codespaces hiện có, sau khi cập nhật mã nguồn, chạy:
+
+```bash
+source scripts/use-java17.sh
+java -version
+mvn -version
+mvn -DskipTests package
+mvn spring-boot:run
+```
+
+Script chọn JDK 17 đã cài trong SDKMAN hoặc thư mục JDK chuẩn và cập nhật `JAVA_HOME`/`PATH` của **terminal hiện tại**. Nếu cần chỉ rõ đường dẫn: `source scripts/use-java17.sh /path/to/jdk-17`. Không chạy bằng `bash scripts/use-java17.sh` vì shell con không đổi môi trường terminal cha.
+
+Nếu chưa có JDK 17, mở Command Palette và chọn **Codespaces: Rebuild Container** (hoặc **Dev Containers: Rebuild Container**). Cấu hình `.devcontainer/devcontainer.json` cài Java 17 và Maven 3.9.9 cho workspace mới/được rebuild, đồng thời đặt project runtime JavaSE-17 trong VS Code. Pull mã không tự đổi JDK của container đang chạy; mở terminal mới sau rebuild. Không ép Java language server mới chạy trên Java 17: extension có thể dùng JDK mới hơn, còn project/Maven phải dùng 17.
+
+`-DskipTests package` chỉ kiểm tra build/đóng gói. `mvn clean verify` đầy đủ còn cần PostgreSQL test tại `localhost:5432`, database `growlab_ci` theo cấu hình trong Java CI; rebuild không tự tạo hoặc xóa database này.
 
 ## Khởi động
 
@@ -83,3 +107,7 @@ UPDATE users SET role = 'ADMIN' WHERE username = '<trusted-account-username>' AN
 Then sign out and sign back in so the session receives the new role. Only authorized operators should have DB write access. Account management: `/admin/users`, audit: `/admin/users/audit`; service prices: `/admin/catalog`. Staff may access only `/admin/support/**`. Locking and role changes invalidate existing database-authenticated sessions on the following request. Admins cannot modify their own account via the UI.
 
 Pricing comes from `service_offerings`, seeded via Flyway V6 on new PostgreSQL databases; development H2 uses matching enum defaults if the table is empty. Changing or disabling services affects **new orders only**, not historic order quotes. Pricing API: `GET /api/v1/services` (authenticated). External posting, fake engagement, and real payments remain disabled pending provider authorizations.
+
+## Security hardening (October 2026)
+
+Shared database rate limits, trusted-proxy configuration, account/source lockout, write budgets, deposit caps and chat restrictions are documented in [docs/SECURITY_HARDENING_2026_10.md](docs/SECURITY_HARDENING_2026_10.md). Apply migration V16 before deploying this version on PostgreSQL. This change does not enable wallet crediting or external fulfillment.

@@ -21,6 +21,10 @@ public class CampaignOrder {
     @Column(nullable = false)
     private long quotedPriceVnd;
 
+    @Column(name="original_price_vnd") private Long originalPriceVnd;
+    @Column(name="discount_vnd",nullable=false,columnDefinition="bigint default 0") private long discountVnd;
+    @Column(name="coupon_code",length=32) private String couponCode;
+
     @Column(name = "assignee_username", length = 100)
     private String assigneeUsername;
     @Enumerated(EnumType.STRING) @Column(nullable = false, length = 24)
@@ -40,6 +44,11 @@ public class CampaignOrder {
         this.brief=request.brief().trim();
         this.quotedPriceVnd=quotedPriceVnd;
     }
+
+    void pricing(long original,long discount,String code){originalPriceVnd=original;discountVnd=discount;couponCode=code;}
+    public long getOriginalPriceVnd(){return originalPriceVnd==null?quotedPriceVnd:originalPriceVnd;}
+    public long getDiscountVnd(){return discountVnd;}
+    public String getCouponCode(){return couponCode;}
 
     @PreUpdate public void beforeUpdate(){updatedAt=LocalDateTime.now();}
 

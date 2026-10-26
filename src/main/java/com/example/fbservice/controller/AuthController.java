@@ -2,6 +2,7 @@ package com.example.fbservice.controller;
 
 import com.example.fbservice.model.User;
 import com.example.fbservice.service.UserService;
+import java.nio.charset.StandardCharsets;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -21,12 +22,14 @@ public class AuthController {
     public String registerUser(@RequestParam String username,@RequestParam String password,
                                @RequestParam(required=false) String email,Model model){
         String name=username==null?"":username.trim();
+        model.addAttribute("registerUsername",name);
+        model.addAttribute("registerEmail",email);
         if(!name.matches("[a-zA-Z0-9._-]{3,40}")){
             model.addAttribute("error","Tên tài khoản cần 3–40 ký tự chữ, số, dấu chấm hoặc gạch.");
             return "register";
         }
-        if(password==null||password.length()<8||password.length()>72){
-            model.addAttribute("error","Mật khẩu cần từ 8 đến 72 ký tự.");
+        if(password==null||password.length()<8||password.isBlank()||password.getBytes(StandardCharsets.UTF_8).length>72){
+            model.addAttribute("error","Mật khẩu cần ít nhất 8 ký tự và tối đa 72 byte UTF-8.");
             return "register";
         }
         String cleanEmail=email==null?null:email.trim();

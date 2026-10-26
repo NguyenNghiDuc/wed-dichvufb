@@ -18,8 +18,26 @@ public class ChatService {
 
     private final ChatMessageRepository messages;
 
-    public ChatService(ChatMessageRepository messages) {
-        this.messages = messages;
+    private final com.example.fbservice.repository.UserRepository users;
+    private final com.example.fbservice.config.TrafficLimiter limiter;
+    public ChatService(ChatMessageRepository messages,com.example.fbservice.repository.UserRepository users,
+                       com.example.fbservice.config.TrafficLimiter limiter) {
+        this.messages=messages;this.users=users;this.limiter=limiter;
+    }
+
+    @Transactional
+    public ChatMessage sendAuthorized(String sender,String receiver,String content) {
+        if(sender==null||receiver==null||!receiver.matches("[a-zA-Z0-9._-]{3,40}")||content==null||content.isBlank()||content.length()>255)
+            throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST,"Invalid message");
+        var from=users.findByUsername(sender).filter(com.example.fbservice.model.User::isEnabled)
+            .orElseThrow(()->new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.FORBIDDEN));
+        var to=users.findByUsername(receiver).filter(com.example.fbservice.model.User::isEnabled)
+            .orElseThrow(()->new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.NOT_FOUND));
+        var staff=java.util.Set.of("ADMIN","STAFF");
+        if(sender.equals(receiver)||!staff.contains(from.getRole())&&!staff.contains(to.getRole()))
+            throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.FORBIDDEN,"Chat is available with support staff only");
+        limiter.check("chat:send:"+sender,60,java.time.Duration.ofMinutes(1));
+        return messages.save(new ChatMessage(sender,receiver,content.strip()));
     }
 
     @Transactional

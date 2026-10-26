@@ -23,6 +23,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class ChatPaginationIntegrationTest {
     @Autowired MockMvc mvc;
     @Autowired ChatService chat;
+    @Autowired com.example.fbservice.repository.UserRepository users;
 
     @Test
     @WithMockUser(username = "chat-alice")
@@ -86,6 +87,10 @@ class ChatPaginationIntegrationTest {
     @Test
     @WithMockUser(username = "chat-verified-sender")
     void chatSendRejectsCsrfBypassAndIgnoresSpoofedSender() throws Exception {
+        for(String name:new String[]{"chat-verified-sender","chat-receiver"}){
+            var u=new com.example.fbservice.model.User();u.setUsername(name);u.setPassword("unused-test-fixture");
+            u.setRole(name.equals("chat-receiver")?"STAFF":"USER");users.saveAndFlush(u);
+        }
         String body = """
             {"sender":"chat-spoof","receiver":"chat-receiver","content":"real message"}
             """;
@@ -105,4 +110,20 @@ class ChatPaginationIntegrationTest {
         mvc.perform(get("/chat/thread/chat-bob")).andExpect(status().is3xxRedirection());
         mvc.perform(get("/chat/inbox/chat-bob")).andExpect(status().is3xxRedirection());
     }
+    @Test @WithMockUser(username="chat-customer")
+    void customersCannotMessageOtherCustomersOrUnknownAccounts() throws Exception {
+        for(String name:new String[]{"chat-customer","chat-other-customer"}){
+            var u=new com.example.fbservice.model.User();u.setUsername(name);u.setPassword("unused-test-fixture");users.saveAndFlush(u);
+        }
+        mvc.perform(post("/chat/send").with(csrf()).contentType(MediaType.APPLICATION_JSON)
+            .content("{\"receiver\":\"chat-other-customer\",\"content\":\"not allowed\"}"))
+            .andExpect(status().isForbidden());
+        mvc.perform(post("/chat/send").with(csrf()).contentType(MediaType.APPLICATION_JSON)
+            .content("{\"receiver\":\"not-existing-user\",\"content\":\"not allowed\"}"))
+            .andExpect(status().isNotFound());
+        mvc.perform(post("/chat/send").with(csrf()).contentType(MediaType.APPLICATION_JSON)
+            .content("{\"receiver\":\"bad name\",\"content\":\"not allowed\"}"))
+            .andExpect(status().isBadRequest());
+    }
+
 }

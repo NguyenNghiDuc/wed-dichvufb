@@ -1,4 +1,4 @@
-# Roadmap 105 hạng mục — GrowLab
+# Roadmap 125 hạng mục — GrowLab
 
 **Chính sách nghiệm thu:** Mặc định mọi hạng mục là [ ] CHƯA NGHIỆM THU, kể cả nếu đã có phiên bản thử nghiệm trong code. Chỉ đổi thành [x] khi có bằng chứng thực tế (unit/integration/security/UAT thích hợp) và review. Không tự đồng nhất “CI xanh” với “không có lỗ hổng”.
 
@@ -137,7 +137,7 @@
 - [ ] **104** Triển khai staging và production với HTTPS
 - [ ] **105** Kiểm thử tải cao, kiểm tra Docker và quy trình rollback
 
-## Sprint P0 đang triển khai
+## Nền tảng vận hành và bảo mật
 
 - Bảo vệ endpoint auth bằng giới hạn request theo IP/phiên, thêm security headers và kiểm thử.
 - Bổ sung hủy chiến dịch khi còn chờ duyệt, ghi nhật ký và thông báo; chống truy cập chéo tài khoản.
@@ -146,3 +146,67 @@
 - Chưa có nghiệm thu ngoài production hay pentest độc lập.
 
 Xem `docs/DEPLOYMENT.md` để biết những điều kiện còn thiếu trước khi vận hành chính thức.
+
+## Đối chiếu với yêu cầu mới (2026-10-18)
+
+Các checkbox trên là trạng thái nghiệm thu production/review, không phải khẳng định toàn bộ chưa có code. Không đánh dấu hoàn thành 105 mục chỉ vì một lần build thành công.
+
+| Nhóm | Phần đã có trong code | Phần cần phát triển/cấu hình tiếp |
+|---|---|---|
+| 001–015 | BCrypt, đổi mật khẩu, role USER/STAFF/ADMIN, audit Admin. Đợt hiện tại thêm phiên đăng nhập, lịch sử IP, thu hồi từng phiên/toàn bộ, cảnh báo trình duyệt/mạng mới trên website, khóa tạm theo tài khoản và migration giữ nguyên BCrypt. | Xác minh email, email OTP, 2FA, Google/Facebook OAuth, role đại lý, mã hóa token nền tảng, nhập dữ liệu H2 cũ có đối soát. |
+| 016–027 | Dashboard chiến dịch, hồ sơ, lịch sử/tìm kiếm/hủy đơn chờ, hỗ trợ, chat phân trang, thông báo website và trang hướng dẫn. | Đánh giá hoàn tất, thông báo email, tìm kiếm FAQ và cập nhật trạng thái chủ động. |
+| 028–039 | Danh mục/gói tư vấn nhiều nền tảng, bảng giá admin, tính giá server, duyệt, giao việc, tiến độ/trạng thái, timeline và cảnh báo đơn chậm. Server/đơn TikTok thủ công. | Giá theo cấp, hoàn tiền/điều chỉnh có sổ cái, quản trị danh mục xóa an toàn đầy đủ. |
+| 040–054 | Gợi ý AI dạng cơ bản khi có cấu hình và lịch nội dung bản nháp. | Các workflow AI riêng, quota/chi phí, phân tích từ dữ liệu đã cấp quyền, đăng theo lịch và A/B cần triển khai/kiểm thử riêng. |
+| 055–064 | YouTube dữ liệu công khai có giới hạn timeout/retry và test. | OAuth chính thức, refresh token mã hóa, queue/worker, dashboard quota/sync; cần app và quyền nền tảng. |
+| 065–076 | Yêu cầu nạp thủ công; webhook nội bộ có chữ ký/chống trùng và receipt. | VNPay/QR thật, ví có ledger, hoàn tiền, khuyến mãi, referral, cấp thành viên, hóa đơn và đối soát. Webhook nội bộ không phải tích hợp VNPay. |
+| 077–090 | Dashboard vận hành, quản trị tài khoản/quyền/khóa, đơn/phân công/danh mục/hỗ trợ, CSV, audit; đợt này thêm xem lịch sử/phiên tài khoản. | Doanh thu đối soát từ thanh toán thật, broadcast, khuyến mãi, xử lý hoàn tiền và báo cáo Excel. |
+| 091–105 | Test integration/security, H2/PostgreSQL/Flyway, viewport trình duyệt, CSRF/ownership, webhook và resilience YouTube. | Cần nghiệm thu production riêng cho rate limit phân tán, backup/restore tự động, load test, monitoring/alert, HTTPS và rollback. |
+
+### Trình tự triển khai tiếp
+
+1. Nền bảo mật phiên và log (đợt này); chi tiết và bằng chứng trong `ACCOUNT_SESSIONS_AND_LOGIN_SECURITY.md`.
+2. Email đã cấu hình → xác minh đăng ký, quên mật khẩu OTP, sau đó 2FA và OAuth. Không ghi OTP/secret ra log hoặc yêu cầu gửi secret trong chat.
+3. Luồng kinh doanh: ledger, hoàn tiền có duyệt, ưu đãi và cấp khách hàng; tích hợp sandbox trước thanh toán thật.
+4. AI có hạn mức/chi phí, OAuth mạng xã hội và queue theo quyền chính thức. Không yêu cầu mật khẩu mạng xã hội.
+5. Hoàn thiện UX còn thiếu, kiểm thử tải/backup/restore, staging HTTPS và nghiệm thu production.
+
+### IX. Danh sách 106–125 theo ưu tiên của chủ dự án
+
+Danh sách này thay thế 20 đề xuất trước. Ưu tiên và ý nghĩa mã số theo yêu cầu mới; “có code” không thay cho nghiệm thu production.
+
+| Mã | Chức năng | Ưu tiên |
+|---|---|---|
+| 106 | Menu danh mục dịch vụ nhiều cấp | P1 |
+| 107 | Tìm kiếm dịch vụ có gợi ý tức thì | P1 |
+| 108 | Lọc dịch vụ theo nền tảng, giá, mục tiêu | P1 |
+| 109 | So sánh nhiều gói dịch vụ cạnh nhau | P1 |
+| 110 | Tính báo giá tức thì khi chọn gói | P0 |
+| 111 | Lưu gói yêu thích | P2 |
+| 112 | Lưu đơn nháp đang điền | P1 |
+| 113 | Quy trình đặt dịch vụ từng bước | P0 |
+| 114 | Xem lại thông tin trước khi gửi đơn | P0 |
+| 115 | Trang xác nhận tạo đơn thành công | P0 |
+| 116 | Timeline trực quan của từng đơn | P1 |
+| 117 | Tải tài liệu, ảnh minh chứng vào yêu cầu | P1 |
+| 118 | Khách hàng và nhân viên trao đổi ngay trong đơn | P1 |
+| 119 | Trang dịch vụ liên quan | P2 |
+| 120 | Bảng giá và FAQ riêng cho từng dịch vụ | P1 |
+| 121 | Đánh giá từ đơn hoàn thành đã xác minh | P1 |
+| 122 | Thanh tìm kiếm và danh mục đẹp trên mobile | P1 |
+| 123 | Hỗ trợ nhanh từ trang chi tiết dịch vụ | P1 |
+| 124 | SEO riêng cho từng trang dịch vụ | P1 |
+| 125 | Phân tích tỷ lệ xem dịch vụ → gửi yêu cầu | P2 |
+
+Đợt P0 tập trung 110/113/114 cho form tư vấn và 115 cho cả tư vấn/TikTok. TikTok đã có báo giá theo server/số lượng và bước chọn dịch vụ; đợt này không tự tuyên bố hoàn tất toàn bộ P1/P2. Đánh giá riêng từ đơn hoàn thành đã có code ở 023/121; công bố lên trang dịch vụ cần luồng quyền/đồng ý riêng.
+
+### Đợt tiếp theo: đánh giá dịch vụ và FAQ có tìm kiếm
+
+Bổ sung code và kiểm thử cho 023/027: nhận xét riêng theo đơn đã hoàn thành, một lần mỗi đơn, quản trị đọc/lọc và tìm trợ giúp tiếng Việt không dấu. Chi tiết quyền, migration V13 và nghiệm thu xem `REVIEWS_AND_SEARCHABLE_HELP.md`. Không tự đánh dấu nghiệm thu production, không thay đổi trạng thái email/OAuth/thanh toán thật.
+
+### Đợt thông báo toàn hệ thống
+
+Bổ sung 086, phần website của 026 và audit 090: tạo bản nháp/xem trước, nhóm nhận theo quyền và tài khoản hoạt động, xác nhận gửi tối đa 5.000 người, chống gửi lặp và lịch sử thao tác. Tích hợp trung tâm thông báo hiện có; chưa gửi email. Xem `SYSTEM_BROADCASTS.md` để biết giới hạn, migration V14 và kiểm thử giao dịch/đồng thời PostgreSQL.
+
+### Đợt mã giảm giá đơn tư vấn
+
+Bổ sung 071, quản trị 087 và mở rộng 033: mã VND/phần trăm, trần giảm/giá trị đơn tối thiểu, hạn dùng UTC, giới hạn tổng và mỗi tài khoản; xem trước giá server và lưu snapshot khi tạo đơn. Lượt chỉ dùng trong transaction thành công, hủy/từ chối không trả lượt. Chưa áp dụng cho TikTok hoặc ví/thanh toán thật. Xem `COUPONS_AND_CAMPAIGN_PRICING.md` cho migration V15, API và kiểm thử PostgreSQL đồng thời/rollback.

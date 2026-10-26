@@ -4,6 +4,10 @@ import com.example.fbservice.config.TrafficLimiter;
 import com.example.fbservice.notification.*;
 import java.time.Duration;
 import java.util.List;
+import java.util.ArrayList;
+import jakarta.persistence.criteria.Predicate;
+import com.example.fbservice.web.SearchText;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.domain.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -38,12 +42,39 @@ public class SupportTicketService {
 
     @Transactional(readOnly = true)
     public Page<SupportTicket> listMine(String user, int page) {
-        return tickets.findByOwnerUsername(user, paging(page));
+        return searchMine(user,page,null,null,null);
     }
 
     @Transactional(readOnly = true)
     public Page<SupportTicket> listForAdmin(int page) {
-        return tickets.findAll(paging(page));
+        return searchForAdmin(page,null,null,null,null);
+    }
+
+    @Transactional(readOnly=true)
+    public Page<SupportTicket> searchMine(String user,int page,String query,Long id,TicketStatus status){
+        if(user==null||user.isBlank())throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+        return search(user,page,query,id,status,null);
+    }
+
+    @Transactional(readOnly=true)
+    public Page<SupportTicket> searchForAdmin(int page,String query,Long id,TicketStatus status,String owner){
+        return search(null,page,query,id,status,owner);
+    }
+
+    private Page<SupportTicket> search(String user,int page,String query,Long id,TicketStatus status,String owner){
+        var pageable=paging(page);
+        String q=SearchText.clean(query,120),ownerFilter=SearchText.clean(owner,100);
+        if(id!=null&&id<=0)throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Mã yêu cầu không hợp lệ.");
+        Specification<SupportTicket> filter=(root,request,builder)->{
+            var conditions=new ArrayList<Predicate>();
+            if(user!=null)conditions.add(builder.equal(root.get("ownerUsername"),user));
+            else if(!ownerFilter.isEmpty())conditions.add(builder.equal(root.get("ownerUsername"),ownerFilter));
+            if(id!=null)conditions.add(builder.equal(root.get("id"),id));
+            if(status!=null)conditions.add(builder.equal(root.get("status"),status));
+            if(!q.isEmpty())conditions.add(builder.like(builder.lower(root.get("subject")),SearchText.contains(q),'\\'));
+            return builder.and(conditions.toArray(new Predicate[0]));
+        };
+        return tickets.findAll(filter,pageable);
     }
 
     @Transactional(readOnly = true)
@@ -96,6 +127,40 @@ public class SupportTicketService {
         ticket.close();
         notices.save(new AccountNotification(ticket.getOwnerUsername(),
             "Hỗ trợ #" + id + " đã đóng", "Yêu cầu đã được đóng bởi nhân viên " + admin + "."));
+    }
+
+    @Transactional
+    public void closeAsOwner(String user, Long id) {
+        SupportTicket ticket = tickets.lockForOwner(id, user)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        if (ticket.getStatus() == TicketStatus.CLOSED) return;
+        ticket.close();
+        notices.save(new AccountNotification(user, "Đã đóng hỗ trợ #" + id,
+            "Bạn đã xác nhận đóng yêu cầu hỗ trợ."));
+    }
+
+    @Transactional
+    public void reopenAsOwner(String user,Long id,String reason) {
+        SupportTicket ticket=tickets.lockForOwner(id,user)
+            .orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND));
+        reopen(ticket,user,reason);
+    }
+
+    @Transactional
+    public void reopenAsAdmin(String admin,Long id,String reason) {
+        SupportTicket ticket=tickets.lockForAdmin(id)
+            .orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND));
+        reopen(ticket,admin,reason);
+    }
+
+    private void reopen(SupportTicket ticket,String actor,String reason) {
+        validate(reason,10,1900);
+        if(ticket.getStatus()!=TicketStatus.CLOSED)throw new IllegalArgumentException("Chỉ mở lại yêu cầu đã đóng.");
+        limiter.check("support:reopen:"+actor,5,Duration.ofHours(1));
+        ticket.reopen();
+        messages.save(new SupportMessage(ticket.getId(),actor,"[Mở lại yêu cầu] "+reason.strip()));
+        notices.save(new AccountNotification(ticket.getOwnerUsername(),"Hỗ trợ #"+ticket.getId()+" đã mở lại",
+            "Yêu cầu đã được mở lại. Đăng nhập để xem lịch sử trao đổi và gửi phản hồi."));
     }
 
     private Pageable paging(int page) {

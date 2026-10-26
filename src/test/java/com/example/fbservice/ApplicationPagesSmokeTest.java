@@ -35,7 +35,7 @@ class ApplicationPagesSmokeTest {
     void authenticatedViewsRender() throws Exception {
         mvc.perform(get("/campaigns")).andExpect(status().isOk());
         mvc.perform(get("/campaigns/new")).andExpect(status().isOk());
-        mvc.perform(get("/order/new")).andExpect(status().isOk());
+        mvc.perform(get("/order/new")).andExpect(redirectedUrl("/campaigns/new"));
         mvc.perform(get("/deposit/new")).andExpect(status().isOk());
     }
 
@@ -60,6 +60,6 @@ class ApplicationPagesSmokeTest {
                 .param("username", "smoketest_user_001")
                 .param("password", "strongpassword123"))
             .andExpect(status().is3xxRedirection())
-            .andExpect(redirectedUrl("/campaigns"));
+            .andExpect(redirectedUrl("/"));
     }
 }

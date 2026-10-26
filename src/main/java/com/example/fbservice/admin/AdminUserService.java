@@ -1,8 +1,14 @@
 package com.example.fbservice.admin;
 
 import com.example.fbservice.model.User;
+import com.example.fbservice.security.*;
+import java.time.*;
 import com.example.fbservice.repository.UserRepository;
 import java.util.List;
+import java.util.ArrayList;
+import jakarta.persistence.criteria.Predicate;
+import com.example.fbservice.web.SearchText;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.domain.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -14,15 +20,41 @@ public class AdminUserService {
     private final UserRepository users;
     private final AdminAccountAuditRepository audit;
 
-    public AdminUserService(UserRepository users, AdminAccountAuditRepository audit) {
+    private final AccountSessionRepository sessions;
+    private final AccountSecurityEventRepository securityEvents;
+    private final Clock clock;
+
+    public AdminUserService(UserRepository users, AdminAccountAuditRepository audit,
+            AccountSessionRepository sessions,AccountSecurityEventRepository securityEvents,Clock clock) {
         this.users=users;
-        this.audit=audit;
+        this.audit=audit;this.sessions=sessions;this.securityEvents=securityEvents;this.clock=clock;
     }
 
     @Transactional(readOnly=true)
     public Page<User> page(int page) {
+        return page(page,null,null,null);
+    }
+
+    @Transactional(readOnly=true)
+    public Page<User> page(int page,String query,String role,Boolean enabled) {
         if(page<0||page>10000) throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Invalid page");
-        return users.findAllByOrderByIdDesc(PageRequest.of(page,20));
+        String q=SearchText.clean(query,120);
+        String roleFilter=SearchText.clean(role,16);
+        if(!roleFilter.isEmpty()&&!List.of("USER","STAFF","ADMIN").contains(roleFilter))
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Vai trò lọc không hợp lệ.");
+        Specification<User> filter=(root,request,builder)->{
+            var conditions=new ArrayList<Predicate>();
+            if(!q.isEmpty()){
+                String pattern=SearchText.contains(q);
+                conditions.add(builder.or(builder.like(builder.lower(root.get("username")),pattern,'\\'),
+                    builder.like(builder.lower(root.get("displayName")),pattern,'\\'),
+                    builder.like(builder.lower(root.get("email")),pattern,'\\')));
+            }
+            if(!roleFilter.isEmpty())conditions.add(builder.equal(root.get("role"),roleFilter));
+            if(enabled!=null)conditions.add(builder.equal(root.get("enabled"),enabled));
+            return builder.and(conditions.toArray(new Predicate[0]));
+        };
+        return users.findAll(filter,PageRequest.of(page,20,Sort.by(Sort.Direction.DESC,"id")));
     }
 
     @Transactional(readOnly=true)
@@ -37,6 +69,7 @@ public class AdminUserService {
             throw new IllegalArgumentException("Tài khoản đang ở trạng thái này.");
         String before=Boolean.toString(target.isEnabled());
         target.setEnabled(enabled);
+        revokeAccess(target,SecurityEventType.ACCOUNT_STATE_CHANGED);
         audit.save(new AdminAccountAudit(actor,target.getId(),"ACCOUNT_ENABLED",before,Boolean.toString(enabled)));
     }
 
@@ -49,7 +82,15 @@ public class AdminUserService {
             throw new IllegalArgumentException("Tài khoản đã có vai trò này.");
         String before=target.getRole();
         target.setRole(role);
+        revokeAccess(target,SecurityEventType.ACCOUNT_ROLE_CHANGED);
         audit.save(new AdminAccountAudit(actor,target.getId(),"ACCOUNT_ROLE",before,role));
+    }
+
+    private void revokeAccess(User target,SecurityEventType type){
+        target.setAuthVersion(Math.addExact(target.getAuthVersion(),1));
+        var now=LocalDateTime.now(clock);
+        sessions.revokeAll(target.getId(),now);
+        securityEvents.save(new AccountSecurityEvent(target.getId(),type,"","",now));
     }
 
     private User lockAndAuthorize(String actor,Long targetId) {
