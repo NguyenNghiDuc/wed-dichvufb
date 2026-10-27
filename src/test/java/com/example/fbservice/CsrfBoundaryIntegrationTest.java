@@ -67,6 +67,20 @@ class CsrfBoundaryIntegrationTest {
     }
 
     @Test
+    void unsignedMalformedAndOversizedWebhookRequestsAreRejected() throws Exception {
+        String endpoint = "/api/v1/payments/webhooks/internal";
+        mvc.perform(post(endpoint).contentType(MediaType.APPLICATION_JSON).content("{}"))
+            .andExpect(status().isUnauthorized());
+        mvc.perform(post(endpoint).contentType(MediaType.APPLICATION_JSON).content("{}")
+                .header("X-GrowLab-Signature", "not-hex"))
+            .andExpect(status().isUnauthorized());
+        mvc.perform(post(endpoint).contentType(MediaType.APPLICATION_JSON)
+                .content("x".repeat(4097))
+                .header("X-GrowLab-Signature", "0".repeat(64)))
+            .andExpect(status().is(413));
+    }
+
+    @Test
     @WithMockUser(username = "csrf-owner", roles = "ADMIN")
     void authenticatedStateChangesRequireCsrf() throws Exception {
         mvc.perform(post("/admin/campaign-orders/1/status").param("status", "APPROVED"))
