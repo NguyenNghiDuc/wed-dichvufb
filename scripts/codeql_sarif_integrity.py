@@ -48,7 +48,23 @@ def inspect_log(log: str) -> list[str]:
     return errors
 
 
-def inspect_sarif(content: str) -> list[str]:
+def check_provenance(run: dict, index: int, expected_sha: str) -> list[str]:
+    """Fail closed if a SARIF run cannot be tied to the exact reviewed commit.
+
+    This checks SARIF-declared provenance, not authenticity of the artifact.
+    """
+    provenance = run.get('versionControlProvenance')
+    if not isinstance(provenance, list) or not provenance:
+        return [f'SARIF run {index} lacks source revision provenance']
+    if not any(isinstance(item, dict) and
+               isinstance(item.get('revisionId'), str) and
+               item['revisionId'].lower() == expected_sha.lower()
+               for item in provenance):
+        return [f'SARIF run {index} source revision does not match expected commit']
+    return []
+
+
+def inspect_sarif(content: str, expected_sha: str | None = None) -> list[str]:
     try:
         doc = json.loads(content)
     except (ValueError, TypeError):
@@ -68,6 +84,8 @@ def inspect_sarif(content: str) -> list[str]:
         name = driver.get('name') if isinstance(driver, dict) else None
         if not isinstance(name, str) or 'codeql' not in name.lower():
             errors.append(f'SARIF run {index} does not identify CodeQL')
+        if expected_sha is not None:
+            errors.extend(check_provenance(run, index, expected_sha))
         if not isinstance(run.get('results'), list):
             errors.append(f'SARIF run {index} has no results array')
         # Action success alone is not evidence that SARIF contains a completed run.
@@ -95,7 +113,8 @@ def inspect_sarif(content: str) -> list[str]:
     return errors
 
 
-def inspect_files(log_path: Path, sarif_path: Path | None) -> list[str]:
+def inspect_files(log_path: Path, sarif_path: Path | None,
+                  expected_sha: str | None = None) -> list[str]:
     errors: list[str] = []
     log, problems = read_bounded(log_path, MAX_LOG_BYTES, 'CodeQL log')
     errors.extend(problems)
@@ -107,7 +126,7 @@ def inspect_files(log_path: Path, sarif_path: Path | None) -> list[str]:
         sarif, problems = read_bounded(sarif_path, MAX_SARIF_BYTES, 'SARIF')
         errors.extend(problems)
         if sarif is not None:
-            errors.extend(inspect_sarif(sarif))
+            errors.extend(inspect_sarif(sarif, expected_sha))
     return errors
 
 
@@ -186,6 +205,27 @@ class IntegrityTests(unittest.TestCase):
         doc['runs'][0]['invocations'][0]['toolExecutionNotifications'] = [42]
         self.assertTrue(inspect_sarif(json.dumps(doc)))
 
+    def test_expected_commit_matches_sarif_provenance(self):
+        doc = json.loads(self.SARIF)
+        sha = 'a' * 40
+        doc['runs'][0]['versionControlProvenance'] = [{'revisionId': sha.upper()}]
+        self.assertEqual(inspect_sarif(json.dumps(doc), sha), [])
+
+    def test_expected_commit_missing_provenance_fails_closed(self):
+        self.assertIn('SARIF run 0 lacks source revision provenance',
+                      inspect_sarif(self.SARIF, 'a' * 40))
+
+    def test_expected_commit_mismatch_fails_closed(self):
+        doc = json.loads(self.SARIF)
+        doc['runs'][0]['versionControlProvenance'] = [{'revisionId': 'b' * 40}]
+        self.assertIn('SARIF run 0 source revision does not match expected commit',
+                      inspect_sarif(json.dumps(doc), 'a' * 40))
+
+    def test_malformed_provenance_fails_closed(self):
+        doc = json.loads(self.SARIF)
+        doc['runs'][0]['versionControlProvenance'] = ['bad', None]
+        self.assertTrue(inspect_sarif(json.dumps(doc), 'a' * 40))
+
     def test_no_artifact_fails_closed(self):
         with tempfile.TemporaryDirectory() as tmp:
             log = Path(tmp) / 'log.txt'
@@ -218,13 +258,16 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument('--self-test', action='store_true', help='run embedded unit tests')
     parser.add_argument('--log', type=Path, help='decoded CodeQL job log')
     parser.add_argument('--sarif', type=Path, help='actual SARIF artifact')
+    parser.add_argument('--expected-sha', help='exact 40-character commit SHA for SARIF provenance')
     args = parser.parse_args(argv)
     if args.self_test:
         suite = unittest.defaultTestLoader.loadTestsFromTestCase(IntegrityTests)
         return 0 if unittest.TextTestRunner(verbosity=2).run(suite).wasSuccessful() else 1
     if args.log is None:
         parser.error('--log is required (or use --self-test)')
-    errors = inspect_files(args.log, args.sarif)
+    if args.expected_sha is not None and not re.fullmatch(r'[0-9a-fA-F]{40}', args.expected_sha):
+        parser.error('--expected-sha must be a full 40-character hexadecimal commit SHA')
+    errors = inspect_files(args.log, args.sarif, args.expected_sha)
     for error in errors:
         print('::error::CodeQL integrity: ' + error)
     if errors:
