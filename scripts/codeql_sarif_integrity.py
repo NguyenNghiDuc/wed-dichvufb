@@ -48,6 +48,16 @@ def inspect_log(log: str) -> list[str]:
     return errors
 
 
+def has_path_graph_error_notification(note: dict) -> bool:
+    """Catch exporter graph failures even when SARIF marks them as warnings."""
+    message = note.get('message')
+    if not isinstance(message, dict):
+        return False
+    return any(isinstance(message.get(field), str) and
+               (GRAPH_ERROR.search(message[field]) or PATH_ERROR.search(message[field]))
+               for field in ('text', 'markdown'))
+
+
 def check_provenance(run: dict, index: int, expected_sha: str) -> list[str]:
     """Fail closed if a SARIF run cannot be tied to the exact reviewed commit.
 
@@ -107,8 +117,8 @@ def inspect_sarif(content: str, expected_sha: str | None = None) -> list[str]:
                 for note in notes:
                     if not isinstance(note, dict):
                         errors.append(f'SARIF run {index} {field} entry is invalid')
-                    elif note.get('level') == 'error':
-                        errors.append(f'SARIF run {index} contains {field} errors')
+                    elif note.get('level') == 'error' or has_path_graph_error_notification(note):
+                        errors.append(f'SARIF run {index} contains {field} errors or path-graph failures')
                         break
     return errors
 
@@ -177,6 +187,26 @@ class IntegrityTests(unittest.TestCase):
         doc = json.loads(self.SARIF)
         doc['runs'][0]['invocations'][0]['toolExecutionNotifications'] = [{'level': 'error'}]
         self.assertTrue(inspect_sarif(json.dumps(doc)))
+
+    def test_warning_graph_error_notification_fails_closed(self):
+        doc = json.loads(self.SARIF)
+        doc['runs'][0]['invocations'][0]['toolExecutionNotifications'] = [
+            {'level': 'warning', 'message': {'text':
+             'got start node that does not appear in graph: loginPage'}}]
+        self.assertTrue(inspect_sarif(json.dumps(doc)))
+
+    def test_note_markdown_path_error_fails_closed(self):
+        doc = json.loads(self.SARIF)
+        doc['runs'][0]['invocations'][0]['toolConfigurationNotifications'] = [
+            {'level': 'note', 'message': {'markdown':
+             'ERROR: While processing path-problem rule java/csrf-unprotected-request-type'}}]
+        self.assertTrue(inspect_sarif(json.dumps(doc)))
+
+    def test_benign_warning_notification_remains_accepted(self):
+        doc = json.loads(self.SARIF)
+        doc['runs'][0]['invocations'][0]['toolExecutionNotifications'] = [
+            {'level': 'warning', 'message': {'text': 'Query completed with zero findings'}}]
+        self.assertEqual(inspect_sarif(json.dumps(doc)), [])
 
     def test_missing_or_empty_invocations_fail_closed(self):
         doc = json.loads(self.SARIF)
