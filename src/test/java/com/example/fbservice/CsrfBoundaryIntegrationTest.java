@@ -50,6 +50,37 @@ class CsrfBoundaryIntegrationTest {
     }
 
     @Test
+    void invalidCsrfTokenCannotRegisterOrAuthenticate() throws Exception {
+        String username = "csrf-invalid-token-user";
+        mvc.perform(post("/register").with(csrf().useInvalidToken())
+                .param("username", username)
+                .param("password", "not-a-real-password"))
+            .andExpect(status().isSeeOther())
+            .andExpect(redirectedUrl("/register?sessionExpired"));
+        org.assertj.core.api.Assertions.assertThat(users.existsByUsername(username)).isFalse();
+
+        mvc.perform(post("/login").with(csrf().useInvalidToken())
+                .param("username", username)
+                .param("password", "not-a-real-password"))
+            .andExpect(status().isSeeOther())
+            .andExpect(redirectedUrl("/login?sessionExpired"));
+    }
+
+    @Test
+    void unsignedMalformedAndOversizedWebhookRequestsAreRejected() throws Exception {
+        String endpoint = "/api/v1/payments/webhooks/internal";
+        mvc.perform(post(endpoint).contentType(MediaType.APPLICATION_JSON).content("{}"))
+            .andExpect(status().isUnauthorized());
+        mvc.perform(post(endpoint).contentType(MediaType.APPLICATION_JSON).content("{}")
+                .header("X-GrowLab-Signature", "not-hex"))
+            .andExpect(status().isUnauthorized());
+        mvc.perform(post(endpoint).contentType(MediaType.APPLICATION_JSON)
+                .content("x".repeat(4097))
+                .header("X-GrowLab-Signature", "0".repeat(64)))
+            .andExpect(status().is(413));
+    }
+
+    @Test
     @WithMockUser(username = "csrf-owner", roles = "ADMIN")
     void authenticatedStateChangesRequireCsrf() throws Exception {
         mvc.perform(post("/admin/campaign-orders/1/status").param("status", "APPROVED"))
