@@ -29,8 +29,23 @@ jobs:
           languages: java-kotlin
           queries: security-extended,security-and-quality
           build-mode: manual
-      - name: Compile application for analysis
-        run: mvn -B --no-transfer-progress -DskipTests package
-      - uses: github/codeql-action/analyze@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4
+      - name: Compile application and isolated CSRF reproduction for analysis
+        run: |
+          mvn -B --no-transfer-progress -DskipTests package
+          mvn -B --no-transfer-progress -f tools/codeql-csrf-repro/pom.xml verify
+      - id: analyze
+        uses: github/codeql-action/analyze@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4
         with:
           category: '/language:java-kotlin'
+          output: ${{ runner.temp }}/codeql-sarif-raw
+          post-processed-sarif-path: ${{ runner.temp }}/codeql-sarif-postprocessed
+      - name: Preserve raw and uploaded SARIF for issue #13
+        if: always()
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
+        with:
+          name: codeql-sarif-triage-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/codeql-sarif-raw
+            ${{ runner.temp }}/codeql-sarif-postprocessed
+          if-no-files-found: warn
+          retention-days: 14
