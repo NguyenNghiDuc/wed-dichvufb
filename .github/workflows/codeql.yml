@@ -49,3 +49,36 @@ jobs:
             ${{ runner.temp }}/codeql-sarif-postprocessed
           if-no-files-found: warn
           retention-days: 14
+
+  csrf-minimal-repro:
+    name: Isolated CSRF reproduction (SARIF only; upload disabled)
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.ref == 'chore/codeql-action-4.39.1-coordinated-20261115'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+      - uses: github/codeql-action/init@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4
+        with:
+          languages: java-kotlin
+          queries: security-extended,security-and-quality
+          build-mode: manual
+      - name: Compile only the isolated CSRF reproduction
+        run: mvn -B --no-transfer-progress -f tools/codeql-csrf-repro/pom.xml verify
+      - id: analyze
+        uses: github/codeql-action/analyze@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4
+        with:
+          upload: never
+          category: '/language:java-kotlin/csrf-repro-isolated'
+          output: ${{ runner.temp }}/codeql-csrf-isolated-sarif
+      - name: Preserve fixture-only SARIF without publishing alerts
+        if: always()
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
+        with:
+          name: codeql-csrf-isolated-${{ github.run_id }}
+          path: ${{ runner.temp }}/codeql-csrf-isolated-sarif
+          if-no-files-found: warn
+          retention-days: 14
