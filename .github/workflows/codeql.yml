@@ -104,24 +104,30 @@ jobs:
                   print(f"::error::Unexpected SARIF version in {path}: {document.get('version')}")
                   sys.exit(1)
               for run in document.get("runs", []):
-                  driver = run.get("tool", {}).get("driver", {})
-                  rules = driver.get("rules", [])
-                  rule_ids = {rule.get("id") for rule in rules}
+                  tool = run.get("tool", {})
+                  driver = tool.get("driver", {})
+                  driver_rules = driver.get("rules", [])
+                  components = [driver, *tool.get("extensions", [])]
+                  rule_ids = {
+                      rule.get("id")
+                      for component in components
+                      for rule in component.get("rules", [])
+                  }
                   definition_found = definition_found or target in rule_ids
                   for result in run.get("results", []):
                       rule_id = result.get("ruleId")
                       if rule_id is None:
                           index = result.get("ruleIndex")
-                          if isinstance(index, int) and 0 <= index < len(rules):
-                              rule_id = rules[index].get("id")
+                          if isinstance(index, int) and 0 <= index < len(driver_rules):
+                              rule_id = driver_rules[index].get("id")
                       if rule_id == target:
                           result_count += 1
 
           if not definition_found:
-              print(f"::error::SARIF does not contain the expected query definition: {target}")
+              print(f"::error::SARIF does not contain the expected query definition in the driver or extensions: {target}")
               sys.exit(1)
           if result_count == 0:
-              print(f"::error::The fixture query {target} produced no SARIF result. Inspect CodeQL path-graph exporter errors; a green analyze step is not sufficient evidence.")
+              print(f"::error::The fixture query definition is present, but {target} produced no SARIF result. Inspect CodeQL path-graph exporter errors; a green analyze step is not sufficient evidence.")
               sys.exit(1)
           print(f"Validated {result_count} SARIF result(s) for {target} across {len(files)} file(s).")
           PY
