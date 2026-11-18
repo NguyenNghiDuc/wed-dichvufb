@@ -74,6 +74,57 @@ jobs:
           upload: never
           category: '/language:java-kotlin/csrf-repro-isolated'
           output: ${{ runner.temp }}/codeql-csrf-isolated-sarif
+      - name: Fail closed when the fixture CSRF result is missing from SARIF
+        if: steps.analyze.outcome == 'success'
+        env:
+          SARIF_DIR: ${{ runner.temp }}/codeql-csrf-isolated-sarif
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import sys
+          from pathlib import Path
+
+          target = "java/csrf-unprotected-request-type"
+          root = Path(os.environ["SARIF_DIR"])
+          files = sorted(root.rglob("*.sarif")) if root.exists() else []
+          if not files:
+              print(f"::error::No fixture SARIF file found under {root}")
+              sys.exit(1)
+
+          definition_found = False
+          result_count = 0
+          for path in files:
+              try:
+                  document = json.loads(path.read_text(encoding="utf-8"))
+              except (OSError, json.JSONDecodeError) as error:
+                  print(f"::error::Cannot read SARIF {path}: {error}")
+                  sys.exit(1)
+              if document.get("version") != "2.1.0":
+                  print(f"::error::Unexpected SARIF version in {path}: {document.get('version')}")
+                  sys.exit(1)
+              for run in document.get("runs", []):
+                  driver = run.get("tool", {}).get("driver", {})
+                  rules = driver.get("rules", [])
+                  rule_ids = {rule.get("id") for rule in rules}
+                  definition_found = definition_found or target in rule_ids
+                  for result in run.get("results", []):
+                      rule_id = result.get("ruleId")
+                      if rule_id is None:
+                          index = result.get("ruleIndex")
+                          if isinstance(index, int) and 0 <= index < len(rules):
+                              rule_id = rules[index].get("id")
+                      if rule_id == target:
+                          result_count += 1
+
+          if not definition_found:
+              print(f"::error::SARIF does not contain the expected query definition: {target}")
+              sys.exit(1)
+          if result_count == 0:
+              print(f"::error::The fixture query {target} produced no SARIF result. Inspect CodeQL path-graph exporter errors; a green analyze step is not sufficient evidence.")
+              sys.exit(1)
+          print(f"Validated {result_count} SARIF result(s) for {target} across {len(files)} file(s).")
+          PY
       - name: Preserve fixture-only SARIF without publishing alerts
         if: always()
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
