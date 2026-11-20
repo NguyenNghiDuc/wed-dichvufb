@@ -35,6 +35,13 @@ class CsrfBoundaryTest {
     }
 
     @Test
+    void diagnosticSelfEdgeControlRemainsReadOnlyAndDoesNotRecurse() throws Exception {
+        mvc.perform(get("/edit-self-edge"))
+            .andExpect(status().isOk())
+            .andExpect(content().string("edit-self-edge"));
+    }
+
+    @Test
     void unsafePostRejectsMissingCsrfAndAcceptsValidTestToken() throws Exception {
         mvc.perform(post("/register"))
             .andExpect(status().isForbidden());

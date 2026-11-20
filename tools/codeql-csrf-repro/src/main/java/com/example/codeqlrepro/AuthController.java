@@ -29,6 +29,20 @@ public class AuthController {
         return "edit";
     }
 
+    /**
+     * Diagnostic-only differential control for the zero-edge hypothesis.
+     * Boolean.FALSE is a constant false, so this self-call is never executed;
+     * it exists only as a syntactic call-graph self-edge for CodeQL analysis.
+     */
+    @GetMapping("/edit-self-edge")
+    @ResponseBody
+    public String editSelfEdgeProbe() {
+        if (Boolean.FALSE.booleanValue()) {
+            editSelfEdgeProbe();
+        }
+        return "edit-self-edge";
+    }
+
     /** Negative control: the query treats the leading "view" as uninteresting. */
     @GetMapping("/view-login")
     @ResponseBody
