@@ -3,7 +3,7 @@
 **Status:** investigation only; not a security approval.  
 **Checked:** 2026-11-21  
 **Main:** `084f85dcaf1b39553298da18e021b7cbd688c990`  
-**PR #62:** `279591718c495d88a9a747d832c0a381aa3a6725` (Open, Draft; 7 ahead / 0 behind)
+**PR #62:** [Open · Draft](https://github.com/NguyenNghiDuc/wed-dichvufb/pull/62). See the live PR metadata for the current head SHA and ahead/behind count; historical exact-head SHAs and runs are labeled in the sections below.
 
 ## 1. Historical exact-head CI evidence (2026-11-20)
 
