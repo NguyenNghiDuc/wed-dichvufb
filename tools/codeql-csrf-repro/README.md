@@ -23,10 +23,14 @@ mvn -B --no-transfer-progress -f tools/codeql-csrf-repro/pom.xml verify
 
 The CodeQL workflow runs this independent Maven build in a separate database job with upload disabled. The combined analysis also compiles the application and fixture and retains raw plus post-processed SARIF for Issue #13 review.
 
-## Current differential result (2026-11-20)
+## Current differential result (2026-11-21)
 
-On PR #62 head `279591718c495d88a9a747d832c0a381aa3a6725`, the fixture-only CodeQL job passed Maven verify (3 tests) but still logged path-graph errors for `editSelfEdgeProbe`, `edit`, `registerPage`, and `loginPage`. Its SARIF contains the CSRF rule definition but zero CSRF results, so the fail-closed gate fails. The self-call control did not resolve the error; the simple zero-edge explanation is therefore not confirmed.
+The official query source has a same-node name-based branch (`sinkMethod = sourceMethod`) but the path-graph `edges` relation only exposes `relevantEdge`, which requires a database-update `revFlow`. The name-based branch explicitly excludes database-update paths. This leaves the selected same-node finding out of the declared path graph and matches the CodeQL missing-start-node export error.
 
-The read-only GET handlers are heuristic candidates, not proof of CSRF exploitability. A path-graph error reproduces analyzer/export behavior; it does not establish an application vulnerability or an upstream root cause. Inspect exact SARIF notifications, query pack, CLI, Action, and source revision.
+A diagnostic query pack in `queries/` adds a self-edge for `pred = succ and unprotectedStateChange(pred, succ)`. On PR #62 head `e00250286fab641bbc1c55ad3e43e731954faccd`, CodeQL run 44869100874 emitted four SARIF results for `growlab/csrf-namebased-self-edge-probe`; the official `java/csrf-unprotected-request-type` still emitted zero and the fail-closed gate failed. This is strong evidence for the path-graph edge omission, not proof that the read-only GET fixture handlers are exploitable.
 
-Do not suppress `java/csrf-unprotected-request-type`, rename handlers to evade its heuristic, or weaken CSRF to obtain a clean report. This fixture is evidence gathering, not a security approval.
+The earlier Java self-call control is not equivalent to a QL path-graph self-edge and is not treated as a counterexample. The diagnostic query runs only in the isolated fixture job with `upload: never`; it never publishes alerts.
+
+The CodeQL workflow pins the same 2.27.5 Java bundle in both jobs. Only the publishing job has `security-events: write`; the isolated job remains read-only. Java CI run 44869100731 passed 173 tests on Java 17.0.21 with PostgreSQL 16.16, Flyway version guard, JAR health smoke, and Docker image build.
+
+The read-only GET handlers are heuristic candidates, not proof of CSRF exploitability. Do not suppress `java/csrf-unprotected-request-type`, rename handlers to evade its heuristic, or weaken CSRF to obtain a clean report. This fixture is evidence gathering, not a security approval.
