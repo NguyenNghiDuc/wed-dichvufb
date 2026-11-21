@@ -74,7 +74,7 @@ jobs:
         with:
           tools: https://github.com/github/codeql-action/releases/download/codeql-bundle-v2.27.5/codeql-bundle-java-linux64.tar.zst
           languages: java-kotlin
-          queries: security-extended,security-and-quality
+          queries: security-extended,security-and-quality,./tools/codeql-csrf-repro/queries
           build-mode: manual
       - name: Compile only the isolated CSRF reproduction
         run: mvn -B --no-transfer-progress -f tools/codeql-csrf-repro/pom.xml verify
@@ -96,6 +96,7 @@ jobs:
           from pathlib import Path
 
           target = "java/csrf-unprotected-request-type"
+          probe_target = "growlab/csrf-namebased-self-edge-probe"
           root = Path(os.environ["SARIF_DIR"])
           files = sorted(root.rglob("*.sarif")) if root.exists() else []
           if not files:
@@ -103,7 +104,9 @@ jobs:
               sys.exit(1)
 
           definition_found = False
+          probe_definition_found = False
           result_count = 0
+          probe_result_count = 0
           for path in files:
               try:
                   document = json.loads(path.read_text(encoding="utf-8"))
@@ -124,6 +127,7 @@ jobs:
                       for rule in component.get("rules", [])
                   }
                   definition_found = definition_found or target in rule_ids
+                  probe_definition_found = probe_definition_found or probe_target in rule_ids
                   for result in run.get("results", []):
                       rule_id = result.get("ruleId")
                       if rule_id is None:
@@ -132,14 +136,24 @@ jobs:
                               rule_id = driver_rules[index].get("id")
                       if rule_id == target:
                           result_count += 1
+                      if rule_id == probe_target:
+                          probe_result_count += 1
+
+          if not probe_definition_found:
+              print(f"::error::SARIF does not contain the diagnostic self-edge query definition: {probe_target}")
+              sys.exit(1)
+          if probe_result_count == 0:
+              print(f"::error::The diagnostic query did not serialize a self-edge path result: {probe_target}")
+              sys.exit(1)
+          print(f"Diagnostic self-edge probe serialized {probe_result_count} result(s).")
 
           if not definition_found:
               print(f"::error::SARIF does not contain the expected query definition in the driver or extensions: {target}")
               sys.exit(1)
           if result_count == 0:
-              print(f"::error::The fixture query definition is present, but {target} produced no SARIF result. Inspect CodeQL path-graph exporter errors; a green analyze step is not sufficient evidence.")
+              print(f"::error::The official fixture query definition is present, but {target} produced no SARIF result. Inspect CodeQL path-graph exporter errors; a green analyze step is not sufficient evidence.")
               sys.exit(1)
-          print(f"Validated {result_count} SARIF result(s) for {target} across {len(files)} file(s).")
+          print(f"Validated {result_count} official SARIF result(s) for {target} across {len(files)} file(s).")
           PY
       - name: Preserve fixture-only SARIF without publishing alerts
         if: always()
