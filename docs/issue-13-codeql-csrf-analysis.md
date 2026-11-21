@@ -201,3 +201,14 @@ Toolchain alignment history:
 - [ ] Verify main branch protection and required checks with a repository owner; current integration receives 403 on the branch-protection endpoint.
 
 **Decision:** keep PR #62 Draft and Issue #13 open. The path-graph omission is now supported by exact query source and a successful diagnostic self-edge SARIF experiment, but the official rule still fails to serialize its findings and no upstream maintainer/security review has been completed.
+## 10. Exact current-head revalidation — 2026-11-21
+
+The documentation-only follow-up head `b7a1ccc50ab64cd6d38fa09dbb4d512e3e76da46` was also tested before this final documentation refresh:
+
+- Java CI [44869555373](https://github.com/NguyenNghiDuc/wed-dichvufb/actions/runs/44869555373), job `136740781486`: PASS; Java 17.0.21, 173 tests, PostgreSQL 16.16, Flyway version guard, JAR health smoke and Docker image build.
+- CodeQL [44869555275](https://github.com/NguyenNghiDuc/wed-dichvufb/actions/runs/44869555275), combined job `136740781151`: SUCCESS with seven official CSRF path-graph errors and successful upload.
+- The same CodeQL run, isolated job `136740781340`: expected FAIL closed because official CSRF SARIF results remain zero; the diagnostic self-edge query again serialized four results.
+- Exact-head fixture SARIF artifact `14693541550`: 4 diagnostic results, 0 official CSRF results, CodeQL 2.27.5 / SARIF 2.1.0.
+- Exact-head combined artifact `14693631411`: 11 non-CSRF raw results, 0 official CSRF results, post-processed SARIF 0 results.
+
+This re-run confirms the diagnostic result is stable on the current PR content. The commit after `b7a1ccc` only refreshes this report; it does not change application, workflow, or query code.
