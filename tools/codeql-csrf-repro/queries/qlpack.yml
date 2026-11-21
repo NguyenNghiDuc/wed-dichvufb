@@ -1,0 +1,4 @@
+name: growlab/csrf-pathgraph-probe
+version: 0.0.1
+dependencies:
+  codeql/java-all: 1.12.1
