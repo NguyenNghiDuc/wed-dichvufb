@@ -30,6 +30,7 @@ jobs:
           cache: maven
       - uses: github/codeql-action/init@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4
         with:
+          tools: https://github.com/github/codeql-action/releases/download/codeql-bundle-v2.27.5/codeql-bundle-java-linux64.tar.zst
           languages: java-kotlin
           queries: security-extended,security-and-quality
           build-mode: manual
@@ -71,6 +72,7 @@ jobs:
           cache: maven
       - uses: github/codeql-action/init@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4
         with:
+          tools: https://github.com/github/codeql-action/releases/download/codeql-bundle-v2.27.5/codeql-bundle-java-linux64.tar.zst
           languages: java-kotlin
           queries: security-extended,security-and-quality
           build-mode: manual
