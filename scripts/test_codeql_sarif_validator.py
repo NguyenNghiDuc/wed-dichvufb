@@ -65,7 +65,7 @@ class CodeQLSarifValidatorTest(unittest.TestCase):
                 self.document(results=[{"ruleId": "unknown/rule"}]),
             )
             with self.assertRaisesRegex(ValueError, "missing rule definitions"):
-                validate_sarif_paths([str(path)], ["growlab/extension-rule"])
+                validate_sarif_paths([str(path)], ["unknown/rule"])
 
     def test_rejects_non_sarif_210(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
