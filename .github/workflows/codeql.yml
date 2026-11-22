@@ -41,10 +41,23 @@ jobs:
       - id: analyze
         uses: github/codeql-action/analyze@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4
         with:
+          # Do not publish until the expected CSRF fixture result is present in raw SARIF.
+          upload: never
           category: '/language:java-kotlin'
           output: ${{ runner.temp }}/codeql-sarif-raw
           post-processed-sarif-path: ${{ runner.temp }}/codeql-sarif-postprocessed
-      - name: Preserve raw and uploaded SARIF for issue #13
+      - name: Fail closed before publishing CodeQL SARIF
+        if: steps.analyze.outcome == 'success'
+        run: |
+          python3 scripts/validate_codeql_csrf_sarif.py \
+            --require-rule java/csrf-unprotected-request-type \
+            "${{ runner.temp }}/codeql-sarif-raw"
+      - name: Upload validated CodeQL SARIF
+        uses: github/codeql-action/upload-sarif@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4
+        with:
+          sarif_file: ${{ runner.temp }}/codeql-sarif-raw
+          category: '/language:java-kotlin'
+      - name: Preserve raw and post-processed SARIF for issue #13
         if: always()
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
         with:
@@ -84,77 +97,13 @@ jobs:
           upload: never
           category: '/language:java-kotlin/csrf-repro-isolated'
           output: ${{ runner.temp }}/codeql-csrf-isolated-sarif
-      - name: Fail closed when the fixture CSRF result is missing from SARIF
+      - name: Fail closed when official and diagnostic fixture results are missing
         if: steps.analyze.outcome == 'success'
-        env:
-          SARIF_DIR: ${{ runner.temp }}/codeql-csrf-isolated-sarif
         run: |
-          python - <<'PY'
-          import json
-          import os
-          import sys
-          from pathlib import Path
-
-          target = "java/csrf-unprotected-request-type"
-          probe_target = "growlab/csrf-namebased-self-edge-probe"
-          root = Path(os.environ["SARIF_DIR"])
-          files = sorted(root.rglob("*.sarif")) if root.exists() else []
-          if not files:
-              print(f"::error::No fixture SARIF file found under {root}")
-              sys.exit(1)
-
-          definition_found = False
-          probe_definition_found = False
-          result_count = 0
-          probe_result_count = 0
-          for path in files:
-              try:
-                  document = json.loads(path.read_text(encoding="utf-8"))
-              except (OSError, json.JSONDecodeError) as error:
-                  print(f"::error::Cannot read SARIF {path}: {error}")
-                  sys.exit(1)
-              if document.get("version") != "2.1.0":
-                  print(f"::error::Unexpected SARIF version in {path}: {document.get('version')}")
-                  sys.exit(1)
-              for run in document.get("runs", []):
-                  tool = run.get("tool", {})
-                  driver = tool.get("driver", {})
-                  driver_rules = driver.get("rules", [])
-                  components = [driver, *tool.get("extensions", [])]
-                  rule_ids = {
-                      rule.get("id")
-                      for component in components
-                      for rule in component.get("rules", [])
-                  }
-                  definition_found = definition_found or target in rule_ids
-                  probe_definition_found = probe_definition_found or probe_target in rule_ids
-                  for result in run.get("results", []):
-                      rule_id = result.get("ruleId")
-                      if rule_id is None:
-                          index = result.get("ruleIndex")
-                          if isinstance(index, int) and 0 <= index < len(driver_rules):
-                              rule_id = driver_rules[index].get("id")
-                      if rule_id == target:
-                          result_count += 1
-                      if rule_id == probe_target:
-                          probe_result_count += 1
-
-          if not probe_definition_found:
-              print(f"::error::SARIF does not contain the diagnostic self-edge query definition: {probe_target}")
-              sys.exit(1)
-          if probe_result_count == 0:
-              print(f"::error::The diagnostic query did not serialize a self-edge path result: {probe_target}")
-              sys.exit(1)
-          print(f"Diagnostic self-edge probe serialized {probe_result_count} result(s).")
-
-          if not definition_found:
-              print(f"::error::SARIF does not contain the expected query definition in the driver or extensions: {target}")
-              sys.exit(1)
-          if result_count == 0:
-              print(f"::error::The official fixture query definition is present, but {target} produced no SARIF result. Inspect CodeQL path-graph exporter errors; a green analyze step is not sufficient evidence.")
-              sys.exit(1)
-          print(f"Validated {result_count} official SARIF result(s) for {target} across {len(files)} file(s).")
-          PY
+          python3 scripts/validate_codeql_csrf_sarif.py \
+            --require-rule java/csrf-unprotected-request-type \
+            --require-rule growlab/csrf-namebased-self-edge-probe \
+            "${{ runner.temp }}/codeql-csrf-isolated-sarif"
       - name: Preserve fixture-only SARIF without publishing alerts
         if: always()
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
