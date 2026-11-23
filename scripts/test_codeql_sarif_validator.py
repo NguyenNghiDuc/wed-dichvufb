@@ -21,6 +21,7 @@ class CodeQLSarifValidatorTest(unittest.TestCase):
             "version": version,
             "runs": [
                 {
+                    "invocations": [{"executionSuccessful": True}],
                     "tool": {
                         "driver": {"rules": [{"id": "java/driver-rule"}]},
                         "extensions": [{"rules": [{"id": "growlab/extension-rule"}]}],
@@ -80,6 +81,42 @@ class CodeQLSarifValidatorTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp:
             with self.assertRaisesRegex(ValueError, "No SARIF files found"):
                 validate_sarif_paths([temp], ["growlab/extension-rule"])
+
+    def test_rejects_missing_invocation_metadata(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            document = self.document(results=[{"ruleId": "growlab/extension-rule"}])
+            del document["runs"][0]["invocations"]
+            path = self.write_sarif(Path(temp), document)
+            with self.assertRaisesRegex(ValueError, "no invocation metadata"):
+                validate_sarif_paths([str(path)], ["growlab/extension-rule"])
+
+    def test_rejects_unsuccessful_invocation(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            document = self.document(results=[{"ruleId": "growlab/extension-rule"}])
+            document["runs"][0]["invocations"][0]["executionSuccessful"] = False
+            path = self.write_sarif(Path(temp), document)
+            with self.assertRaisesRegex(ValueError, "not confirmed successful"):
+                validate_sarif_paths([str(path)], ["growlab/extension-rule"])
+
+    def test_rejects_error_level_execution_notification(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            document = self.document(results=[{"ruleId": "growlab/extension-rule"}])
+            document["runs"][0]["invocations"][0]["toolExecutionNotifications"] = [
+                {"level": "error", "message": {"text": "path graph export failed"}}
+            ]
+            path = self.write_sarif(Path(temp), document)
+            with self.assertRaisesRegex(ValueError, "error-level toolExecutionNotifications"):
+                validate_sarif_paths([str(path)], ["growlab/extension-rule"])
+
+    def test_rejects_error_level_configuration_notification(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            document = self.document(results=[{"ruleId": "growlab/extension-rule"}])
+            document["runs"][0]["invocations"][0]["toolConfigurationNotifications"] = [
+                {"level": "error", "message": {"text": "query configuration failed"}}
+            ]
+            path = self.write_sarif(Path(temp), document)
+            with self.assertRaisesRegex(ValueError, "error-level toolConfigurationNotifications"):
+                validate_sarif_paths([str(path)], ["growlab/extension-rule"])
 
 
 if __name__ == "__main__":
