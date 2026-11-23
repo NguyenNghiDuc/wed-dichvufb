@@ -1,9 +1,9 @@
 # CodeQL CSRF SARIF investigation — Issue #13
 
 **Status:** investigation only; not a security approval.  
-**Checked:** 2026-11-21  
+**Checked:** 2026-11-23  
 **Main:** `084f85dcaf1b39553298da18e021b7cbd688c990`  
-**PR #62:** [Open · Draft](https://github.com/NguyenNghiDuc/wed-dichvufb/pull/62). See the live PR metadata for the current head SHA and ahead/behind count; historical exact-head SHAs and runs are labeled in the sections below.
+**PR #62:** [Open · Draft](https://github.com/NguyenNghiDuc/wed-dichvufb/pull/62). Exact current head is recorded in §11; earlier SHAs and runs below are historical.
 
 ## 1. Historical exact-head CI evidence (2026-11-20)
 
@@ -212,3 +212,66 @@ The documentation-only follow-up head `b7a1ccc50ab64cd6d38fa09dbb4d512e3e76da46`
 - Exact-head combined artifact `14693631411`: 11 non-CSRF raw results, 0 official CSRF results, post-processed SARIF 0 results.
 
 This re-run confirms the diagnostic result is stable on the current PR content. The commit after `b7a1ccc` only refreshes this report; it does not change application, workflow, or query code.
+
+## 11. Exact-head SARIF integrity hardening — 2026-11-23
+
+Tested code head: `6fa834a3ff837ed173c00fa65e1440266ca61d96`  
+Main: `084f85dcaf1b39553298da18e021b7cbd688c990`  
+PR #62: Open + Draft; 18 commits ahead / 0 behind main.
+
+### Validator changes
+
+- Commit `3c6f24cc11a27f2d7b0a02317805f184e7e0d1c7` strengthens `scripts/validate_codeql_csrf_sarif.py`: every SARIF run must contain invocation metadata; every invocation must explicitly set `executionSuccessful: true`; error-level `toolExecutionNotifications` and `toolConfigurationNotifications` reject the artifact.
+- Commit `6fa834a3ff837ed173c00fa65e1440266ca61d96` adds four regression tests, bringing the validator suite to 10 tests.
+- Local Python unit tests: 10/10 passed.
+- Exact-head GitHub Java CI also ran the validator tests successfully.
+
+This check is additional integrity validation. It does not interpret missing CodeQL path-graph log errors as SARIF notifications; those errors remain visible in the Actions logs and the official-result gate still blocks publication.
+
+### Exact-head Java CI
+
+[Run 45114995652](https://github.com/NguyenNghiDuc/wed-dichvufb/actions/runs/45114995652), job `137495706599`: **PASS**.
+
+- Temurin Java 17.0.21.
+- SARIF validator: 10 tests passed.
+- Flyway version-guard tests: 10 passed; 16 versioned migrations validated.
+- PostgreSQL 16.16 integration service.
+- Maven: 173 tests, 0 failures, 0 errors, 0 skipped; `BUILD SUCCESS`.
+- Production-profile JAR health smoke passed.
+- Docker image build passed.
+- JaCoCo artifact: `14791052919`.
+- Docker application-container runtime health remains untested.
+
+### Exact-head CodeQL and SARIF
+
+[Run 45114995686](https://github.com/NguyenNghiDuc/wed-dichvufb/actions/runs/45114995686): overall **FAILURE by design while the official CSRF result is absent**.
+
+| Job | Job ID | Result |
+|---|---:|---|
+| Analyze Java security | `137495707012` | CodeQL analyze completed; validator failed on zero official CSRF results; SARIF upload was skipped |
+| Isolated CSRF reproduction | `137495707258` | Official CSRF result remains zero; diagnostic QL probe emits four results; fixture upload disabled |
+
+Both jobs use CodeQL Action v4.39.1 at immutable SHA `9b3254085494b55a0f7c4c2b3d2d52cc712ce370`, CLI 2.27.5, Java query pack 1.12.1, and Java 17.
+
+Downloaded and parsed exact-head artifacts:
+
+- Combined artifact [14791745649](https://github.com/NguyenNghiDuc/wed-dichvufb/actions/runs/45114995686): raw SARIF has 11 non-CSRF results and 0 official `java/csrf-unprotected-request-type` results; post-processed SARIF has 0 results.
+- Fixture artifact [14790862737](https://github.com/NguyenNghiDuc/wed-dichvufb/actions/runs/45114995686): 4 diagnostic `growlab/csrf-namebased-self-edge-probe` results and 0 official CSRF results.
+- Both artifacts are SARIF 2.1.0, with one invocation each, `executionSuccessful: true`, and zero error-level SARIF notifications.
+- The combined CodeQL log still reports seven missing-start-node errors; the isolated fixture log reports four. The errors are not represented as SARIF error-level notifications.
+
+The strengthened validator was run directly against both downloaded artifact ZIPs. It accepted their invocation metadata but rejected both because the official CSRF rule has zero serialized results. The combined workflow skipped the upload step; the isolated job remains `upload: never`.
+
+### Current decision and remaining gates
+
+The validator hardening is verified. The official CodeQL query/exporter problem is **not fixed** and no upstream maintainer acceptance exists. The diagnostic self-edge result remains evidence for investigation, not a replacement for official CSRF results and not proof that the read-only GET fixture is exploitable.
+
+- [ ] CodeQL maintainer review or tested upstream correction.
+- [ ] Repository owner/security reviewer inspects published Code Scanning analyses and alerts.
+- [ ] Independent browser-session CSRF tests on isolated staging.
+- [ ] Independent webhook HMAC replay/idempotency/concurrency review.
+- [ ] Docker application-container runtime health smoke.
+- [ ] W9/CI owner review.
+- [ ] Repository owner verifies main branch protection and required checks.
+
+**Decision:** keep PR #62 Draft and Issue #13 open. No application source, Spring CSRF settings, migrations, or production behavior changed in this follow-up. No production deployment, real transaction, artificial engagement, secret use, force push, or direct main write.
