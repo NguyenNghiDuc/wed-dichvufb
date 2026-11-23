@@ -26,6 +26,41 @@ def _sarif_files(paths: Iterable[str]) -> list[Path]:
     return files
 
 
+def _validate_invocations(run: dict, path: Path, run_index: int) -> None:
+    invocations = run.get("invocations")
+    if not isinstance(invocations, list) or not invocations:
+        raise ValueError(f"SARIF run {run_index} has no invocation metadata: {path}")
+
+    for invocation_index, invocation in enumerate(invocations):
+        if not isinstance(invocation, dict):
+            raise ValueError(
+                f"SARIF run {run_index} has malformed invocation {invocation_index}: {path}"
+            )
+        if invocation.get("executionSuccessful") is not True:
+            raise ValueError(
+                f"SARIF run {run_index} invocation {invocation_index} is not confirmed successful: {path}"
+            )
+
+        for notification_field in ("toolExecutionNotifications", "toolConfigurationNotifications"):
+            notifications = invocation.get(notification_field, [])
+            if not isinstance(notifications, list):
+                raise ValueError(
+                    f"SARIF run {run_index} has malformed {notification_field}: {path}"
+                )
+            for notification in notifications:
+                if not isinstance(notification, dict):
+                    raise ValueError(
+                        f"SARIF run {run_index} has malformed notification in {notification_field}: {path}"
+                    )
+                if notification.get("level") == "error":
+                    message = notification.get("message", {})
+                    text = message.get("text") if isinstance(message, dict) else None
+                    detail = f": {text}" if text else ""
+                    raise ValueError(
+                        f"SARIF run {run_index} contains an error-level {notification_field}{detail}: {path}"
+                    )
+
+
 def validate_sarif_paths(paths: Iterable[str], required_rules: Iterable[str]) -> dict[str, int]:
     required = tuple(dict.fromkeys(required_rules))
     if not required:
@@ -41,30 +76,59 @@ def validate_sarif_paths(paths: Iterable[str], required_rules: Iterable[str]) ->
         except (OSError, json.JSONDecodeError) as error:
             raise ValueError(f"Cannot read SARIF {path}: {error}") from error
 
-        if document.get("version") != "2.1.0":
-            raise ValueError(f"Unexpected SARIF version in {path}: {document.get('version')!r}")
+        if not isinstance(document, dict) or document.get("version") != "2.1.0":
+            version = document.get("version") if isinstance(document, dict) else None
+            raise ValueError(f"Unexpected SARIF version in {path}: {version!r}")
 
         runs = document.get("runs")
-        if not isinstance(runs, list):
-            raise ValueError(f"SARIF document has no runs array: {path}")
+        if not isinstance(runs, list) or not runs:
+            raise ValueError(f"SARIF document has no non-empty runs array: {path}")
 
-        for run in runs:
+        for run_index, run in enumerate(runs):
+            if not isinstance(run, dict):
+                raise ValueError(f"SARIF run {run_index} is malformed: {path}")
+            _validate_invocations(run, path, run_index)
+
             tool = run.get("tool", {})
+            if not isinstance(tool, dict):
+                raise ValueError(f"SARIF run {run_index} has malformed tool metadata: {path}")
             driver = tool.get("driver", {})
+            if not isinstance(driver, dict):
+                raise ValueError(f"SARIF run {run_index} has malformed driver metadata: {path}")
             driver_rules = driver.get("rules", [])
-            components = [driver, *tool.get("extensions", [])]
-            for component in components:
-                for rule in component.get("rules", []):
-                    rule_id = rule.get("id")
-                    if isinstance(rule_id, str):
-                        definitions.add(rule_id)
+            extensions = tool.get("extensions", [])
+            if not isinstance(driver_rules, list) or not isinstance(extensions, list):
+                raise ValueError(f"SARIF run {run_index} has malformed rule metadata: {path}")
 
-            for result in run.get("results", []):
+            components = [driver]
+            for extension in extensions:
+                if not isinstance(extension, dict):
+                    raise ValueError(f"SARIF run {run_index} has malformed extension metadata: {path}")
+                components.append(extension)
+
+            for component in components:
+                component_rules = component.get("rules", [])
+                if not isinstance(component_rules, list):
+                    raise ValueError(f"SARIF run {run_index} has malformed rule list: {path}")
+                for rule in component_rules:
+                    if isinstance(rule, dict):
+                        rule_id = rule.get("id")
+                        if isinstance(rule_id, str):
+                            definitions.add(rule_id)
+
+            run_results = run.get("results", [])
+            if not isinstance(run_results, list):
+                raise ValueError(f"SARIF run {run_index} has malformed results: {path}")
+            for result in run_results:
+                if not isinstance(result, dict):
+                    raise ValueError(f"SARIF run {run_index} has malformed result: {path}")
                 rule_id = result.get("ruleId")
                 if not isinstance(rule_id, str):
                     index = result.get("ruleIndex")
                     if isinstance(index, int) and 0 <= index < len(driver_rules):
-                        rule_id = driver_rules[index].get("id")
+                        rule = driver_rules[index]
+                        if isinstance(rule, dict):
+                            rule_id = rule.get("id")
                 if isinstance(rule_id, str):
                     results[rule_id] += 1
 
