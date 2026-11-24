@@ -303,7 +303,7 @@ The path-graph re-interpretation step is deliberately duplicated in the combined
 
 - No application controller, Spring CSRF setting, migration, payment behavior, or production configuration changed.
 - No rule is suppressed, no handler is renamed, and no self-edge is injected into the official query.
-- Local Python regression suite for the new validator semantics and path-graph log parser: **14 tests passed**.
+- Local Python regression suite for the new validator semantics and path-graph log parser: **17 tests passed**.
 - The actual combined SARIF artifact passes the rule-definition-only check (zero findings allowed); a captured representative path-graph log fails the new parser as intended.
 - GitHub Actions must still validate the exact pushed head. New workflow run IDs and results are recorded in the PR after completion; local tests do not substitute for that run.
 

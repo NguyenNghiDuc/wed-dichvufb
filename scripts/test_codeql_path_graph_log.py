@@ -31,7 +31,7 @@ class CodeQLPathGraphLogTest(unittest.TestCase):
         self.assertEqual(find_path_graph_errors(log, self.RULE), [])
 
     def test_detects_multiple_errors(self) -> None:
-        log = "\\n".join(
+        log = "\n".join(
             f"ERROR: While processing path-problem rule {self.RULE}, missing node: {name}."
             for name in ("loginPage", "registerPage", "edit")
         )

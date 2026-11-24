@@ -9,7 +9,7 @@ import sys
 from pathlib import Path
 
 _ERROR = re.compile(
-    r"ERROR:\\s+While processing path-problem rule\\s+(?P<rule>[^,\\s]+),\\s*(?P<detail>.*)"
+    r"ERROR:\s+While processing path-problem rule\s+(?P<rule>[^,\s]+),\s*(?P<detail>.*)"
 )
 
 

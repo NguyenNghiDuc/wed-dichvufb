@@ -41,7 +41,7 @@ jobs:
       - id: analyze
         uses: github/codeql-action/analyze@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4
         with:
-          # Do not publish until the expected CSRF fixture result is present in raw SARIF.
+          # Do not publish until the path-graph log and SARIF metadata checks pass.
           upload: never
           category: '/language:java-kotlin'
           output: ${{ runner.temp }}/codeql-sarif-raw
@@ -49,17 +49,22 @@ jobs:
       - name: Re-interpret CodeQL results and capture path-graph diagnostics
         if: steps.analyze.outcome == 'success'
         env:
-          DB_LOCATIONS: \${{ steps.analyze.outputs.db-locations }}
+          DB_LOCATIONS: ${{ steps.analyze.outputs.db-locations }}
         run: |
           set -euo pipefail
-          CODEQL_BIN="$(find "$RUNNER_TEMP" -type f -path '*/codeql/codeql' -perm -u+x -print -quit)"
-          if [ -z "$CODEQL_BIN" ]; then
+          CODEQL_BIN="$(find "$RUNNER_TEMP" -type f -path '*/codeql/codeql' -print -quit)"
+          if [ -z "$CODEQL_BIN" ] || [ ! -x "$CODEQL_BIN" ]; then
             echo "::error::CodeQL CLI binary not found under RUNNER_TEMP"
             exit 1
           fi
           "$CODEQL_BIN" version
           DB_PATH="$(python3 -c 'import json,os; print(json.loads(os.environ["DB_LOCATIONS"])["java"])')"
-          if [ ! -d "$DB_PATH/results" ] || ! find "$DB_PATH/results" -type f -name '*.bqrs' -print -quit | grep -q .; then
+          if [ ! -d "$DB_PATH/results" ]; then
+            echo "::error::CodeQL database results directory is missing"
+            exit 1
+          fi
+          BQR_FILE="$(find "$DB_PATH/results" -type f -name '*.bqrs' -print -quit || true)"
+          if [ -z "$BQR_FILE" ]; then
             echo "::error::CodeQL database has no persisted query results to re-interpret"
             exit 1
           fi
@@ -97,6 +102,8 @@ jobs:
           path: |
             ${{ runner.temp }}/codeql-sarif-raw
             ${{ runner.temp }}/codeql-sarif-postprocessed
+            ${{ runner.temp }}/codeql-csrf-reinterpret.log
+            ${{ runner.temp }}/codeql-csrf-reinterpret.sarif
           if-no-files-found: warn
           retention-days: 14
 
@@ -132,11 +139,11 @@ jobs:
       - name: Re-interpret CodeQL results and capture path-graph diagnostics
         if: steps.analyze.outcome == 'success'
         env:
-          DB_LOCATIONS: \${{ steps.analyze.outputs.db-locations }}
+          DB_LOCATIONS: ${{ steps.analyze.outputs.db-locations }}
         run: |
           set -euo pipefail
-          CODEQL_BIN="$(find "$RUNNER_TEMP" -type f -path '*/codeql/codeql' -perm -u+x -print -quit)"
-          if [ -z "$CODEQL_BIN" ]; then
+          CODEQL_BIN="$(find "$RUNNER_TEMP" -type f -path '*/codeql/codeql' -print -quit)"
+          if [ -z "$CODEQL_BIN" ] || [ ! -x "$CODEQL_BIN" ]; then
             echo "::error::CodeQL CLI binary not found under RUNNER_TEMP"
             exit 1
           fi
@@ -173,6 +180,9 @@ jobs:
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
         with:
           name: codeql-csrf-isolated-${{ github.run_id }}
-          path: ${{ runner.temp }}/codeql-csrf-isolated-sarif
+          path: |
+            ${{ runner.temp }}/codeql-csrf-isolated-sarif
+            ${{ runner.temp }}/codeql-csrf-reinterpret.log
+            ${{ runner.temp }}/codeql-csrf-reinterpret.sarif
           if-no-files-found: warn
           retention-days: 14
