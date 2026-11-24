@@ -46,11 +46,43 @@ jobs:
           category: '/language:java-kotlin'
           output: ${{ runner.temp }}/codeql-sarif-raw
           post-processed-sarif-path: ${{ runner.temp }}/codeql-sarif-postprocessed
-      - name: Fail closed before publishing CodeQL SARIF
+      - name: Re-interpret CodeQL results and capture path-graph diagnostics
+        if: steps.analyze.outcome == 'success'
+        env:
+          DB_LOCATIONS: \${{ steps.analyze.outputs.db-locations }}
+        run: |
+          set -euo pipefail
+          CODEQL_BIN="$(find "$RUNNER_TEMP" -type f -path '*/codeql/codeql' -perm -u+x -print -quit)"
+          if [ -z "$CODEQL_BIN" ]; then
+            echo "::error::CodeQL CLI binary not found under RUNNER_TEMP"
+            exit 1
+          fi
+          "$CODEQL_BIN" version
+          DB_PATH="$(python3 -c 'import json,os; print(json.loads(os.environ["DB_LOCATIONS"])["java"])')"
+          if [ ! -d "$DB_PATH/results" ] || ! find "$DB_PATH/results" -type f -name '*.bqrs' -print -quit | grep -q .; then
+            echo "::error::CodeQL database has no persisted query results to re-interpret"
+            exit 1
+          fi
+          LOG="$RUNNER_TEMP/codeql-csrf-reinterpret.log"
+          set +e
+          "$CODEQL_BIN" database interpret-results "$DB_PATH" \
+            --format=sarif-latest \
+            --output="$RUNNER_TEMP/codeql-csrf-reinterpret.sarif" \
+            --print-diagnostics-summary \
+            --print-metrics-summary \
+            --sarif-include-diagnostics \
+            -v > "$LOG" 2>&1
+          CODEQL_EXIT=$?
+          set -e
+          cat "$LOG"
+          if [ "$CODEQL_EXIT" -ne 0 ]; then exit "$CODEQL_EXIT"; fi
+          python3 scripts/check_codeql_path_graph_log.py \
+            --rule java/csrf-unprotected-request-type "$LOG"
+      - name: Validate CodeQL SARIF metadata before publishing
         if: steps.analyze.outcome == 'success'
         run: |
           python3 scripts/validate_codeql_csrf_sarif.py \
-            --require-rule java/csrf-unprotected-request-type \
+            --require-rule-definition java/csrf-unprotected-request-type \
             "${{ runner.temp }}/codeql-sarif-raw"
       - name: Upload validated CodeQL SARIF
         uses: github/codeql-action/upload-sarif@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4
@@ -97,11 +129,43 @@ jobs:
           upload: never
           category: '/language:java-kotlin/csrf-repro-isolated'
           output: ${{ runner.temp }}/codeql-csrf-isolated-sarif
-      - name: Fail closed when official and diagnostic fixture results are missing
+      - name: Re-interpret CodeQL results and capture path-graph diagnostics
+        if: steps.analyze.outcome == 'success'
+        env:
+          DB_LOCATIONS: \${{ steps.analyze.outputs.db-locations }}
+        run: |
+          set -euo pipefail
+          CODEQL_BIN="$(find "$RUNNER_TEMP" -type f -path '*/codeql/codeql' -perm -u+x -print -quit)"
+          if [ -z "$CODEQL_BIN" ]; then
+            echo "::error::CodeQL CLI binary not found under RUNNER_TEMP"
+            exit 1
+          fi
+          "$CODEQL_BIN" version
+          DB_PATH="$(python3 -c 'import json,os; print(json.loads(os.environ["DB_LOCATIONS"])["java"])')"
+          if [ ! -d "$DB_PATH/results" ] || ! find "$DB_PATH/results" -type f -name '*.bqrs' -print -quit | grep -q .; then
+            echo "::error::CodeQL database has no persisted query results to re-interpret"
+            exit 1
+          fi
+          LOG="$RUNNER_TEMP/codeql-csrf-reinterpret.log"
+          set +e
+          "$CODEQL_BIN" database interpret-results "$DB_PATH" \
+            --format=sarif-latest \
+            --output="$RUNNER_TEMP/codeql-csrf-reinterpret.sarif" \
+            --print-diagnostics-summary \
+            --print-metrics-summary \
+            --sarif-include-diagnostics \
+            -v > "$LOG" 2>&1
+          CODEQL_EXIT=$?
+          set -e
+          cat "$LOG"
+          if [ "$CODEQL_EXIT" -ne 0 ]; then exit "$CODEQL_EXIT"; fi
+          python3 scripts/check_codeql_path_graph_log.py \
+            --rule java/csrf-unprotected-request-type "$LOG"
+      - name: Validate isolated fixture SARIF
         if: steps.analyze.outcome == 'success'
         run: |
           python3 scripts/validate_codeql_csrf_sarif.py \
-            --require-rule java/csrf-unprotected-request-type \
+            --require-rule-definition java/csrf-unprotected-request-type \
             --require-rule growlab/csrf-namebased-self-edge-probe \
             "${{ runner.temp }}/codeql-csrf-isolated-sarif"
       - name: Preserve fixture-only SARIF without publishing alerts

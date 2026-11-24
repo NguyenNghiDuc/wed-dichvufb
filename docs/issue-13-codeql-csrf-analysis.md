@@ -275,3 +275,36 @@ The validator hardening is verified. The official CodeQL query/exporter problem 
 - [ ] Repository owner verifies main branch protection and required checks.
 
 **Decision:** keep PR #62 Draft and Issue #13 open. No application source, Spring CSRF settings, migrations, or production behavior changed in this follow-up. No production deployment, real transaction, artificial engagement, secret use, force push, or direct main write.
+
+## 12. 2026-11-24 — correct zero-finding semantics and inspect path-graph logs
+
+### Fresh main and PR baseline
+
+- Main ref was re-read from GitHub: `084f85dcaf1b39553298da18e021b7cbd688c990`.
+- Latest scheduled main CodeQL run: [45176815118](https://github.com/NguyenNghiDuc/wed-dichvufb/actions/runs/45176815118), job `137700088488`, conclusion **SUCCESS**. The decoded log nevertheless contains three errors for `edit`, `registerPage`, and `loginPage`, followed by SARIF upload success. This is the same false-green condition Issue #13 tracks.
+- Latest main Java CI run: [39548204218](https://github.com/NguyenNghiDuc/wed-dichvufb/actions/runs/39548204218), job `119051109194`, **PASS** (Java 17, PostgreSQL 16.15, 173 tests, JAR smoke, Docker build). It is an older baseline from 2026-10-21; no newer main Java CI run was present in the inspected run list.
+- Previous PR #62 exact head: `2bf7c0d263d863763e9f11a4cbb4e3b15c6bc625`; Java CI [45115539080](https://github.com/NguyenNghiDuc/wed-dichvufb/actions/runs/45115539080) passed, while CodeQL [45115539033](https://github.com/NguyenNghiDuc/wed-dichvufb/actions/runs/45115539033) failed closed. Combined job `137497416458` logged seven missing-start-node errors; fixture job `137497416127` logged four.
+- Combined SARIF artifact [14791077843](https://github.com/NguyenNghiDuc/wed-dichvufb/actions/runs/45115539033) was downloaded and inspected. It contains 11 non-CSRF results, zero official CSRF results, and 207 `toolExecutionNotifications` (203 `none`, four `note`, zero error-level). The path-graph errors exist only in the CLI log and are not represented as error-level SARIF notifications. Fixture artifact [14791731803](https://github.com/NguyenNghiDuc/wed-dichvufb/actions/runs/45115539033) contains four diagnostic self-edge results and zero official CSRF results.
+
+### Corrected acceptance semantics
+
+The previous validator incorrectly required at least one result for the official CSRF rule. A security query returning zero findings is valid when the rule was executed successfully and no finding exists; requiring a non-zero result could force false-positive findings just to make CI green. The official rule must therefore have a SARIF definition, not a fabricated minimum finding count.
+
+The new design keeps the security gate fail-closed without treating zero findings as failure:
+
+1. `validate_codeql_csrf_sarif.py --require-rule-definition` requires the official CSRF rule definition, SARIF 2.1.0, invocation metadata, explicit `executionSuccessful: true`, and no error-level SARIF notifications. Zero official findings are allowed.
+2. After CodeQL analyze, the workflow locates the exact CLI/database reported by the analyze step and re-runs `codeql database interpret-results` against the persisted BQRS results, capturing stdout and stderr.
+3. `check_codeql_path_graph_log.py` fails the job if the captured interpretation log contains any `ERROR: While processing path-problem rule java/csrf-unprotected-request-type` entry. This checks the failure channel that the SARIF notification validator cannot see.
+4. The isolated fixture still requires the diagnostic `growlab/csrf-namebased-self-edge-probe` result, but it never uploads fixture alerts. The combined job uploads raw SARIF only after the path-graph log and SARIF metadata gates pass.
+
+The path-graph re-interpretation step is deliberately duplicated in the combined and isolated jobs so both the application database and clean-room fixture are checked. If the CLI binary or persisted query results cannot be located, the job fails closed rather than silently skipping the check.
+
+### Scope and local regression evidence
+
+- No application controller, Spring CSRF setting, migration, payment behavior, or production configuration changed.
+- No rule is suppressed, no handler is renamed, and no self-edge is injected into the official query.
+- Local Python regression suite for the new validator semantics and path-graph log parser: **14 tests passed**.
+- The actual combined SARIF artifact passes the rule-definition-only check (zero findings allowed); a captured representative path-graph log fails the new parser as intended.
+- GitHub Actions must still validate the exact pushed head. New workflow run IDs and results are recorded in the PR after completion; local tests do not substitute for that run.
+
+**Decision:** PR #62 remains Draft and Issue #13 remains open. Do not merge while the exact-head path-graph re-interpretation gate, Java/PostgreSQL/Flyway/JAR/Docker checks, and independent security review are incomplete.

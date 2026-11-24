@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fail-closed validation for CodeQL SARIF rules required by the CSRF fixture."""
+"""Fail-closed validation for required CodeQL SARIF rules and analysis metadata."""
 
 from __future__ import annotations
 
@@ -61,10 +61,15 @@ def _validate_invocations(run: dict, path: Path, run_index: int) -> None:
                     )
 
 
-def validate_sarif_paths(paths: Iterable[str], required_rules: Iterable[str]) -> dict[str, int]:
+def validate_sarif_paths(
+    paths: Iterable[str],
+    required_rules: Iterable[str],
+    required_definitions: Iterable[str] = (),
+) -> dict[str, int]:
     required = tuple(dict.fromkeys(required_rules))
-    if not required:
-        raise ValueError("At least one --require-rule must be supplied")
+    definitions_required = tuple(dict.fromkeys(required_definitions))
+    if not required and not definitions_required:
+        raise ValueError("At least one --require-rule or --require-rule-definition must be supplied")
 
     definitions: set[str] = set()
     results: Counter[str] = Counter()
@@ -132,7 +137,8 @@ def validate_sarif_paths(paths: Iterable[str], required_rules: Iterable[str]) ->
                 if isinstance(rule_id, str):
                     results[rule_id] += 1
 
-    missing_definitions = [rule for rule in required if rule not in definitions]
+    all_required_definitions = tuple(dict.fromkeys((*required, *definitions_required)))
+    missing_definitions = [rule for rule in all_required_definitions if rule not in definitions]
     missing_results = [rule for rule in required if results[rule] == 0]
     if missing_definitions or missing_results:
         details = []
@@ -151,20 +157,29 @@ def main() -> int:
         "--require-rule",
         action="append",
         dest="required_rules",
-        required=True,
+        default=[],
         help="SARIF rule ID that must have both a definition and at least one result; repeat as needed.",
+    )
+    parser.add_argument(
+        "--require-rule-definition",
+        action="append",
+        dest="required_definitions",
+        default=[],
+        help="SARIF rule ID whose definition must be present; zero findings are allowed.",
     )
     parser.add_argument("paths", nargs="+", help="SARIF file(s) or directories to inspect.")
     args = parser.parse_args()
 
     try:
-        counts = validate_sarif_paths(args.paths, args.required_rules)
+        counts = validate_sarif_paths(args.paths, args.required_rules, args.required_definitions)
     except ValueError as error:
         print(f"::error::{error}", file=sys.stderr)
         return 1
 
     for rule_id, count in counts.items():
         print(f"Validated {count} SARIF result(s) for {rule_id}.")
+    for rule_id in args.required_definitions:
+        print(f"Validated SARIF rule definition for {rule_id}; zero findings are allowed.")
     return 0
 
 

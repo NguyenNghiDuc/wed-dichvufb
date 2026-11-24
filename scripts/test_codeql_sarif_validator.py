@@ -118,6 +118,26 @@ class CodeQLSarifValidatorTest(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "error-level toolConfigurationNotifications"):
                 validate_sarif_paths([str(path)], ["growlab/extension-rule"])
 
+    def test_accepts_rule_definition_without_findings(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            path = self.write_sarif(Path(temp), self.document())
+            self.assertEqual(
+                validate_sarif_paths([str(path)], [], ["java/driver-rule"]),
+                {},
+            )
+
+    def test_rejects_missing_required_rule_definition_without_findings(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            path = self.write_sarif(Path(temp), self.document())
+            with self.assertRaisesRegex(ValueError, "missing rule definitions"):
+                validate_sarif_paths([str(path)], [], ["java/missing-rule"])
+
+    def test_rejects_when_no_rule_requirements_are_supplied(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            path = self.write_sarif(Path(temp), self.document())
+            with self.assertRaisesRegex(ValueError, "At least one"):
+                validate_sarif_paths([str(path)], [])
+
 
 if __name__ == "__main__":
     unittest.main()
