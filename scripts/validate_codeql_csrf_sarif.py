@@ -61,15 +61,43 @@ def _validate_invocations(run: dict, path: Path, run_index: int) -> None:
                     )
 
 
+def parse_expected_rule_counts(values: Iterable[str]) -> dict[str, int]:
+    """Parse repeatable RULE_ID=COUNT CLI arguments without accepting negatives or conflicts."""
+    expected: dict[str, int] = {}
+    for raw_value in values:
+        rule_id, separator, raw_count = raw_value.partition("=")
+        if not separator or not rule_id or not raw_count.isdecimal():
+            raise ValueError(
+                f"Invalid --expect-rule-count value {raw_value!r}; expected RULE_ID=NON_NEGATIVE_INTEGER"
+            )
+        count = int(raw_count)
+        previous = expected.get(rule_id)
+        if previous is not None and previous != count:
+            raise ValueError(
+                f"Conflicting expected counts for {rule_id}: {previous} and {count}"
+            )
+        expected[rule_id] = count
+    return expected
+
+
 def validate_sarif_paths(
     paths: Iterable[str],
     required_rules: Iterable[str],
     required_definitions: Iterable[str] = (),
+    expected_result_counts: dict[str, int] | None = None,
 ) -> dict[str, int]:
     required = tuple(dict.fromkeys(required_rules))
     definitions_required = tuple(dict.fromkeys(required_definitions))
-    if not required and not definitions_required:
-        raise ValueError("At least one --require-rule or --require-rule-definition must be supplied")
+    expected_counts = dict(expected_result_counts or {})
+    for rule_id, count in expected_counts.items():
+        if not isinstance(rule_id, str) or not rule_id:
+            raise ValueError("Expected result-count rule IDs must be non-empty strings")
+        if isinstance(count, bool) or not isinstance(count, int) or count < 0:
+            raise ValueError(f"Expected result count for {rule_id} must be a non-negative integer")
+    if not required and not definitions_required and not expected_counts:
+        raise ValueError(
+            "At least one --require-rule, --require-rule-definition, or --expect-rule-count must be supplied"
+        )
 
     definitions: set[str] = set()
     results: Counter[str] = Counter()
@@ -137,18 +165,28 @@ def validate_sarif_paths(
                 if isinstance(rule_id, str):
                     results[rule_id] += 1
 
-    all_required_definitions = tuple(dict.fromkeys((*required, *definitions_required)))
+    all_required_definitions = tuple(
+        dict.fromkeys((*required, *definitions_required, *expected_counts))
+    )
     missing_definitions = [rule for rule in all_required_definitions if rule not in definitions]
     missing_results = [rule for rule in required if results[rule] == 0]
-    if missing_definitions or missing_results:
+    count_mismatches = [
+        f"{rule} expected exactly {expected}, got {results[rule]}"
+        for rule, expected in expected_counts.items()
+        if results[rule] != expected
+    ]
+    if missing_definitions or missing_results or count_mismatches:
         details = []
         if missing_definitions:
             details.append("missing rule definitions: " + ", ".join(missing_definitions))
         if missing_results:
             details.append("zero serialized results: " + ", ".join(missing_results))
+        if count_mismatches:
+            details.append("unexpected result counts: " + "; ".join(count_mismatches))
         raise ValueError("; ".join(details))
 
-    return {rule: results[rule] for rule in required}
+    returned_rules = tuple(dict.fromkeys((*required, *expected_counts)))
+    return {rule: results[rule] for rule in returned_rules}
 
 
 def main() -> int:
@@ -167,11 +205,25 @@ def main() -> int:
         default=[],
         help="SARIF rule ID whose definition must be present; zero findings are allowed.",
     )
+    parser.add_argument(
+        "--expect-rule-count",
+        action="append",
+        dest="expected_rule_counts",
+        default=[],
+        metavar="RULE_ID=COUNT",
+        help="Require an exact non-negative result count for a SARIF rule; repeat as needed.",
+    )
     parser.add_argument("paths", nargs="+", help="SARIF file(s) or directories to inspect.")
     args = parser.parse_args()
 
     try:
-        counts = validate_sarif_paths(args.paths, args.required_rules, args.required_definitions)
+        expected_counts = parse_expected_rule_counts(args.expected_rule_counts)
+        counts = validate_sarif_paths(
+            args.paths,
+            args.required_rules,
+            args.required_definitions,
+            expected_counts,
+        )
     except ValueError as error:
         print(f"::error::{error}", file=sys.stderr)
         return 1
@@ -180,6 +232,8 @@ def main() -> int:
         print(f"Validated {count} SARIF result(s) for {rule_id}.")
     for rule_id in args.required_definitions:
         print(f"Validated SARIF rule definition for {rule_id}; zero findings are allowed.")
+    for rule_id, expected in parse_expected_rule_counts(args.expected_rule_counts).items():
+        print(f"Validated exactly {expected} SARIF result(s) for {rule_id}.")
     return 0
 
 
