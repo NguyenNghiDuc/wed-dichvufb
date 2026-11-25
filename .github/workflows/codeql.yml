@@ -174,6 +174,7 @@ jobs:
           python3 scripts/validate_codeql_csrf_sarif.py \
             --require-rule-definition java/csrf-unprotected-request-type \
             --require-rule growlab/csrf-namebased-self-edge-probe \
+            --expect-rule-count growlab/csrf-namebased-self-edge-probe=4 \
             "${{ runner.temp }}/codeql-csrf-isolated-sarif"
       - name: Preserve fixture-only SARIF without publishing alerts
         if: always()
