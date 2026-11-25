@@ -84,7 +84,7 @@ jobs:
           python3 scripts/check_codeql_path_graph_log.py \
             --rule java/csrf-unprotected-request-type "$LOG"
       - name: Validate CodeQL SARIF metadata before publishing
-        if: steps.analyze.outcome == 'success'
+        if: always() && steps.analyze.outcome == 'success'
         run: |
           python3 scripts/validate_codeql_csrf_sarif.py \
             --require-rule-definition java/csrf-unprotected-request-type \
@@ -169,7 +169,7 @@ jobs:
           python3 scripts/check_codeql_path_graph_log.py \
             --rule java/csrf-unprotected-request-type "$LOG"
       - name: Validate isolated fixture SARIF
-        if: steps.analyze.outcome == 'success'
+        if: always() && steps.analyze.outcome == 'success'
         run: |
           python3 scripts/validate_codeql_csrf_sarif.py \
             --require-rule-definition java/csrf-unprotected-request-type \
