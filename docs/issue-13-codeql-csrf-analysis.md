@@ -1,7 +1,7 @@
 # CodeQL CSRF SARIF investigation — Issue #13
 
 **Status:** investigation only; not a security approval.  
-**Checked:** 2026-11-23  
+**Checked:** 2026-11-25  
 **Main:** `084f85dcaf1b39553298da18e021b7cbd688c990`  
 **PR #62:** [Open · Draft](https://github.com/NguyenNghiDuc/wed-dichvufb/pull/62). Exact current head is recorded in §11; earlier SHAs and runs below are historical.
 
@@ -308,3 +308,16 @@ The path-graph re-interpretation step is deliberately duplicated in the combined
 - GitHub Actions must still validate the exact pushed head. New workflow run IDs and results are recorded in the PR after completion; local tests do not substitute for that run.
 
 **Decision:** PR #62 remains Draft and Issue #13 remains open. Do not merge while the exact-head path-graph re-interpretation gate, Java/PostgreSQL/Flyway/JAR/Docker checks, and independent security review are incomplete.
+
+
+## 13. 2026-11-25 — exact-count regression for the diagnostic path graph
+
+The isolated fixture now checks the diagnostic query's serialized result count, not merely that at least one result exists:
+
+- `--expect-rule-count growlab/csrf-namebased-self-edge-probe=4`
+- The four expected candidates are `loginPage`, `registerPage`, `edit`, and `editSelfEdgeProbe`.
+- The official `java/csrf-unprotected-request-type` rule remains definition-only in the fixture validator; zero findings are valid and no synthetic official finding is required.
+- The exact-count option rejects missing, additional, malformed, or negative expected counts. An explicit expected count of zero is supported.
+- The change is confined to SARIF validation and the isolated fixture workflow. It does not change application controllers, Spring CSRF settings, migrations, payment behavior, or production configuration.
+
+Exact-head CI evidence for this follow-up is recorded in the PR after GitHub Actions completes. Until the official query path-graph export is clean and independent security review is complete, PR #62 remains Draft and Issue #13 remains open.
