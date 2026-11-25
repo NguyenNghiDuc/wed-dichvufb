@@ -7,7 +7,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from validate_codeql_csrf_sarif import validate_sarif_paths
+from validate_codeql_csrf_sarif import parse_expected_rule_counts, validate_sarif_paths
 
 
 class CodeQLSarifValidatorTest(unittest.TestCase):
@@ -137,6 +137,69 @@ class CodeQLSarifValidatorTest(unittest.TestCase):
             path = self.write_sarif(Path(temp), self.document())
             with self.assertRaisesRegex(ValueError, "At least one"):
                 validate_sarif_paths([str(path)], [])
+
+    def test_accepts_exact_expected_result_count(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            path = self.write_sarif(
+                Path(temp),
+                self.document(results=[
+                    {"ruleId": "growlab/extension-rule"},
+                    {"ruleId": "growlab/extension-rule"},
+                ]),
+            )
+            self.assertEqual(
+                validate_sarif_paths(
+                    [str(path)], [], expected_result_counts={"growlab/extension-rule": 2}
+                ),
+                {"growlab/extension-rule": 2},
+            )
+
+    def test_rejects_too_few_expected_results(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            path = self.write_sarif(Path(temp), self.document())
+            with self.assertRaisesRegex(ValueError, "expected exactly 2, got 0"):
+                validate_sarif_paths(
+                    [str(path)], [], expected_result_counts={"growlab/extension-rule": 2}
+                )
+
+    def test_rejects_too_many_expected_results(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            path = self.write_sarif(
+                Path(temp),
+                self.document(results=[{"ruleId": "growlab/extension-rule"}]),
+            )
+            with self.assertRaisesRegex(ValueError, "expected exactly 0, got 1"):
+                validate_sarif_paths(
+                    [str(path)], [], expected_result_counts={"growlab/extension-rule": 0}
+                )
+
+    def test_accepts_exact_zero_expected_results(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            path = self.write_sarif(Path(temp), self.document())
+            self.assertEqual(
+                validate_sarif_paths(
+                    [str(path)], [], expected_result_counts={"java/driver-rule": 0}
+                ),
+                {"java/driver-rule": 0},
+            )
+
+    def test_parses_expected_rule_count_arguments(self) -> None:
+        self.assertEqual(
+            parse_expected_rule_counts([
+                "growlab/diagnostic=4",
+                "java/csrf-unprotected-request-type=0",
+            ]),
+            {
+                "growlab/diagnostic": 4,
+                "java/csrf-unprotected-request-type": 0,
+            },
+        )
+
+    def test_rejects_malformed_expected_rule_count_arguments(self) -> None:
+        for value in ("missing-count", "=4", "rule=-1", "rule=1.5"):
+            with self.subTest(value=value):
+                with self.assertRaisesRegex(ValueError, "expected RULE_ID=NON_NEGATIVE_INTEGER"):
+                    parse_expected_rule_counts([value])
 
 
 if __name__ == "__main__":
