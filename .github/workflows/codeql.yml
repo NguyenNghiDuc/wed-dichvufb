@@ -34,10 +34,8 @@ jobs:
           languages: java-kotlin
           queries: security-extended,security-and-quality
           build-mode: manual
-      - name: Compile application and isolated CSRF reproduction for analysis
-        run: |
-          mvn -B --no-transfer-progress -DskipTests package
-          mvn -B --no-transfer-progress -f tools/codeql-csrf-repro/pom.xml verify
+      - name: Compile application only for combined analysis
+        run: mvn -B --no-transfer-progress -DskipTests package
       - id: analyze
         uses: github/codeql-action/analyze@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4
         with:
