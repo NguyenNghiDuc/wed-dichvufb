@@ -28,16 +28,16 @@ jobs:
           distribution: temurin
           java-version: '17'
           cache: maven
-      - uses: github/codeql-action/init@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4
+      - uses: github/codeql-action/init@915412ff23e8b7659517e607487dbeae018f2934 # v4.39.5
         with:
-          tools: https://github.com/github/codeql-action/releases/download/codeql-bundle-v2.27.5/codeql-bundle-java-linux64.tar.zst
+          tools: https://github.com/github/codeql-action/releases/download/codeql-bundle-v2.27.6/codeql-bundle-java-linux64.tar.zst
           languages: java-kotlin
           queries: security-extended,security-and-quality
           build-mode: manual
       - name: Compile application only for combined analysis
         run: mvn -B --no-transfer-progress -DskipTests package
       - id: analyze
-        uses: github/codeql-action/analyze@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4
+        uses: github/codeql-action/analyze@915412ff23e8b7659517e607487dbeae018f2934 # v4.39.5
         with:
           # Do not publish until the path-graph log and SARIF metadata checks pass.
           upload: never
@@ -88,7 +88,7 @@ jobs:
             --require-rule-definition java/csrf-unprotected-request-type \
             "${{ runner.temp }}/codeql-sarif-raw"
       - name: Upload validated CodeQL SARIF
-        uses: github/codeql-action/upload-sarif@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4
+        uses: github/codeql-action/upload-sarif@915412ff23e8b7659517e607487dbeae018f2934 # v4.39.5
         with:
           sarif_file: ${{ runner.temp }}/codeql-sarif-raw
           category: '/language:java-kotlin'
@@ -120,16 +120,16 @@ jobs:
           distribution: temurin
           java-version: '17'
           cache: maven
-      - uses: github/codeql-action/init@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4
+      - uses: github/codeql-action/init@915412ff23e8b7659517e607487dbeae018f2934 # v4.39.5
         with:
-          tools: https://github.com/github/codeql-action/releases/download/codeql-bundle-v2.27.5/codeql-bundle-java-linux64.tar.zst
+          tools: https://github.com/github/codeql-action/releases/download/codeql-bundle-v2.27.6/codeql-bundle-java-linux64.tar.zst
           languages: java-kotlin
           queries: security-extended,security-and-quality,./tools/codeql-csrf-repro/queries
           build-mode: manual
       - name: Compile only the isolated CSRF reproduction
         run: mvn -B --no-transfer-progress -f tools/codeql-csrf-repro/pom.xml verify
       - id: analyze
-        uses: github/codeql-action/analyze@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4
+        uses: github/codeql-action/analyze@915412ff23e8b7659517e607487dbeae018f2934 # v4.39.5
         with:
           upload: never
           category: '/language:java-kotlin/csrf-repro-isolated'
