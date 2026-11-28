@@ -8,14 +8,18 @@ on:
   schedule:
     - cron: '19 3 * * 1'
 
+# Default to read-only. The publishing job opts into security-events: write.
 permissions:
   actions: read
   contents: read
-  security-events: write
 
 jobs:
   java-security:
     name: Analyze Java security
+    permissions:
+      actions: read
+      contents: read
+      security-events: read
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
@@ -24,13 +28,187 @@ jobs:
           distribution: temurin
           java-version: '17'
           cache: maven
-      - uses: github/codeql-action/init@6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee # v4
+      - uses: github/codeql-action/init@915412ff23e8b7659517e607487dbeae018f2934 # v4.39.5
         with:
+          tools: https://github.com/github/codeql-action/releases/download/codeql-bundle-v2.27.6/codeql-bundle-java-linux64.tar.zst
           languages: java-kotlin
           queries: security-extended,security-and-quality
           build-mode: manual
-      - name: Compile application for analysis
+      - name: Compile application only for combined analysis
         run: mvn -B --no-transfer-progress -DskipTests package
-      - uses: github/codeql-action/analyze@6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee # v4
+      - id: analyze
+        uses: github/codeql-action/analyze@915412ff23e8b7659517e607487dbeae018f2934 # v4.39.5
         with:
+          # Do not publish until the path-graph log and SARIF metadata checks pass.
+          upload: never
           category: '/language:java-kotlin'
+          output: ${{ runner.temp }}/codeql-sarif-raw
+          post-processed-sarif-path: ${{ runner.temp }}/codeql-sarif-postprocessed
+      - name: Re-interpret CodeQL results and capture path-graph diagnostics
+        if: steps.analyze.outcome == 'success'
+        env:
+          DB_LOCATIONS: ${{ steps.analyze.outputs.db-locations }}
+        run: |
+          set -euo pipefail
+          CODEQL_BIN="$(find "$RUNNER_TEMP" -type f -path '*/codeql/codeql' -print -quit)"
+          if [ -z "$CODEQL_BIN" ] || [ ! -x "$CODEQL_BIN" ]; then
+            echo "::error::CodeQL CLI binary not found under RUNNER_TEMP"
+            exit 1
+          fi
+          "$CODEQL_BIN" version
+          DB_PATH="$(python3 -c 'import json,os; print(json.loads(os.environ["DB_LOCATIONS"])["java"])')"
+          if [ ! -d "$DB_PATH/results" ]; then
+            echo "::error::CodeQL database results directory is missing"
+            exit 1
+          fi
+          BQR_FILE="$(find "$DB_PATH/results" -type f -name '*.bqrs' -print -quit || true)"
+          if [ -z "$BQR_FILE" ]; then
+            echo "::error::CodeQL database has no persisted query results to re-interpret"
+            exit 1
+          fi
+          LOG="$RUNNER_TEMP/codeql-csrf-reinterpret.log"
+          set +e
+          "$CODEQL_BIN" database interpret-results "$DB_PATH" \
+            --format=sarif-latest \
+            --output="$RUNNER_TEMP/codeql-csrf-reinterpret.sarif" \
+            --print-diagnostics-summary \
+            --print-metrics-summary \
+            --sarif-include-diagnostics \
+            -v > "$LOG" 2>&1
+          CODEQL_EXIT=$?
+          set -e
+          cat "$LOG"
+          if [ "$CODEQL_EXIT" -ne 0 ]; then exit "$CODEQL_EXIT"; fi
+          python3 scripts/check_codeql_path_graph_log.py \
+            --rule java/csrf-unprotected-request-type "$LOG"
+      - name: Validate CodeQL SARIF metadata before publishing
+        if: always() && steps.analyze.outcome == 'success'
+        run: |
+          python3 scripts/validate_codeql_csrf_sarif.py \
+            --require-rule-definition java/csrf-unprotected-request-type \
+            "${{ runner.temp }}/codeql-sarif-raw"
+      - name: Stage validated SARIF for isolated publisher
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
+        with:
+          name: validated-codeql-sarif-${{ github.run_id }}
+          path: ${{ runner.temp }}/codeql-sarif-raw
+          if-no-files-found: error
+          retention-days: 1
+      - name: Preserve raw and post-processed SARIF for issue #13
+        if: always()
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
+        with:
+          name: codeql-sarif-triage-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/codeql-sarif-raw
+            ${{ runner.temp }}/codeql-sarif-postprocessed
+            ${{ runner.temp }}/codeql-csrf-reinterpret.log
+            ${{ runner.temp }}/codeql-csrf-reinterpret.sarif
+          if-no-files-found: warn
+          retention-days: 14
+
+  publish-codeql-sarif:
+    name: Publish validated CodeQL SARIF
+    needs: java-security
+    if: >-
+      needs.java-security.result == 'success' &&
+      (github.event_name != 'pull_request' ||
+       github.event.pull_request.head.repo.full_name == github.repository)
+    # Only this artifact-only job receives permission to publish code-scanning alerts.
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download validated SARIF from the analysis job
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
+        with:
+          name: validated-codeql-sarif-${{ github.run_id }}
+          path: ${{ runner.temp }}/codeql-sarif-raw
+      - name: Publish validated CodeQL SARIF
+        uses: github/codeql-action/upload-sarif@915412ff23e8b7659517e607487dbeae018f2934 # v4.39.5
+        with:
+          sarif_file: ${{ runner.temp }}/codeql-sarif-raw
+          category: '/language:java-kotlin'
+
+  csrf-minimal-repro:
+    name: Isolated CSRF reproduction (SARIF only; upload disabled)
+    # This job never publishes alerts and therefore must not receive security-events: write.
+    permissions:
+      actions: read
+      contents: read
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.ref == 'chore/codeql-action-4.39.1-coordinated-20261115'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+      - uses: github/codeql-action/init@915412ff23e8b7659517e607487dbeae018f2934 # v4.39.5
+        with:
+          tools: https://github.com/github/codeql-action/releases/download/codeql-bundle-v2.27.6/codeql-bundle-java-linux64.tar.zst
+          languages: java-kotlin
+          queries: security-extended,security-and-quality,./tools/codeql-csrf-repro/queries
+          build-mode: manual
+      - name: Compile only the isolated CSRF reproduction
+        run: mvn -B --no-transfer-progress -f tools/codeql-csrf-repro/pom.xml verify
+      - id: analyze
+        uses: github/codeql-action/analyze@915412ff23e8b7659517e607487dbeae018f2934 # v4.39.5
+        with:
+          upload: never
+          category: '/language:java-kotlin/csrf-repro-isolated'
+          output: ${{ runner.temp }}/codeql-csrf-isolated-sarif
+      - name: Re-interpret CodeQL results and capture path-graph diagnostics
+        if: steps.analyze.outcome == 'success'
+        env:
+          DB_LOCATIONS: ${{ steps.analyze.outputs.db-locations }}
+        run: |
+          set -euo pipefail
+          CODEQL_BIN="$(find "$RUNNER_TEMP" -type f -path '*/codeql/codeql' -print -quit)"
+          if [ -z "$CODEQL_BIN" ] || [ ! -x "$CODEQL_BIN" ]; then
+            echo "::error::CodeQL CLI binary not found under RUNNER_TEMP"
+            exit 1
+          fi
+          "$CODEQL_BIN" version
+          DB_PATH="$(python3 -c 'import json,os; print(json.loads(os.environ["DB_LOCATIONS"])["java"])')"
+          if [ ! -d "$DB_PATH/results" ] || ! find "$DB_PATH/results" -type f -name '*.bqrs' -print -quit | grep -q .; then
+            echo "::error::CodeQL database has no persisted query results to re-interpret"
+            exit 1
+          fi
+          LOG="$RUNNER_TEMP/codeql-csrf-reinterpret.log"
+          set +e
+          "$CODEQL_BIN" database interpret-results "$DB_PATH" \
+            --format=sarif-latest \
+            --output="$RUNNER_TEMP/codeql-csrf-reinterpret.sarif" \
+            --print-diagnostics-summary \
+            --print-metrics-summary \
+            --sarif-include-diagnostics \
+            -v > "$LOG" 2>&1
+          CODEQL_EXIT=$?
+          set -e
+          cat "$LOG"
+          if [ "$CODEQL_EXIT" -ne 0 ]; then exit "$CODEQL_EXIT"; fi
+          python3 scripts/check_codeql_path_graph_log.py \
+            --rule java/csrf-unprotected-request-type "$LOG"
+      - name: Validate isolated fixture SARIF
+        if: always() && steps.analyze.outcome == 'success'
+        run: |
+          python3 scripts/validate_codeql_csrf_sarif.py \
+            --require-rule-definition java/csrf-unprotected-request-type \
+            --require-rule growlab/csrf-namebased-self-edge-probe \
+            --expect-rule-count growlab/csrf-namebased-self-edge-probe=4 \
+            "${{ runner.temp }}/codeql-csrf-isolated-sarif"
+      - name: Preserve fixture-only SARIF without publishing alerts
+        if: always()
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
+        with:
+          name: codeql-csrf-isolated-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/codeql-csrf-isolated-sarif
+            ${{ runner.temp }}/codeql-csrf-reinterpret.log
+            ${{ runner.temp }}/codeql-csrf-reinterpret.sarif
+          if-no-files-found: warn
+          retention-days: 14
