@@ -321,3 +321,15 @@ The isolated fixture now checks the diagnostic query's serialized result count, 
 - The change is confined to SARIF validation and the isolated fixture workflow. It does not change application controllers, Spring CSRF settings, migrations, payment behavior, or production configuration.
 
 Exact-head CI evidence for this follow-up is recorded in the PR after GitHub Actions completes. Until the official query path-graph export is clean and independent security review is complete, PR #62 remains Draft and Issue #13 remains open.
+
+
+## 14. 2026-11-28 — least-privilege SARIF publisher
+
+The CodeQL workflow now separates analysis from publication:
+
+- Commit `7a13523e420398d07a9dc4dc43b8c5b34bbd9c53` removed `security-events: write` from the job that checks out and compiles repository code. That job stages the raw SARIF only after the path-graph log gate and SARIF metadata validator both succeed.
+- The new `publish-codeql-sarif` job has no checkout or build step. It downloads only the validated SARIF artifact and is the sole job with `security-events: write`. It requires `needs.java-security.result == 'success'` and skips fork pull requests.
+- Exact intermediate-head CodeQL run [46108908089](https://github.com/NguyenNghiDuc/wed-dichvufb/actions/runs/46108908089) confirmed the intended fail-closed behavior: combined path-graph gate failed on three official CSRF missing-start-node errors; SARIF metadata validation passed; SARIF staging was skipped; publisher job was skipped. The isolated fixture job failed on four path-graph errors while its diagnostic count remained exactly four; it never publishes alerts.
+- The first run also emitted a CodeQL Action API warning because the analysis job lacked `security-events: read`. Commit `870e5fed3d67eb837e11623cccbeea5f98ac8bc2` adds **read-only** `security-events: read` to the analysis job so CodeQL can access its API endpoints. It does not restore write access. The publisher job remains the only job with `security-events: write`.
+
+The intermediate run above does **not** validate commit `870e5fed` or this documentation follow-up. Fresh exact-head Java CI and CodeQL runs are required. Main remains `084f85dcaf1b39553298da18e021b7cbd688c990`; do not merge while the official path-graph errors and independent security gates remain unresolved.
