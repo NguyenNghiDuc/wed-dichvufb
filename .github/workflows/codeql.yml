@@ -19,7 +19,6 @@ jobs:
     permissions:
       actions: read
       contents: read
-      security-events: write
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
@@ -87,11 +86,13 @@ jobs:
           python3 scripts/validate_codeql_csrf_sarif.py \
             --require-rule-definition java/csrf-unprotected-request-type \
             "${{ runner.temp }}/codeql-sarif-raw"
-      - name: Upload validated CodeQL SARIF
-        uses: github/codeql-action/upload-sarif@915412ff23e8b7659517e607487dbeae018f2934 # v4.39.5
+      - name: Stage validated SARIF for isolated publisher
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
         with:
-          sarif_file: ${{ runner.temp }}/codeql-sarif-raw
-          category: '/language:java-kotlin'
+          name: validated-codeql-sarif-${{ github.run_id }}
+          path: ${{ runner.temp }}/codeql-sarif-raw
+          if-no-files-found: error
+          retention-days: 1
       - name: Preserve raw and post-processed SARIF for issue #13
         if: always()
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
@@ -104,6 +105,31 @@ jobs:
             ${{ runner.temp }}/codeql-csrf-reinterpret.sarif
           if-no-files-found: warn
           retention-days: 14
+
+  publish-codeql-sarif:
+    name: Publish validated CodeQL SARIF
+    needs: java-security
+    if: >-
+      needs.java-security.result == 'success' &&
+      (github.event_name != 'pull_request' ||
+       github.event.pull_request.head.repo.full_name == github.repository)
+    # Only this artifact-only job receives permission to publish code-scanning alerts.
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download validated SARIF from the analysis job
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
+        with:
+          name: validated-codeql-sarif-${{ github.run_id }}
+          path: ${{ runner.temp }}/codeql-sarif-raw
+      - name: Publish validated CodeQL SARIF
+        uses: github/codeql-action/upload-sarif@915412ff23e8b7659517e607487dbeae018f2934 # v4.39.5
+        with:
+          sarif_file: ${{ runner.temp }}/codeql-sarif-raw
+          category: '/language:java-kotlin'
 
   csrf-minimal-repro:
     name: Isolated CSRF reproduction (SARIF only; upload disabled)
